@@ -9,9 +9,9 @@
 ## 当前状态
 
 **阶段**: Sprint 1 — MVP 核心开发
-**当前子阶段**: Phase 3.1 — Codex Review 修复 ✅ → Phase 4 待开始
-**整体进度**: █████████░ 92%
-**最后更新**: 2026-02-26 23:30
+**当前子阶段**: Phase 4 — UI 完善 ✅ → 部署 + 真机测试待开始
+**整体进度**: ██████████ 95%
+**最后更新**: 2026-02-26
 
 ---
 
@@ -19,7 +19,7 @@
 
 | Agent | 任务 | 开始时间 |
 |-------|------|---------|
-| — | Phase 3.1 修复完成，Phase 4 待开始 | — |
+| — | Phase 4 UI 完善已完成，部署 + 真机测试待开始 | — |
 
 ---
 
@@ -114,6 +114,19 @@
 | 2026-02-26 | T5: 错误处理 | 网络异常 Toast（3s 自动消失）、识别超时（30s）、JSON 解析降级、组件 unmount abort |
 | 2026-02-26 | T6: 验证通过 | `tsc --noEmit` 零错误；`npm run build` 成功（269 KB JS，17.7 KB CSS）|
 | 2026-02-26 | T7: 文档同步 | PROGRESS.md + EXECUTION_STATE.md 更新 |
+
+### Sprint 1 Phase 4 — UI 完善 ✅
+
+| 完成时间 | 任务 | 说明 |
+|---------|------|------|
+| 2026-02-26 | T1: types/index.ts 扩展 | ViewName 新增 'explore' \| 'settings'，AppAction 新增 RESET_SESSION / SET_LANGUAGE / ADD_DIETARY / REMOVE_DIETARY |
+| 2026-02-26 | T2: AppContext.tsx 更新 | 4 个新 reducer case |
+| 2026-02-26 | T3: HomeView.tsx 更新 | Settings 按钮连接 dispatch，双语文案，"继续上次"入口 |
+| 2026-02-26 | T4: ExploreView.tsx 新建 | 菜单探索视图（分类 Tab + 菜品列表 + ADD_TO_ORDER + 空状态引导扫描）|
+| 2026-02-26 | T5: SettingsView.tsx 新建 | 语言切换、饮食偏好 toggle、关于信息、重置会话（红色按钮）|
+| 2026-02-26 | T6: AgentChatView.tsx 更新 | Path C 相机入口（InputBar 左侧）、failed 状态双按钮 UI、消息列表底部安全区 |
+| 2026-02-26 | T7: App.tsx 路由更新 | 新增 explore / settings case |
+| 2026-02-26 | T8: 验证通过 | `tsc --noEmit` 零错误；`pnpm build` 成功（280 KB JS，19.5 KB CSS）|
 
 ---
 

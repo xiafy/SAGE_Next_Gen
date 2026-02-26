@@ -7,25 +7,43 @@
 
 ## 当前执行批次：Sprint 1 Phase 4 — 完善 + 部署
 
-**开始时间**: 待开始
+**开始时间**: 2026-02-26
 **执行人**: SAGE Agent
-**触发原因**: Phase 3 API 集成全部完成
+**触发原因**: Phase 3.1 Codex Review 修复全部完成
 
 ---
 
-### Sprint 1 Phase 3.1 — Codex Review 修复（2026-02-26）✅
+### Sprint 1 Phase 4 — UI 完善（2026-02-26）✅
 
-8项修复全部完成，详见 PROGRESS.md Phase 3.1 章节。
-Commit: bd2eed5
+| # | 任务 | 输出 | 状态 |
+|---|------|------|------|
+| T1 | types/index.ts 扩展 | ViewName + 4 新 AppAction | ✅ |
+| T2 | AppContext.tsx 更新 | RESET_SESSION / SET_LANGUAGE / ADD_DIETARY / REMOVE_DIETARY reducer | ✅ |
+| T3 | HomeView.tsx 更新 | Settings 导航 + 双语文案 + 继续上次 | ✅ |
+| T4 | ExploreView.tsx 新建 | 菜单探索（分类Tab + 菜品列表 + 加入点单 + 空状态）| ✅ |
+| T5 | SettingsView.tsx 新建 | 语言切换 + 饮食偏好 + 关于 + 重置会话 | ✅ |
+| T6 | AgentChatView.tsx 更新 | Path C 相机入口 + 失败 UI 双按钮 + 底部安全区 | ✅ |
+| T7 | App.tsx 更新 | explore/settings 路由分支 | ✅ |
+| T8 | 构建验证 | `tsc --noEmit` 零错误；`pnpm build`（280 KB JS，19.5 KB CSS）| ✅ |
+| T9 | 文档同步 | PROGRESS.md + EXECUTION_STATE.md | ✅ |
+| T10 | Codex 审计 | 评分 6.5/10，3🔴 + 2🟡 + 1🟢 | ✅ |
+| T11 | 审计修复 | 状态机闭环 + 相机条件 + Explore入口 + aria-label | ✅ |
+| T12 | Git commit | `25c2b7c`（经 Codex 审计）| ✅ |
 
-## 任务队列（Phase 4 — 待规划）
+### 待执行：Phase 4 部署
+
+| # | 任务 | 输出 | 状态 |
+|---|------|------|------|
+| T13 | CF Pages 项目创建 | sage-next-gen（需 Mr. Xia 手动操作）| ⏳ |
+| T14 | Worker 部署 | `wrangler deploy` + `wrangler secret put BAILIAN_API_KEY` | ⏳ |
+| T15 | 真机验收测试 | iPhone Safari + Android Chrome | ⏳ |
+
+## 下一步（Phase 4 后续）
 
 | # | 任务 | 输出 | 状态 |
 |---|------|------|------|
 | T1 | 创建 CF Pages 项目 | `sage-next-gen` Pages 项目 | ⏳ |
 | T2 | 真机验收测试 | iPhone Safari + Android Chrome 测试报告 | ⏳ |
-| T3 | 偏好管理 Settings 页 | ChatGPT 风格，Home 设置入口 | ⏳ |
-| T4 | ExploreView 实现 | 菜单探索视图 | ⏳ |
 
 ---
 
@@ -121,3 +139,16 @@ Commit: bd2eed5
 - Claude Code 调用：`cat TASK.md | claude --dangerously-skip-permissions -p`（不要直接在命令行写长任务）
 - 所有 Bailian 调用必须有 `enable_thinking: false`（DEC-028）
 - Tailwind v4 用 CSS `@theme`，不用 `tailwind.config.js`
+
+## ⚠️ 强制质量门禁（DEC-029，Mr. Xia 2026-02-26 确立）
+
+**Claude Code 完成任何任务后（代码或文档），必须立即触发 Codex 审计，无例外。**
+
+标准执行顺序：
+```
+Claude Code 完成 → tsc + build 通过 → Codex 审计 → 修复🔴问题 → git commit
+```
+
+- 审计 SOP 详见 `CLAUDE.md §7.1`
+- 不得在 Codex 审计完成前 git commit
+- 审计报告存为 `AUDIT_[任务名]_[日期].md`
