@@ -383,4 +383,19 @@
 
 ---
 
+### [DEC-029] 强制 Codex 审计：Claude Code 完成任务后必须触发
+
+- **日期**: 2026-02-26
+- **决策人**: Mr. Xia
+- **背景**: Phase 3 由 Claude Code 独立生成前端代码，未参照 Worker Zod schema，导致前后端契约断裂（API 字段名不一致、类型结构不对齐）。Codex Review 发现 5 个严重问题，综合评分仅 4/10。
+- **决策**:
+  1. Claude Code 完成**任何任务**后（代码或文档），必须立即启动 Codex 审计
+  2. 审计对象：代码变更 + 文档变更，二者均须覆盖
+  3. 审计流程：`Claude Code 完成 → tsc/build 通过 → Codex 审计 → 修复🔴问题 → git commit`
+  4. 不得在 Codex 审计完成前 git commit
+  5. 审计报告写入 `AUDIT_[任务名]_[日期].md`，保留在项目目录
+- **影响**: `CLAUDE.md` §7.1（已更新），所有后续任务 TASK.md 模板须包含审计步骤
+
+---
+
 *后续决策按此格式追加，不修改以上历史记录。*
