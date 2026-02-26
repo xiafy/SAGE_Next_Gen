@@ -13,6 +13,11 @@
 
 ---
 
+### Sprint 1 Phase 3.1 — Codex Review 修复（2026-02-26）✅
+
+8项修复全部完成，详见 PROGRESS.md Phase 3.1 章节。
+Commit: bd2eed5
+
 ## 任务队列（Phase 4 — 待规划）
 
 | # | 任务 | 输出 | 状态 |
@@ -67,6 +72,20 @@
 | T5 | 错误处理（Toast + 超时 + JSON 降级 + unmount abort）| ✅ |
 | T6 | `tsc --noEmit` + `npm run build` 零错误验证 | ✅ |
 | T7 | PROGRESS.md + EXECUTION_STATE.md 文档同步 | ✅ |
+
+### Sprint 1 Phase 3.1 — Codex Review 修复（2026-02-26）✅
+
+| # | 任务 | 状态 |
+|---|------|------|
+| T1 | analyze.ts 请求体 `data` + `context` | ✅ |
+| T2 | MenuItem/MenuData 对齐 Worker schema | ✅ |
+| T3 | chat.ts SSE ok:false 正确 throw | ✅ |
+| T4 | Handoff 失败 → SET_CHAT_PHASE('failed') + UI | ✅ |
+| T5 | Recommendation {itemId, reason} + 查表渲染 | ✅ |
+| T6 | UPDATE_PREFERENCES action + dispatch | ✅ |
+| T7 | ScannerView 防重复提交 | ✅ |
+| T8 | WaiterModeView nameOriginal | ✅ |
+| T9 | `tsc --noEmit` + `pnpm build` 零错误 | ✅ |
 
 ### Sprint 1 Phase 2 — App 骨架（2026-02-26）✅
 

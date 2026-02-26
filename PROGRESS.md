@@ -8,10 +8,10 @@
 
 ## 当前状态
 
-**阶段**: Sprint 1 — MVP 核心开发  
-**当前子阶段**: Phase 3 — API 集成（Worker ↔ App 接通）✅
-**整体进度**: █████████░ 90%
-**最后更新**: 2026-02-26 22:00
+**阶段**: Sprint 1 — MVP 核心开发
+**当前子阶段**: Phase 3.1 — Codex Review 修复 ✅ → Phase 4 待开始
+**整体进度**: █████████░ 92%
+**最后更新**: 2026-02-26 23:30
 
 ---
 
@@ -19,7 +19,7 @@
 
 | Agent | 任务 | 开始时间 |
 |-------|------|---------|
-| — | Phase 3 完成，Phase 4 待开始 | — |
+| — | Phase 3.1 修复完成，Phase 4 待开始 | — |
 
 ---
 
@@ -119,7 +119,20 @@
 
 ## 📋 待处理
 
-### Sprint 1 Phase 3 — API 集成 ✅（上方已记录）
+### Sprint 1 Phase 3.1 — Codex Review 修复 ✅
+
+| 完成时间 | 任务 | 说明 |
+|---------|------|------|
+| 2026-02-26 | T1: analyze.ts 请求体修复 | 字段 `base64` → `data`，加 `context: {language, timestamp}` |
+| 2026-02-26 | T2: MenuItem/MenuData 对齐 Worker schema | nameOriginal/nameTranslated/tags/categories/menuType 等 |
+| 2026-02-26 | T2b: analyze.ts 响应解包 | Worker 返回 `{ok, data, requestId}`，前端正确解包 `json.data` |
+| 2026-02-26 | T3: chat.ts SSE ok:false 修复 | 分离 JSON.parse 错误与业务错误，ok:false 正确 throw |
+| 2026-02-26 | T4: Handoff 失败态 | onError 触发 SET_CHAT_PHASE('failed') + 恢复 UI |
+| 2026-02-26 | T5: Recommendation 字段统一 | `{itemId, reason}` + 通过 menuData.items 查表渲染 |
+| 2026-02-26 | T6: UPDATE_PREFERENCES action | AppContext reducer + AgentChatView dispatch |
+| 2026-02-26 | T7: ScannerView 防重复提交 | 按钮 disabled + loading 文案 |
+| 2026-02-26 | T8: WaiterModeView nameOriginal | 确认显示原文菜名 |
+| 2026-02-26 | 验证通过 | `tsc --noEmit` 零错误；`pnpm build` 成功（270 KB JS，17.8 KB CSS）|
 
 ### Sprint 1 Phase 4 — 完善 + 部署
 
@@ -216,3 +229,18 @@
 | KI-001 | 菜单识别 tag 准确度：夫妻肺片被标为 contains_seafood | P2 | 待 Prompt 迭代 |
 | KI-002 | Pre-Chat "便宜" 偏好提炼为 "低"（过于简略）| P3 | 待 Prompt 迭代 |
 | KI-003 | `claude` CLI 调用方式需用 `cat TASK.md \| claude -p`（已修复）| P0 | ✅ 已修复 |
+
+### Sprint 1 Phase 3.1 — Codex Review 修复 ✅
+
+| 完成时间 | 修复项 | 严重级别 |
+|---------|--------|---------|
+| 2026-02-26 | [1] analyze 请求体契约对齐（data + context） | 🔴 |
+| 2026-02-26 | [2] MenuData/MenuItem 类型对齐 Worker schema | 🔴 |
+| 2026-02-26 | [3] SSE ok:false 错误不再吞掉 | 🔴 |
+| 2026-02-26 | [4] Handoff 失败→failed 态 + 恢复 UI | 🔴 |
+| 2026-02-26 | [5] Recommendations itemId 查表渲染 | 🔴 |
+| 2026-02-26 | [6] UPDATE_PREFERENCES 偏好落状态 | 🟡 |
+| 2026-02-26 | [7] ScannerView 防重复提交 | 🟡 |
+| 2026-02-26 | [8] WaiterMode 显示 nameOriginal | 🟡 |
+
+Codex Review 评分：修前 4/10 → 修后预估 7.5/10（契约一致+状态机完整+错误可恢复）
