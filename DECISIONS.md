@@ -327,4 +327,60 @@
 
 ---
 
+### [DEC-026] AI 模型体系：采用阿里云百炼 Qwen3 系列（解决 OQ3 + OQ4）
+
+- **日期**: 2026-02-26
+- **决策人**: Mr. Xia
+- **背景**: OQ3（Vision 模型选型）和 OQ4（多图提交方式）是 Sprint 1 代码的最后两个 Blocker。Mr. Xia 提供了阿里云百炼 API Key，并指定了模型组合。
+- **选项**:
+  - Option A: Claude Vision（claude-sonnet-4-6）做识别，保持单一供应商
+  - Option B: 阿里云百炼 Qwen3-VL 系列做识别，Chat 用 Qwen3.5
+  - Option C: 混合——百炼识别 + Claude 对话
+- **决策**:
+  - 菜单识别主力：`Qwen3-VL-Plus`
+  - 菜单识别快速/降级：`Qwen3-VL-Flash`
+  - AI 对话主力：`Qwen3.5-Plus`
+  - 轻量判断：`Qwen3.5-Flash`
+  - API 供应商：阿里云百炼（DashScope），OpenAI 兼容接口
+  - OQ4 同步解决：5 张图片**同时提交**一次 API 调用（message content array，Qwen3-VL 原生支持多图）
+- **影响**: `04_technical/ARCHITECTURE.md`（TBD 全部填充）、`worker/handlers/analyze.ts`、`worker/handlers/chat.ts`
+- **安全说明**: API Key 仅存于 Cloudflare Worker `wrangler secret`，不出现在任何代码/文档中
+
+---
+
+### [DEC-027] Icebreaker 状态机：Pre-Chat 主动多轮对话模型
+
+- **日期**: 2026-02-26
+- **决策人**: Mr. Xia
+- **背景**: PRD F06 中"Icebreaker"原设计为静态等待占位，识别完成后 AI 接管。Mr. Xia 指出应将等待期间升级为主动多轮对话，充分利用这段时间收集用户需求。
+- **决策**:
+  1. ANALYZING 阶段 = **Pre-Chat 主动对话模式**，AI 用 `Qwen3.5-Flash` 主动引导用户说出需求，支持多轮
+  2. Pre-Chat 偏好提炼与主 Chat 相同机制（inline preferenceUpdates），无额外 API 调用
+  3. 识别完成后（HANDING_OFF）：全量 Pre-Chat 对话历史 + handoff system note 一起喂给主 Chat AI（`Qwen3.5-Plus`）
+  4. 主 Chat AI 接管时已充分了解用户，**不重复问已回答的问题**，直接给出基于完整菜单的推荐
+  5. 识别失败时：Pre-Chat 内容和已提炼偏好全部保留，重试成功后带入
+  6. Path C 补充菜单：不重走 Pre-Chat，直接注入本地系统消息，chatPhase 保持 chatting
+- **影响**:
+  - `03_design/ICEBREAKER_STATE_MACHINE.md`（新文件）
+  - `02_product/PRD.md` F06 章节（需更新）
+  - `04_technical/API_DESIGN.md`（`/api/chat` 新增 `mode: 'pre_chat'`，支持 `menuData: null`）
+  - Worker `handlers/chat.ts`（Pre-Chat vs 主 Chat prompt 分支）
+
+---
+
+### [DEC-028] 所有 API 调用必须设置 `enable_thinking: false`
+
+- **日期**: 2026-02-26
+- **决策人**: SAGE Agent（Phase 0 Prompt Lab 实测发现）
+- **背景**: Qwen3 系列模型默认开启思考模式（Chain-of-Thought Reasoning），TTFT 达到 7-26 秒，远超产品可接受范围。
+- **实测数据**:
+  - qwen3.5-flash，thinking=ON：TTFT **7000ms** ❌
+  - qwen3.5-flash，thinking=OFF：TTFT **315ms** ✅（22x 提升）
+  - qwen3.5-plus，thinking=OFF：TTFT **450ms** ✅
+  - qwen3-vl-plus，thinking=OFF：TTFT **2ms** ✅，Total **1528ms** ✅
+- **决策**: Worker 所有 Bailian API 调用必须包含 `enable_thinking: false`；同时启用 `stream: true` 流式输出，确保用户感知延迟 < 500ms
+- **影响**: `04_technical/API_DESIGN.md`、`worker/utils/bailian.ts`、所有 handler
+
+---
+
 *后续决策按此格式追加，不修改以上历史记录。*

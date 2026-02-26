@@ -5,15 +5,15 @@
 
 ---
 
-## 当前阶段：Phase 0 — 地基建设
+## 当前阶段：Sprint 1 Phase 3 — API 集成（2026-02-26）
 
-**目标**: 在写任何代码之前，确保文档体系完整、架构清晰、所有 Agent 的上下文一致。
+**目标**: 将 Worker（已完成）与 App 骨架（已完成）接通，完成 Path A 核心链路真机可用。
 
-**原则**: 地基不牢，执行越快错得越多。
+**进度**: Sprint 0 ✅ | Phase 0 Prompt Lab ✅ | Phase 1 Worker ✅ | Phase 2 App 骨架 ✅ | **Phase 3 API 集成 🔄**
 
 ---
 
-## Sprint 0 — 文档完备（当前）
+## Sprint 0 — 文档完备（✅ 已完成，2026-02-26）
 
 **目标**: 完成 M1 里程碑（文档完备）  
 **预计时长**: 1-2 天  
@@ -112,7 +112,8 @@
 
 | 风险 | 描述 | 缓解方案 | 状态 |
 |------|------|---------|------|
-| AI 识别准确率 | 复杂菜单（手写/竖排/低质量图片）识别失败 | Mock 降级 + 用户手动输入兜底 | 🟡 待验证 |
-| Gemini 不可用 | 已废弃，但需要稳定替代方案 | Claude Vision API | 🟢 已决策 |
-| Scanner 真机问题 | getUserMedia 在非 HTTPS 无法使用 | 部署后才能验证 | 🟡 待验证 |
-| API Key 安全 | 历史版本曾暴露前端 | CF Worker 代理（Sprint 1 第一优先级） | 🔴 未解决 |
+| AI 识别准确率 | 复杂菜单（手写/竖排/低质量图片）识别失败 | Mock 降级 + 引导重拍（DEC-019）；Prompt Lab 基础验证通过 | 🟡 待真机验证 |
+| AI 响应速度 | 模型默认开启 Thinking 模式，TTFT 7-26s | `enable_thinking: false`（DEC-028），TTFT 降至 <500ms | ✅ 已解决 |
+| Scanner 真机问题 | getUserMedia 在非 HTTPS 无法使用 | 部署到 CF Pages（HTTPS）后验证 | 🟡 待验证 |
+| API Key 安全 | 历史版本曾暴露前端 | CF Worker 代理（Phase 1 已实现）| ✅ 已解决 |
+| AI 供应商 | Gemini 已废弃（严重限流）| 阿里云百炼 DashScope（DEC-026）| ✅ 已解决 |

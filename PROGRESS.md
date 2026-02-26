@@ -8,63 +8,134 @@
 
 ## 当前状态
 
-**阶段**: Phase 0 — 地基建设  
-**当前 Sprint**: Sprint 0 — 文档完备  
-**整体进度**: ███████░░░ 70%  
-**最后更新**: 2026-02-25
+**阶段**: Sprint 1 — MVP 核心开发  
+**当前子阶段**: Phase 3 — API 集成（Worker ↔ App 接通）✅
+**整体进度**: █████████░ 90%
+**最后更新**: 2026-02-26 22:00
 
 ---
 
 ## 🔴 进行中（锁定区）
 
-> Agent 在处理某文件时，在此声明锁定，防止冲突。
-
-| Agent | 文件 | 开始时间 |
+| Agent | 任务 | 开始时间 |
 |-------|------|---------|
-| SAGE  | PROGRESS.md（本次更新） | 2026-02-25 |
+| — | Phase 3 完成，Phase 4 待开始 | — |
 
 ---
 
 ## ✅ 已完成
 
-### Sprint 0 — 文档完备
+### Sprint 0 — 文档完备（M1 里程碑）✅
+
+| 完成时间 | 文件/任务 | 说明 |
+|---------|------|------|
+| 2026-02-25 | 目录结构 | 六层目录体系建立 |
+| 2026-02-25 | `README.md` / `CLAUDE.md` | 人类文档 + Agent 工作手册 |
+| 2026-02-25 | `PLANNING.md` / `PROGRESS.md` / `DECISIONS.md` | 核心管理文档 |
+| 2026-02-25 | `01_strategy/VISION.md` v1.1 | 产品愿景，已与 Mr. Xia 对齐 |
+| 2026-02-25 | `01_strategy/COMPETITIVE_ANALYSIS.md` | 竞品分析 v1.0 |
+| 2026-02-25 | `02_product/PRD.md` v1.4 | F01-F10 全部对齐（DEC-016~027）|
+| 2026-02-25 | `02_product/USER_STORIES.md` | 20 个用户故事，6 组场景 |
+| 2026-02-25 | `03_design/UX_PRINCIPLES.md` | 10 条 UX 原则 + 反模式清单 |
+| 2026-02-25 | `03_design/VISUAL_DESIGN.md` | 完整视觉规范 + Tailwind v4 配置 |
+| 2026-02-25 | `03_design/ICEBREAKER_STATE_MACHINE.md` v1.1 | Pre-Chat 状态机设计（DEC-027）|
+| 2026-02-26 | `04_technical/ARCHITECTURE.md` v1.1 | OQ3/OQ4 解决，TBD 全清，DEC-028 更新 |
+| 2026-02-26 | `04_technical/API_DESIGN.md` v1.0 | 完整 API 契约（错误码/超时/重试/Prompt）|
+| 2026-02-26 | `04_technical/TECH_STACK.md` v1.0 | 技术栈选型说明 |
+| 2026-02-26 | `04_technical/DEPLOYMENT.md` v1.0 | CI/CD + Secret + 回滚 + 成本 |
+| 2026-02-26 | `06_testing/TEST_PLAN.md` v1.0 | 5 层测试策略 |
+| 2026-02-26 | `06_testing/TEST_CASES.md` v1.0 | 60+ 用例，L1-L5 |
+
+### Sprint 1 Phase 0 — Prompt Lab ✅
+
+| 完成时间 | 任务 | 结果 |
+|---------|------|------|
+| 2026-02-26 | 确认可用模型 ID | qwen3-vl-plus / qwen3-vl-flash / qwen3.5-plus / qwen3.5-flash |
+| 2026-02-26 | 生成合成测试菜单图片 | `test-images/menu_ja_izakaya.jpg` + `menu_zh_restaurant.jpg` |
+| 2026-02-26 | Task 1: 菜单识别测试 | ✅ PASS — Schema 全通，翻译准确 |
+| 2026-02-26 | Task 2: Pre-Chat 测试 v1 | ❌ FAIL — AI 不听用户输入，偏好提炼弱 |
+| 2026-02-26 | Task 2: Pre-Chat 测试 v2 | ✅ PASS — 重写 Prompt，3/3 场景通过 |
+| 2026-02-26 | Task 3: Handoff + 主 Chat | ✅ PASS — 2 轮完成决策，推荐尊重忌口 |
+| 2026-02-26 | Task 4: Streaming 速度测试 | ✅ PASS — 平均 TTFT 377ms（目标 <1.5s）|
+| 2026-02-26 | **DEC-028 发现并记录** | `enable_thinking: false` 必填，22x 速度提升 |
+
+关键产出（`05_implementation/prompt-lab/`）：
+- `test-01-menu-recognition.mjs` — 菜单识别测试脚本
+- `test-02-pre-chat.mjs` / `test-02-pre-chat-v2.mjs` — Pre-Chat 测试（v2 通过）
+- `test-03-handoff.mjs` — Handoff + 主 Chat 测试
+- `test-04-streaming.mjs` — Streaming 速度验证
+
+### Sprint 1 Phase 1 — Cloudflare Worker ✅
 
 | 完成时间 | 文件 | 说明 |
 |---------|------|------|
-| 2026-02-25 | `README.md` | 人类文档，项目介绍 + 快速上手 |
-| 2026-02-25 | `CLAUDE.md` | Agent 工作手册，行为基准 |
-| 2026-02-25 | `PLANNING.md` | 工作计划，Sprint 0-3 |
-| 2026-02-25 | `PROGRESS.md` | 本文件，进展追踪机制建立 |
-| 2026-02-25 | `DECISIONS.md` | 决策记录机制建立 |
-| 2026-02-25 | `01_strategy/VISION.md` | 产品愿景 & 战略 v1.1（已与 Mr. Xia 完成对齐）|
-| 2026-02-25 | `02_product/PRD.md` | 产品需求文档 v1.1（Mr. Xia 审阅完成，3 处更新：多图 5 张/GPS 时机/展示模式）|
-| 2026-02-25 | `02_product/USER_STORIES.md` | 用户故事 v1.0（20 个故事，6 组场景）待 Mr. Xia 审阅 |
-| 2026-02-25 | `01_strategy/COMPETITIVE_ANALYSIS.md` | 竞品分析 v1.0（4 竞品 + 5 差异化机会）|
-| 2026-02-25 | `03_design/UX_PRINCIPLES.md` | UX 原则 v1.0（10 条原则 + 反模式清单）|
-| 2026-02-25 | `03_design/VISUAL_DESIGN.md` | 视觉规范 v1.0（完整色彩/字体/组件/Tailwind 配置）|
-| 2026-02-25 | `04_technical/ARCHITECTURE.md` | 架构骨架 v1.0（四层架构 + 数据流 + API 设计，OQ3/4 TBD）|
-| 2026-02-25 | `EXECUTION_REPORT_20260225.md` | 批次 #1 执行完成报告 |
-| 2026-02-25 | 目录结构 | 六层目录体系建立 |
+| 2026-02-26 | `worker/index.ts` | 入口路由（GET health / POST analyze / POST chat）|
+| 2026-02-26 | `worker/middleware/cors.ts` | CORS 白名单（Pages + localhost）|
+| 2026-02-26 | `worker/utils/bailian.ts` | Bailian 流式客户端（聚合 + 透传两种模式）|
+| 2026-02-26 | `worker/utils/rateLimit.ts` | IP 限速（内存 Map，20/100 次/小时）|
+| 2026-02-26 | `worker/utils/errors.ts` | 标准化错误响应（8 种错误码）|
+| 2026-02-26 | `worker/utils/logger.ts` | 结构化日志 |
+| 2026-02-26 | `worker/prompts/menuAnalysis.ts` | 菜单识别 Prompt（已验证）|
+| 2026-02-26 | `worker/prompts/preChat.ts` | Pre-Chat Prompt v2（双语）+ Icebreaker 本地生成 |
+| 2026-02-26 | `worker/prompts/agentChat.ts` | 主 Chat Prompt（模板填充 + 智能菜单采样）|
+| 2026-02-26 | `worker/schemas/menuSchema.ts` | Zod schema（菜单识别结果校验）|
+| 2026-02-26 | `worker/schemas/chatSchema.ts` | Zod schema（请求/响应校验）|
+| 2026-02-26 | `worker/handlers/analyze.ts` | 识别 handler（主/降级模型，Zod 校验）|
+| 2026-02-26 | `worker/handlers/chat.ts` | 对话 handler（SSE 透传，Pre/主 Chat 分支）|
+| 2026-02-26 | `worker/handlers/health.ts` | 健康检查 handler |
+| 2026-02-26 | `worker/wrangler.toml` / `tsconfig.json` | Worker 配置 |
+| 2026-02-26 | **验证通过** | `tsc --noEmit` 零错误；`wrangler dev` 启动；端到端 SSE 流式测试通过 |
+
+### Sprint 1 Phase 2 — App 骨架 ✅
+
+| 完成时间 | 文件 | 说明 |
+|---------|------|------|
+| 2026-02-26 | `app/src/index.css` | Tailwind v4 `@theme`（品牌色 #6366F1 等 12 个变量）|
+| 2026-02-26 | `app/src/types/index.ts` | 全量 TypeScript 类型定义 |
+| 2026-02-26 | `app/src/context/AppContext.tsx` | `useReducer` 状态机（7 actions，4 chat phases）|
+| 2026-02-26 | `app/src/hooks/useAppState.ts` | 便捷 hook |
+| 2026-02-26 | `app/src/views/HomeView.tsx` | 首屏（品牌 + 扫描按钮 + 设置入口）|
+| 2026-02-26 | `app/src/views/ScannerView.tsx` | 相机/上传页（深色，最多 5 张图片预览）|
+| 2026-02-26 | `app/src/views/AgentChatView.tsx` | AI 对话页（Pre-Chat 进度条 + 消息区 + 快捷回复）|
+| 2026-02-26 | `app/src/views/OrderCardView.tsx` | 点单卡片（数量控制 + 合计 + 展示给服务员按钮）|
+| 2026-02-26 | `app/src/views/WaiterModeView.tsx` | 服务员模式（黑底大字原文）|
+| 2026-02-26 | `app/src/components/` | TopBar / ChatBubble / QuickReplies / LoadingDots |
+| 2026-02-26 | `app/src/App.tsx` / `main.tsx` | 路由 + 入口 |
+| 2026-02-26 | **验证通过** | `tsc --noEmit` 零错误；`npm run build` 成功（206 KB JS，14.9 KB CSS）；dev server HTTP 200 |
+
+### Sprint 1 Phase 3 — API 集成 ✅
+
+| 完成时间 | 任务 | 说明 |
+|---------|------|------|
+| 2026-02-26 | T1: API 客户端层 | `src/api/config.ts`（Worker URL from env）+ `analyze.ts`（base64+HEIC→JPEG）+ `chat.ts`（SSE 流式解析）|
+| 2026-02-26 | T2: ScannerView → `/api/analyze` | 真实 `<input type="file">` 图片选择、缩略图预览、删除单张、30s 超时、AbortController |
+| 2026-02-26 | T3: AgentChatView → `/api/chat` | Pre-Chat icebreaker + 流式对话 → Handoff 自动检测 → 主 Chat 推荐 + 推荐卡片 + 快捷回复 |
+| 2026-02-26 | T4: OrderCardView 完善 | 移除 mock 数据，使用 AppContext 真实 orderItems，空状态引导 |
+| 2026-02-26 | T5: 错误处理 | 网络异常 Toast（3s 自动消失）、识别超时（30s）、JSON 解析降级、组件 unmount abort |
+| 2026-02-26 | T6: 验证通过 | `tsc --noEmit` 零错误；`npm run build` 成功（269 KB JS，17.7 KB CSS）|
+| 2026-02-26 | T7: 文档同步 | PROGRESS.md + EXECUTION_STATE.md 更新 |
 
 ---
 
-## 📋 待处理（按优先级）
+## 📋 待处理
 
-### Sprint 0 剩余任务
+### Sprint 1 Phase 3 — API 集成 ✅（上方已记录）
 
-| 优先级 | 文件 | 说明 |
+### Sprint 1 Phase 4 — 完善 + 部署
+
+| 优先级 | 任务 | 说明 |
 |--------|------|------|
-| ~~P0~~ | ~~`02_product/PRD.md`~~ | ✅ v1.3 F01-F10 全部对齐 |
-| ~~P0~~ | ~~`02_product/USER_STORIES.md`~~ | ✅ 已完成 |
-| P0 | `04_technical/ARCHITECTURE.md` | 系统架构 |
-| P1 | `03_design/UX_PRINCIPLES.md` | 交互设计原则 |
-| P1 | `03_design/VISUAL_DESIGN.md` | 视觉规范 |
-| P1 | `04_technical/API_DESIGN.md` | API 接口设计 |
-| P1 | `04_technical/TECH_STACK.md` | 技术栈选型 |
-| P1 | `04_technical/DEPLOYMENT.md` | 部署方案 |
-| P2 | `06_testing/TEST_PLAN.md` | 测试策略 |
-| P2 | `06_testing/TEST_CASES.md` | 测试用例 |
-| P2 | `01_strategy/COMPETITIVE_ANALYSIS.md` | 竞品分析 |
+| P0 | 创建 CF Pages 项目 `sage-next-gen` | 手动一次性操作 |
+| P0 | 真机验收测试 | iPhone Safari / Android Chrome |
+| P1 | ExploreView 实现 | 菜单探索视图（MVP 保留，A/B 计划）|
+| P1 | 偏好管理 Settings 页 | ChatGPT 风格，Home 设置入口 |
+| P1 | 错误状态 UI | 识别失败 / 网络超时 / 重试 |
+
+### 待决策（阻塞项）
+
+| 编号 | 问题 | 阻塞 |
+|------|------|------|
+| OQ1 | 免费试用次数 X = ？ | Sprint 2 Paywall 实现 |
 
 ---
 
@@ -73,8 +144,8 @@
 | 里程碑 | 目标 | 状态 | 完成时间 |
 |--------|------|------|---------|
 | M0: 项目初始化 | 目录结构 + 根文档建立 | ✅ 完成 | 2026-02-25 |
-| M1: 文档完备 | 所有 01-06 文档完成 | 🔄 进行中 | — |
-| M2: MVP Alpha | 核心链路跑通（真机可用）| ⏳ 待开始 | — |
+| M1: 文档完备 | 所有 01-06 文档完成 | ✅ 完成 | 2026-02-26 |
+| M2: MVP Alpha | 核心链路跑通（真机可用）| 🔄 进行中 | — |
 | M3: MVP Beta | 4+1 感知全部接入 | ⏳ 待开始 | — |
 | M4: 公测上线 | Cloudflare 正式部署 | ⏳ 待开始 | — |
 
@@ -82,24 +153,59 @@
 
 ## 📝 工作日志
 
-### 2026-02-25
-- 项目目录 `SAGE_Next_Gen` 在 `~/Documents/claw-outputs/projects/` 下建立
-- 建立六层目录体系：strategy / product / design / technical / implementation / testing
-- 完成 Sprint 0 根目录文档（README / CLAUDE / PLANNING / PROGRESS / DECISIONS）
-- 完成 `01_strategy/VISION.md` v1.0
-- **决策**: 遵循"文档即协作接口"原则，所有项目记忆存于项目目录，不存 Agent 私有记忆
-- 与 Mr. Xia 完成愿景层逐块对齐（5 大问题 + 4 个细化问题，共 12 条决策记录）
-- 更新 `01_strategy/VISION.md` → v1.1（目标用户、MVP 范围、验收标准、商业模式、语言策略全部落地）
-- 新增 DECISIONS.md 条目 DEC-007 至 DEC-012
-- 完成 `02_product/PRD.md` v1.0（10 个功能模块：F01-F10，含验收标准、优先级矩阵、开放问题）
-- 完成 `02_product/USER_STORIES.md` v1.0（20 个用户故事，覆盖 6 类场景）
-- **自主推进批次 #1**（Mr. Xia 授权后 Agent 独立执行，6 项任务全部完成）：
-  - T1: PRD 更新至 v1.2（MVP=Path A only，Icebreaker 机制）
-  - T2: `01_strategy/COMPETITIVE_ANALYSIS.md` 竞品深度分析
-  - T3: `03_design/UX_PRINCIPLES.md` 10 条交互设计原则
-  - T4: `03_design/VISUAL_DESIGN.md` 完整视觉规范 + Tailwind v4 配置
-  - T5: `04_technical/ARCHITECTURE.md` 系统架构骨架
-  - T6: `EXECUTION_REPORT_20260225.md` 执行完成报告
+### 2026-02-26（Sprint 1 开发日）
+
+**上午**
+- 确定 Sprint 1 开发计划，Mr. Xia 授权开始 Phase 0 Prompt Lab
+- 向百炼 API 确认可用模型 ID（qwen3-vl-plus / flash，qwen3.5-plus / flash）
+- 生成合成测试菜单图片（PIL，日文居酒屋 + 中文餐厅）
+- 完成 Task 1 菜单识别测试：PASS，Schema 校验通过
+
+**下午（上）**
+- Task 2 Pre-Chat v1：FAIL（AI 忽略用户输入，偏好提炼弱，语速 9-26s）
+- 根因分析：Qwen3.5 默认开启思考模式（thinking=ON），TTFT 高达 7-26s
+- 修复：`enable_thinking: false`，TTFT 从 7s → 315ms（22x 提升）
+- Task 2 Pre-Chat v2：PASS（3/3 场景，偏好提炼正确，无矛盾回复）
+- Task 3 Handoff + 主 Chat：PASS（2 轮完成，推荐尊重忌口）
+- Task 4 Streaming：PASS（平均 TTFT 377ms）
+- **记录 DEC-028**，更新 ARCHITECTURE.md
+- Mr. Xia 确认速度方案：方案 A（Streaming）
+
+**下午（中）**
+- 发现 Claude Code 调用方式有 bug（shell 单引号嵌套），修复为 `cat TASK.md | claude -p` 管道方式
+- 验证新调用方式（3 轮测试，全部通过）
+- Phase 1 Worker：直接手写 13 个 TypeScript 文件
+  - Bailian 流式客户端（聚合 + 透传）
+  - 所有 handlers / prompts / schemas / middleware / utils
+  - `wrangler dev` 启动验证 + 端到端 SSE 流式测试通过
+
+**下午（晚）**
+- Phase 2 App 骨架：Claude Code 成功完成（新调用方式）
+  - 15 个文件，Tailwind v4 @theme，useReducer 状态机
+  - `tsc --noEmit` 零错误，`npm run build` 成功
+
+**晚间**
+- Phase 3 API 集成：全 7 项任务完成
+  - T1: API 客户端层（`src/api/` — config + analyze + chat）
+  - T2: ScannerView 接通真实图片上传 + HEIC 转换 + 30s 超时 + AbortController
+  - T3: AgentChatView 完整 Pre-Chat → Handoff → 主 Chat SSE 流式链路
+  - T4: OrderCardView 移除 mock，真实数据 + 空状态
+  - T5: Toast 网络错误提示、JSON 解析降级、unmount abort
+  - T6: `tsc --noEmit` 零错误，`npm run build` 成功（269 KB JS）
+  - 安装 `browser-image-compression` 依赖
+
+### 2026-02-26（Sprint 0 收官）
+
+- 确定 AI 模型体系（DEC-026）：Qwen3-VL-Plus/Flash + Qwen3.5-Plus/Flash（阿里云百炼）
+- 解锁 OQ3 + OQ4，更新 `ARCHITECTURE.md` v1.1
+- 完成 4 个剩余技术文档（API_DESIGN / TECH_STACK / DEPLOYMENT / TEST_CASES）
+- **M1 里程碑达成** 🎉
+
+### 2026-02-25（项目启动日）
+
+- 项目目录建立，六层目录体系
+- Sprint 0 文档全套（VISION / COMPETITIVE / PRD / USER_STORIES / UX / VISUAL / ARCHITECTURE）
+- 与 Mr. Xia 完成愿景对齐（DEC-001~015）
 
 ---
 
@@ -107,4 +213,6 @@
 
 | 编号 | 描述 | 严重级别 | 状态 |
 |------|------|---------|------|
-| — | 暂无（代码尚未开始）| — | — |
+| KI-001 | 菜单识别 tag 准确度：夫妻肺片被标为 contains_seafood | P2 | 待 Prompt 迭代 |
+| KI-002 | Pre-Chat "便宜" 偏好提炼为 "低"（过于简略）| P3 | 待 Prompt 迭代 |
+| KI-003 | `claude` CLI 调用方式需用 `cat TASK.md \| claude -p`（已修复）| P0 | ✅ 已修复 |
