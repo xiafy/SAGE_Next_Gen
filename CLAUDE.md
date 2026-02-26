@@ -5,13 +5,21 @@
 
 ---
 
-## 0. 项目状态速查
+## 0. 每次任务开始前（必做 Checklist）
 
-在开始工作前，先读这两个文件：
-1. `PROGRESS.md` — 当前进展、哪些完成、哪些进行中、哪些待开始
-2. `PLANNING.md` — 当前 Sprint 任务和优先级
+### 0.1 理解当前状态
+1. `cat PROGRESS.md` — 当前进展
+2. `cat PLANNING.md` — 当前 Sprint 任务和优先级
 
-**不要重复做已完成的工作。不要在不了解当前状态的情况下开始写代码。**
+### 0.2 理解要做什么（规格驱动）
+3. `cat 02_product/PRD.md` — 找到本次任务涉及的功能编号（F01-F10），阅读其 AC（验收标准）
+4. `cat 04_technical/API_DESIGN.md` — 找到本次任务涉及的 API 端点，阅读请求/响应 schema
+5. `cat 05_implementation/shared/types.ts` — 权威类型定义，代码必须与此文件一致
+
+### 0.3 理解上下文约束
+6. `cat DECISIONS.md` — 所有已决策项（特别是 DEC-026~030）
+
+**不要重复做已完成的工作。不要在不了解当前状态和规格的情况下开始写代码。**
 
 ---
 
@@ -43,24 +51,29 @@ SAGE_Next_Gen/
 ├── PLANNING.md            # 工作计划 & Sprint
 ├── PROGRESS.md            # 实时进展（每完成一项立即更新）
 ├── DECISIONS.md           # 重要决策记录（仅追加，不修改历史）
+├── TASK_TEMPLATE.md       # 编码任务下发模板（必须使用）
 ├── 01_strategy/           # 产品战略层
 │   └── VISION.md
 ├── 02_product/            # 产品需求层
-│   ├── PRD.md
+│   ├── PRD.md             # ⭐ 功能规格 + 验收标准
 │   └── USER_STORIES.md
 ├── 03_design/             # 设计规范层
 │   ├── UX_PRINCIPLES.md
 │   └── VISUAL_DESIGN.md
 ├── 04_technical/          # 技术方案层
 │   ├── ARCHITECTURE.md
-│   ├── API_DESIGN.md
+│   ├── API_DESIGN.md      # ⭐ API 契约（请求/响应 schema）
+│   ├── TECH_STACK.md
 │   └── DEPLOYMENT.md
 ├── 05_implementation/     # 代码实现
-│   └── app/               # 前端应用
+│   ├── shared/            # ⭐ 前后端共享类型（唯一权威）
+│   │   └── types.ts
+│   ├── app/               # 前端应用
+│   └── worker/            # Cloudflare Worker API
 └── 06_testing/            # 测试
     ├── TEST_PLAN.md
     ├── TEST_CASES.md
-    └── reports/           # QA 报告（按日期命名）
+    └── reports/
 ```
 
 ---
@@ -68,22 +81,20 @@ SAGE_Next_Gen/
 ## 4. 常用命令
 
 ```bash
-# 开发
+# 前端开发
 cd 05_implementation/app
 pnpm install
 pnpm dev          # 启动 dev server，默认 http://localhost:5173
-
-# 构建
 pnpm build        # 必须零 TS 错误、零 build 警告才算通过
 pnpm preview      # 预览 build 产物
 
-# 测试
-pnpm test         # 运行所有测试
-pnpm test:watch   # 监听模式
+# Worker 开发
+cd 05_implementation/worker
+npx wrangler dev  # 启动本地 Worker，默认 http://localhost:8787
 
-# 代码检查
-pnpm lint
-pnpm typecheck    # tsc --noEmit
+# 类型检查（从项目根运行）
+cd 05_implementation/app && npx tsc --noEmit    # 前端类型检查
+cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
 ```
 
 ---
@@ -96,15 +107,8 @@ pnpm typecheck    # tsc --noEmit
 | 样式 | Tailwind CSS v4 | v4 不读 tailwind.config.js，用 CSS `@theme` 配置 |
 | 状态管理 | React hooks（useState/useReducer/Context） | 不引入 Redux/Zustand，保持简单 |
 | API 层 | Cloudflare Workers | 所有 AI API Key 只在 Worker 端，禁止前端暴露 |
-| AI 模型 | 见下方模型策略 | Gemini 全系列已废弃 |
-
-### 模型使用策略
-| 场景 | 模型 |
-|------|------|
-| 架构设计 / 复杂逻辑 | `anthropic/claude-opus-4-6` |
-| 日常对话 / 功能实现 | `anthropic/claude-sonnet-4-6` |
-| 轻量任务 | `fireworks/glm-5` 或 `fireworks/kimi-k2p5` |
-| ⚠️ 禁用 | Google Gemini 全系列（严重限速） |
+| AI 模型 | 阿里云百炼 DashScope（Qwen3 系列）| 所有调用必须 `enable_thinking: false`（DEC-028）|
+| 共享类型 | `05_implementation/shared/types.ts` | 前后端都 import，禁止重复定义 |
 
 ### Tailwind CSS v4 配置方式
 ```css
@@ -131,51 +135,70 @@ pnpm typecheck    # tsc --noEmit
 
 ---
 
-## 7. 代码质量标准
+## 7. 质量标准（三级门控）⭐⭐⭐
 
-完成任何代码任务后，必须满足：
-- [ ] `npm run build` 零错误、零警告
-- [ ] `tsc --noEmit` 零错误
+### Level 1：编译（必过）
+- [ ] `tsc --noEmit` 零错误（前端 + Worker 都要检查）
+- [ ] `pnpm build` 成功，零警告
 - [ ] 无 `any`、无多余的 `console.log`
+
+### Level 2：契约一致性（必过）
+- [ ] 前端 API 调用的 request body 类型从 `shared/types.ts` 导入
+- [ ] 前端 API 调用的 response 解析类型从 `shared/types.ts` 导入
+- [ ] `grep` 验证关键字段存在：
+  ```bash
+  # 示例：确认 preferences 传递了 restrictions 结构体
+  grep -n "restrictions" src/api/chat.ts
+  # 示例：确认 analyze 请求有 context.language
+  grep -n "language" src/api/analyze.ts
+  ```
+- [ ] Worker Zod schema 的 `z.infer<>` 结果与 `shared/types.ts` 兼容
+
+### Level 3：行为正确性（必过）
+- [ ] **状态机完整性**：每个 `chatPhase` 值有进入条件 + 正常退出 + 异常退出（→ failed）
+  ```bash
+  grep -n "chatPhase\|SET_CHAT_PHASE\|ChatPhase" src/context/AppContext.tsx
+  ```
+- [ ] **错误恢复路径**：每个 `failed` 态有用户可操作的恢复按钮
+- [ ] **PRD AC 逐条确认**：对照 PRD 中相关功能的 AC 列表，每条都能在代码中找到对应实现
+- [ ] **主路径 trace**：手动 trace 状态转换 `home → scanner → chat(pre_chat) → chat(handing_off) → chat(chatting) → order → waiter`，确认无断裂
 
 ---
 
-## 7.1 强制 Codex 审计（Mr. Xia 2026-02-26 确立）
+## 7.1 强制 Codex 审计（DEC-029）
 
 **规则：Claude Code 完成任何任务后，必须立即触发 Codex 审计，无例外。**
-
-审计对象：代码变更 + 文档变更，二者均须覆盖。
 
 ### 审计流程
 
 ```
-Claude Code 完成 → tsc + build 通过 → Codex 审计 → 修复问题 → git commit
-                                            ↑
-                                     不得跳过此步
+Claude Code 完成 → Level 1-3 自检 → Codex 审计 → 修复问题 → git commit
+                                         ↑
+                                  不得跳过此步
 ```
 
 ### Codex 审计 SOP
 
-**Step 1**：在任务目录写 `AUDIT_TASK.md`（单引号 heredoc 防展开）：
+**Step 1**：写 `AUDIT_TASK.md`：
 
 ```bash
 cat > AUDIT_TASK.md << 'ENDAUDIT'
 你是资深工程师，审计刚完成的代码变更。
 
 ## 变更内容
-[描述本次变更做了什么]
+[描述本次变更]
 
-## 审计要求
-1. 代码逻辑是否与业务需求一致（对照 DECISIONS.md 关键决策）
-2. 前后端契约是否对齐（类型/字段名/结构）
-3. 错误处理是否完整（边界情况、失败路径）
-4. 状态机转换是否完整（无死路、无永久 stuck 状态）
-5. 文档是否与代码同步（PROGRESS.md / EXECUTION_STATE.md）
+## 审计要求（全部必检）
+1. **PRD AC 对照**：列出本次涉及的 PRD 功能编号，逐条检查 AC 是否实现
+2. **前后端契约**：对比 `shared/types.ts` 类型定义与实际代码使用是否一致
+3. **状态机完整性**：检查 AppContext reducer 的状态转换图，是否有死路或无限循环
+4. **错误处理**：每个 API 调用是否有 error path，error path 是否有用户可见的恢复 UI
+5. **文档同步**：PROGRESS.md / EXECUTION_STATE.md 是否与代码一致
 
 ## 输出
-将审计报告写入 [REPORT_FILE].md，格式：
+将审计报告写入 AUDIT_[任务名]_[日期].md，格式：
 🔴 严重 / 🟡 中等 / 🟢 轻微 / ✅ 优秀
-每项含：位置 + 影响 + 修复建议
+每项含：位置 + PRD AC 编号 + 影响 + 修复建议
 
 完成后输出：AUDIT_DONE
 ENDAUDIT
@@ -184,47 +207,54 @@ ENDAUDIT
 **Step 2**：启动 Codex（在有 git repo 的目录执行）：
 
 ```bash
-exec pty:true background:true workdir:/path/to/project \
-  command:"bash run_audit.sh"
+cat AUDIT_TASK.md | codex exec --full-auto
 ```
 
-其中 `run_audit.sh`：
-```bash
-#!/bin/bash
-TASK=$(cat AUDIT_TASK.md)
-codex exec --full-auto "$TASK"
-```
-
-**Step 3**：Codex 完成后，必须修复所有 🔴 严重问题，🟡 中等问题原则上也修复。
+**Step 3**：必须修复所有 🔴 严重问题，🟡 中等问题原则上也修复。
 
 **Step 4**：修复完成后再 git commit（commit message 注明"经 Codex 审计"）。
 
-### 文档审计要点
+---
 
-Codex 审计文档时检查：
-- PROGRESS.md 当前状态是否与实际代码一致
-- EXECUTION_STATE.md 任务队列状态是否正确
-- DECISIONS.md 是否遗漏本次任务产生的新决策
-- 技术文档（ARCHITECTURE / API_DESIGN）是否需要更新
+## 8. 前后端契约规则（红线）⭐⭐⭐
+
+### 8.1 唯一类型源
+
+```
+05_implementation/shared/types.ts  ← 唯一权威
+     ↑ import              ↑ import
+app/src/types/index.ts    worker/schemas/*.ts
+(re-export + 加 UI 类型)  (Zod 运行时校验，z.infer<> 必须兼容)
+```
+
+### 8.2 禁止行为
+
+- ❌ 在 `app/src/types/index.ts` 重新定义 `MenuItem`、`MenuData`、`ChatRequest` 等已在 shared 中定义的接口
+- ❌ 在 TASK.md 中内联 API schema（应写"参照 `shared/types.ts` 的 `ChatRequest` 接口"）
+- ❌ 凭记忆/猜测 API 字段名，必须先 `cat shared/types.ts` 确认
+
+### 8.3 新增字段流程
+
+```
+1. 修改 shared/types.ts
+2. 运行 tsc --noEmit（前端 + Worker 都要跑）→ 编译错误暴露所有影响点
+3. 修复所有影响点
+4. 更新 API_DESIGN.md 对应章节
+```
 
 ---
 
-## 8. 记忆与状态管理约定
+## 9. 记忆与状态管理约定
 
 ### Agent 工作时必须遵守：
-1. **读先于写** — 每次开始工作前先读 `PROGRESS.md` 和 `PLANNING.md`
+1. **读先于写** — 每次开始工作前先读 §0 清单
 2. **完成即更新** — 每完成一个任务，立即更新 `PROGRESS.md`
 3. **决策即记录** — 做了重要技术/产品决策，立即追加到 `DECISIONS.md`
 4. **禁止私有记忆** — 不得将项目信息只存在 Agent 自己的 MEMORY.md，必须写入本项目目录
 
-### 为什么这很重要：
-- 防止上下文过载导致记忆丢失
-- 支持多 Agent 分工协作（任何 Agent 接手都能快速上下文）
-- 支持人工审查和介入
-
 ---
 
-## 9. Multi-Agent 协作协议
+## 10. Multi-Agent 协作协议
 
 当多个 Agent 并行工作时：
 
@@ -242,7 +272,7 @@ Codex 审计文档时检查：
 
 ---
 
-## 10. 里程碑定义
+## 11. 里程碑定义
 
 | 里程碑 | 定义 | 验收标准 |
 |--------|------|---------|
@@ -253,7 +283,7 @@ Codex 审计文档时检查：
 
 ---
 
-## 11. 沟通规范
+## 12. 沟通规范
 
 - 里程碑完成时，主动向 Mr. Xia 推送进度（通过 OpenClaw 消息）
 - 遇到阻塞（无法独立解决）时立即上报，不要卡着不动

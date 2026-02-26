@@ -8,10 +8,10 @@
 
 ## 当前状态
 
-**阶段**: Sprint 1 — MVP 核心开发 ✅
-**当前子阶段**: Phase 4 全部完成 → 真机验收测试待进行
-**整体进度**: ██████████ 98%
-**最后更新**: 2026-02-26 16:10
+**阶段**: Sprint 1 完成 → 复盘改进完成 → Sprint 2 待开始
+**当前子阶段**: 流程改进全部落地（shared types + CLAUDE.md 重写 + TASK 模板化）
+**整体进度**: Sprint 1 ██████████ 100% ✅ | 流程改进 ██████████ 100% ✅
+**最后更新**: 2026-02-26 18:30
 
 ## 🌐 线上地址
 - **App**: https://sage-next-gen.pages.dev
@@ -23,7 +23,25 @@
 
 | Agent | 任务 | 开始时间 |
 |-------|------|---------|
-| — | Phase 4 UI 完善已完成，部署 + 真机测试待开始 | — |
+| — | 无进行中任务 | — |
+
+---
+
+## 🔧 Sprint 1 复盘改进（2026-02-26 晚）✅
+
+| # | 改进项 | 状态 |
+|---|--------|------|
+| 1 | 创建 `shared/types.ts` 共享类型包（DEC-031）| ✅ |
+| 2 | App `types/index.ts` 改为从 shared re-export | ✅ |
+| 3 | App/Worker tsconfig 加入 shared include | ✅ |
+| 4 | `chat.ts` 重写：使用 shared ChatRequest 类型 + 正确的 preferences 转换 | ✅ |
+| 5 | `analyze.ts` 重写：使用 shared AnalyzeRequest 类型 + TIMEOUTS 常量 | ✅ |
+| 6 | CLAUDE.md 全面重写（§0 必读清单 + §7 三级门控 + §8 契约规则）（DEC-032）| ✅ |
+| 7 | 创建 TASK_TEMPLATE.md（DEC-033）| ✅ |
+| 8 | DECISIONS.md 记录 DEC-031/032/033 | ✅ |
+| 9 | 前端 `tsc --noEmit` 零错误验证 | ✅ |
+| 10 | 前端 `vite build` 成功（286 KB JS）| ✅ |
+| 11 | Worker `tsc --noEmit` 零错误验证 | ✅ |
 
 ---
 
@@ -118,6 +136,18 @@
 | 2026-02-26 | T5: 错误处理 | 网络异常 Toast（3s 自动消失）、识别超时（30s）、JSON 解析降级、组件 unmount abort |
 | 2026-02-26 | T6: 验证通过 | `tsc --noEmit` 零错误；`npm run build` 成功（269 KB JS，17.7 KB CSS）|
 | 2026-02-26 | T7: 文档同步 | PROGRESS.md + EXECUTION_STATE.md 更新 |
+
+### Sprint 1 Phase 5 — P0 审计修复（2026-02-26）✅
+
+| 完成时间 | 任务 | 说明 |
+|---------|------|------|
+| 2026-02-26 | T1: F06 Pre-Chat 状态机修复 | AgentChatView 重构，analyze 异步化，恢复 pre_chat→handing_off→chatting |
+| 2026-02-26 | T2: F09/F10 localStorage 持久化 | AppContext 启动读取 + 变更写入，系统语言自动检测 |
+| 2026-02-26 | T3: F02 Scanner 重构 | 确认即跳 Chat + 后台分析，图片压缩<2MB，Path C 返回逻辑修复 |
+| 2026-02-26 | T4: F01 动态问候语 | HomeView 基于时段显示问候语，移除"继续上次"（DEC-018）|
+| 2026-02-26 | T5: Codex 审计修复 | 修复 2🔴严重问题（CLEAR_ANALYZING_FILES/Path C 入口/failed 态逻辑）|
+| 2026-02-26 | T6: P1/P2 中等问题修复 | 完成 F02 相机权限检测、F03 错误文案映射、F04 GPS 静默请求、F08 waiter 模式优化、chat 偏好契约对齐 |
+| 2026-02-26 | 验证通过 | `pnpm build` 成功（282 KB JS，20.8 KB CSS）|
 
 ### Sprint 1 Phase 4 — UI 完善 ✅
 

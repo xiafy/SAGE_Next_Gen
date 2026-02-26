@@ -408,4 +408,46 @@
 
 ---
 
+### [DEC-031] 建立 shared/ 共享类型包，前后端唯一权威类型源
+
+- **日期**: 2026-02-26
+- **决策人**: SAGE Agent（复盘驱动）
+- **背景**: Sprint 1 复盘发现前端 `types/index.ts` 和 Worker `schemas/*.ts` 各自定义类型，导致契约 drift，Phase 3 Codex 审计评分 4/10。
+- **决策**:
+  1. 创建 `05_implementation/shared/types.ts` 作为前后端共享的唯一权威类型定义
+  2. App 的 `types/index.ts` 从 shared re-export API 类型，只保留 UI-only 类型（ViewName, ChatPhase, AppState 等）
+  3. Worker 的 Zod schema 的 `z.infer<>` 结果必须与 shared 类型兼容
+  4. TASK.md 禁止内联 API schema，必须引用 `shared/types.ts`
+- **影响**: `CLAUDE.md` §8（新增）、tsconfig.json（app + worker 都 include shared）、TASK_TEMPLATE.md（新增）
+
+---
+
+### [DEC-032] CLAUDE.md 升级为三级质量门控 + 必读规格清单
+
+- **日期**: 2026-02-26
+- **决策人**: SAGE Agent（复盘驱动）
+- **背景**: 原 CLAUDE.md §7 只有编译级检查（tsc + build），导致 Claude Code "编译通过但逻辑不对"。
+- **决策**:
+  1. §0 新增"每次任务开始前"必读清单：PROGRESS + PRD AC + API_DESIGN + shared/types.ts
+  2. §7 升级为三级门控：Level 1 编译 → Level 2 契约一致性（grep 验证）→ Level 3 行为正确性（状态机 + PRD AC）
+  3. §8 新增"前后端契约规则"章节，明确禁止重复定义类型
+  4. Codex 审计 checklist 增加"PRD AC 逐条对照"要求
+- **影响**: CLAUDE.md 全面重写、TASK_TEMPLATE.md 新增
+
+---
+
+### [DEC-033] TASK.md 模板化，禁止内联规格
+
+- **日期**: 2026-02-26
+- **决策人**: SAGE Agent（复盘驱动）
+- **背景**: Phase 3 TASK.md 内联了简化版 API schema（如 `preferences: {"restrictions":[],"flavors":[],"history":[]}`），丢失了 `Restriction` 结构体的 `type/value` 字段，导致 Claude Code 实现了错误的数据结构。
+- **决策**:
+  1. 创建 `TASK_TEMPLATE.md` 标准模板
+  2. 每个 TASK.md 必须包含：必读文件清单 + PRD AC checklist + 契约 grep 断言
+  3. 禁止在 TASK.md 中复述 API schema，必须写"参照 shared/types.ts 的 XXX 接口"
+  4. OpenClaw (SAGE Agent) 下发任务时 workdir 改为项目根目录
+- **影响**: 所有后续 TASK.md 编写方式
+
+---
+
 *后续决策按此格式追加，不修改以上历史记录。*
