@@ -30,13 +30,19 @@
 | T11 | 审计修复 | 状态机闭环 + 相机条件 + Explore入口 + aria-label | ✅ |
 | T12 | Git commit | `25c2b7c`（经 Codex 审计）| ✅ |
 
-### 待执行：Phase 4 部署
+### Phase 4 部署（2026-02-26）✅
 
 | # | 任务 | 输出 | 状态 |
 |---|------|------|------|
-| T13 | CF Pages 项目创建 | sage-next-gen（需 Mr. Xia 手动操作）| ⏳ |
-| T14 | Worker 部署 | `wrangler deploy` + `wrangler secret put BAILIAN_API_KEY` | ⏳ |
-| T15 | 真机验收测试 | iPhone Safari + Android Chrome | ⏳ |
+| T13 | CF Pages 项目创建 | `sage-next-gen` via wrangler pages project create | ✅ |
+| T14 | Worker 部署 | `sage-worker.xiafy920.workers.dev`，BAILIAN_API_KEY secret 写入 | ✅ |
+| T15 | 前端部署 | `sage-next-gen.pages.dev`（commit: 首次部署）| ✅ |
+| T16 | 真机验收测试 | iPhone Safari + Android Chrome | ⏳ |
+
+### 线上地址
+- **App**: https://sage-next-gen.pages.dev
+- **Worker**: https://sage-worker.xiafy920.workers.dev
+- **Health**: https://sage-worker.xiafy920.workers.dev/api/health ✅
 
 ## 下一步（Phase 4 后续）
 
