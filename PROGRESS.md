@@ -54,7 +54,7 @@
 
 | 优先级 | 文件 | 说明 |
 |--------|------|------|
-| ~~P0~~ | ~~`02_product/PRD.md`~~ | ✅ 已完成 |
+| ~~P0~~ | ~~`02_product/PRD.md`~~ | ✅ v1.3 F01-F10 全部对齐 |
 | ~~P0~~ | ~~`02_product/USER_STORIES.md`~~ | ✅ 已完成 |
 | P0 | `04_technical/ARCHITECTURE.md` | 系统架构 |
 | P1 | `03_design/UX_PRINCIPLES.md` | 交互设计原则 |
