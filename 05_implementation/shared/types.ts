@@ -216,8 +216,8 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 /** 各端点超时（毫秒）— 来源 API_DESIGN.md §1.5 */
 export const TIMEOUTS = {
-  ANALYZE_CLIENT: 30_000,
-  ANALYZE_WORKER: 25_000,
+  ANALYZE_CLIENT: 65_000,   // 多图场景实测需要 50-60s
+  ANALYZE_WORKER: 60_000,
   CHAT_CLIENT: 15_000,
   CHAT_WORKER: 12_000,
   HEALTH: 5_000,
