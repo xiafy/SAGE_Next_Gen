@@ -232,7 +232,7 @@ export function AgentChatView() {
         setStreamingText('');
         if (state.chatPhase === 'handing_off') {
           dispatch({ type: 'SET_CHAT_PHASE', phase: 'failed' });
-          showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'recognize' }));
+          showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'chat' }));
         } else {
           showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'chat' }));
         }
@@ -369,35 +369,49 @@ export function AgentChatView() {
       {/* Failed state */}
       {state.chatPhase === 'failed' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
-          <div className="text-5xl">⚠️</div>
+          <div className="text-5xl">{state.menuData ? '💬' : '⚠️'}</div>
           <p className="text-text-secondary text-center text-sm">
-            {isZh ? '识别失败，要重试吗？' : 'Recognition failed. Try again?'}
+            {state.menuData
+              ? (isZh ? 'AI 对话出现问题，要重试吗？' : 'AI chat failed. Try again?')
+              : (isZh ? '菜单识别失败，要重新拍摄吗？' : 'Menu recognition failed. Retake photo?')}
           </p>
           <div className="flex gap-3">
-            <button
-              onClick={() => {
-                dispatch({ type: 'SET_CHAT_PHASE', phase: 'pre_chat' });
-                dispatch({ type: 'NAV_TO', view: 'scanner' });
-              }}
-              className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-medium rounded-button transition-colors"
-              aria-label={isZh ? '重新扫描' : 'Rescan menu'}
-            >
-              {isZh ? '重新扫描' : 'Rescan Menu'}
-            </button>
-            <button
-              onClick={() => {
-                // 只有 menuData 存在时才能继续对话，否则回 pre_chat 引导重扫
-                if (state.menuData) {
-                  dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' });
-                } else {
+            {state.menuData ? (
+              // Chat failed after successful recognition: retry chat or rescan
+              <>
+                <button
+                  onClick={() => {
+                    handoffTriggeredRef.current = false;
+                    dispatch({ type: 'SET_CHAT_PHASE', phase: 'handing_off' });
+                  }}
+                  className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-medium rounded-button transition-colors"
+                  aria-label={isZh ? '重试对话' : 'Retry chat'}
+                >
+                  {isZh ? '重试' : 'Retry'}
+                </button>
+                <button
+                  onClick={() => {
+                    dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' });
+                  }}
+                  className="px-5 py-2.5 bg-surface-secondary hover:bg-border text-text-secondary text-sm font-medium rounded-button border border-border transition-colors"
+                  aria-label={isZh ? '继续对话' : 'Continue anyway'}
+                >
+                  {isZh ? '继续对话' : 'Continue Anyway'}
+                </button>
+              </>
+            ) : (
+              // Menu recognition failed: rescan
+              <button
+                onClick={() => {
                   dispatch({ type: 'SET_CHAT_PHASE', phase: 'pre_chat' });
-                }
-              }}
-              className="px-5 py-2.5 bg-surface-secondary hover:bg-border text-text-secondary text-sm font-medium rounded-button border border-border transition-colors"
-              aria-label={isZh ? '继续对话' : 'Continue anyway'}
-            >
-              {isZh ? '继续对话' : 'Continue Anyway'}
-            </button>
+                  dispatch({ type: 'NAV_TO', view: 'scanner' });
+                }}
+                className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-medium rounded-button transition-colors"
+                aria-label={isZh ? '重新扫描' : 'Rescan menu'}
+              >
+                {isZh ? '重新扫描' : 'Rescan Menu'}
+              </button>
+            )}
           </div>
         </div>
       )}

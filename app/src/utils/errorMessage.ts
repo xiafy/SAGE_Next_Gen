@@ -33,6 +33,9 @@ export function toUserFacingError(error: unknown, options: UserFacingErrorOption
     return isZh ? 'AI 服务暂时不可用，请重试' : 'AI service is temporarily unavailable. Please retry.';
   }
   if (isTimeoutError(raw)) {
+    if (fallbackKind === 'chat') {
+      return isZh ? '对话超时，请重试' : 'Chat timed out. Please retry.';
+    }
     return isZh ? '识别超时，请重新拍摄' : 'Recognition timed out. Please retake the photo.';
   }
 
