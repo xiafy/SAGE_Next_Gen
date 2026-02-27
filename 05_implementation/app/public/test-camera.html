@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Camera Test</title></head>
+<body style="font-family:sans-serif;padding:20px">
+<h2>SAGE Camera Debug</h2>
+<div id="log" style="background:#f0f0f0;padding:10px;white-space:pre-wrap;font-size:12px;max-height:60vh;overflow:auto"></div>
+<hr>
+<button onclick="document.getElementById('cam').click()" style="padding:15px 30px;font-size:18px">📷 Take Photo</button>
+<button onclick="document.getElementById('alb').click()" style="padding:15px 30px;font-size:18px">🖼 Album</button>
+<input id="cam" type="file" accept="image/*" capture="environment" style="display:none">
+<input id="alb" type="file" accept="image/*" multiple style="display:none">
+<div id="preview"></div>
+<script>
+const log = document.getElementById('log');
+const preview = document.getElementById('preview');
+let counter = 0;
+function l(msg) {
+  counter++;
+  const ts = new Date().toLocaleTimeString();
+  log.textContent = `[${counter}] ${ts} ${msg}\n` + log.textContent;
+}
+
+// Track page lifecycle
+l('Page loaded');
+document.addEventListener('visibilitychange', () => l('visibility: ' + document.visibilityState));
+window.addEventListener('pagehide', () => l('pagehide'));
+window.addEventListener('pageshow', (e) => l('pageshow persisted=' + e.persisted));
+window.addEventListener('focus', () => l('window focus'));
+window.addEventListener('blur', () => l('window blur'));
+window.addEventListener('resume', () => l('resume'));
+
+function handleFiles(e, source) {
+  l(source + ' onChange fired');
+  const files = e.target.files;
+  l(source + ' files: ' + (files ? files.length : 'null'));
+  if (!files || files.length === 0) {
+    l(source + ' NO FILES');
+    return;
+  }
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    l(source + ` file[${i}]: name=${f.name} type=${f.type} size=${f.size}`);
+    
+    // Test base64 conversion
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = reader.result.split(',')[1] || '';
+      l(source + ` file[${i}] base64 length: ${b64.length}`);
+      
+      // Test compression
+      l(source + ` file[${i}] testing fetch to worker...`);
+      const body = JSON.stringify({
+        images: [{ data: b64, mimeType: f.type || 'image/jpeg' }],
+        context: { language: 'zh', timestamp: Date.now() }
+      });
+      l(source + ` body size: ${body.length} bytes`);
+      
+      fetch('https://sage-worker.xiafy920.workers.dev/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body,
+        signal: AbortSignal.timeout(65000),
+      }).then(async r => {
+        const text = await r.text();
+        l(source + ` fetch OK status=${r.status} response=${text.slice(0,100)}...`);
+      }).catch(err => {
+        l(source + ` fetch FAILED: ${err.message}`);
+      });
+    };
+    reader.onerror = () => l(source + ` file[${i}] FileReader ERROR`);
+    reader.readAsDataURL(f);
+    
+    // Show preview
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.style.cssText = 'width:100px;height:100px;object-fit:cover;margin:5px';
+    preview.appendChild(img);
+  }
+  e.target.value = '';
+}
+
+document.getElementById('cam').addEventListener('change', (e) => handleFiles(e, 'CAM'));
+document.getElementById('alb').addEventListener('change', (e) => handleFiles(e, 'ALB'));
+</script>
+</body>
+</html>
