@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 
 const DIETARY_OPTIONS: Array<{
@@ -15,9 +16,26 @@ const DIETARY_OPTIONS: Array<{
   { key: 'kosher', zh: '犹太洁食', en: 'Kosher' },
 ];
 
+const FLAVOR_OPTIONS: Array<{
+  key: string;
+  zh: string;
+  en: string;
+}> = [
+  { key: 'spicy', zh: '辣', en: 'Spicy' },
+  { key: 'mild', zh: '清淡', en: 'Mild' },
+  { key: 'sweet', zh: '甜', en: 'Sweet' },
+  { key: 'sour', zh: '酸', en: 'Sour' },
+  { key: 'savory', zh: '咸香', en: 'Savory' },
+  { key: 'umami', zh: '鲜', en: 'Umami' },
+  { key: 'bitter', zh: '微苦', en: 'Bitter' },
+  { key: 'rich', zh: '浓郁', en: 'Rich' },
+  { key: 'light', zh: '清爽', en: 'Light' },
+];
+
 export function SettingsView() {
   const { state, dispatch } = useAppState();
   const isZh = state.preferences.language === 'zh';
+  const [otherInput, setOtherInput] = useState('');
 
   function handleToggleDietary(key: string) {
     if (state.preferences.dietary.includes(key)) {
@@ -25,6 +43,41 @@ export function SettingsView() {
     } else {
       dispatch({ type: 'ADD_DIETARY', restriction: key });
     }
+  }
+
+  function handleToggleFlavor(key: string) {
+    const flavors = state.preferences.flavors ?? [];
+    if (flavors.includes(key)) {
+      dispatch({
+        type: 'UPDATE_PREFERENCES',
+        updates: [{ type: 'flavor', action: 'remove', value: key }],
+      });
+    } else {
+      dispatch({
+        type: 'UPDATE_PREFERENCES',
+        updates: [{ type: 'flavor', action: 'add', value: key }],
+      });
+    }
+  }
+
+  function handleAddOther() {
+    const val = otherInput.trim();
+    if (!val) return;
+    const others = state.preferences.other ?? [];
+    if (!others.includes(val)) {
+      dispatch({
+        type: 'UPDATE_PREFERENCES',
+        updates: [{ type: 'other', action: 'add', value: val }],
+      });
+    }
+    setOtherInput('');
+  }
+
+  function handleRemoveOther(val: string) {
+    dispatch({
+      type: 'UPDATE_PREFERENCES',
+      updates: [{ type: 'other', action: 'remove', value: val }],
+    });
   }
 
   function handleReset() {
@@ -88,10 +141,10 @@ export function SettingsView() {
         {/* Section 2: Dietary Preferences */}
         <div className="px-4 py-5">
           <h2 className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
-            {isZh ? '饮食偏好' : 'Dietary Preferences'}
+            {isZh ? '饮食限制' : 'Dietary Restrictions'}
           </h2>
           <p className="text-xs text-text-muted mb-3">
-            {isZh ? '点击切换饮食限制' : 'Tap to toggle restrictions'}
+            {isZh ? '选择你的饮食限制，AI 会自动避开相关菜品' : 'AI will avoid dishes that conflict with your restrictions'}
           </p>
           <div className="flex flex-wrap gap-2">
             {DIETARY_OPTIONS.map((opt) => {
@@ -117,7 +170,98 @@ export function SettingsView() {
 
         <div className="h-px bg-border mx-4" />
 
-        {/* Section 3: About */}
+        {/* Section 3: Flavor Preferences */}
+        <div className="px-4 py-5">
+          <h2 className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
+            {isZh ? '口味偏好' : 'Flavor Preferences'}
+          </h2>
+          <p className="text-xs text-text-muted mb-3">
+            {isZh ? '选择你喜欢的口味，AI 会优先推荐' : 'AI will prioritize dishes matching your tastes'}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {FLAVOR_OPTIONS.map((opt) => {
+              const selected = (state.preferences.flavors ?? []).includes(opt.key);
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => handleToggleFlavor(opt.key)}
+                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
+                    selected
+                      ? 'border-brand bg-brand-light text-brand font-medium'
+                      : 'border-border text-text-secondary hover:border-text-muted'
+                  }`}
+                  aria-label={`${selected ? (isZh ? '移除' : 'Remove') : (isZh ? '添加' : 'Add')} ${isZh ? opt.zh : opt.en}`}
+                  aria-pressed={selected}
+                >
+                  {isZh ? opt.zh : opt.en}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="h-px bg-border mx-4" />
+
+        {/* Section 4: Other Preferences */}
+        <div className="px-4 py-5">
+          <h2 className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
+            {isZh ? '其他偏好' : 'Other Preferences'}
+          </h2>
+          <p className="text-xs text-text-muted mb-3">
+            {isZh ? '添加自定义偏好，如"不要太油"、"喜欢芝士"' : 'Add custom preferences like "not too oily", "love cheese"'}
+          </p>
+
+          {/* Existing tags */}
+          {(state.preferences.other ?? []).length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {(state.preferences.other ?? []).map((val) => (
+                <span
+                  key={val}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full border border-brand bg-brand-light text-brand font-medium"
+                >
+                  {val}
+                  <button
+                    onClick={() => handleRemoveOther(val)}
+                    className="text-brand/60 hover:text-brand ml-0.5"
+                    aria-label={`${isZh ? '移除' : 'Remove'} ${val}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Add new */}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={otherInput}
+              onChange={(e) => setOtherInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddOther();
+                }
+              }}
+              placeholder={isZh ? '输入偏好…' : 'Type preference…'}
+              className="flex-1 bg-surface-secondary rounded-button px-3 py-2 text-sm text-text-primary placeholder:text-text-muted border border-border focus:border-brand focus:outline-none transition-colors"
+              maxLength={30}
+            />
+            <button
+              onClick={handleAddOther}
+              disabled={!otherInput.trim()}
+              className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-40 text-white text-sm font-medium rounded-button transition-colors"
+              aria-label={isZh ? '添加' : 'Add'}
+            >
+              {isZh ? '添加' : 'Add'}
+            </button>
+          </div>
+        </div>
+
+        <div className="h-px bg-border mx-4" />
+
+        {/* Section 5: About */}
         <div className="px-4 py-5">
           <h2 className="text-xs font-medium text-text-muted uppercase tracking-wider mb-3">
             {isZh ? '关于' : 'About'}
@@ -128,7 +272,7 @@ export function SettingsView() {
 
         <div className="h-px bg-border mx-4" />
 
-        {/* Section 4: Reset */}
+        {/* Section 6: Reset */}
         <div className="px-4 py-5">
           <h2 className="text-xs font-medium text-text-muted uppercase tracking-wider mb-3">
             {isZh ? '重置' : 'Reset'}
