@@ -1,29 +1,72 @@
-# CLAUDE.md — AI Agent 工作手册
+# AGENTS.md — AI Agent 工作手册
 
-> 每个 Agent 在开始任何工作前必须完整阅读本文件。  
+> 每个 Agent（Codex、Claude Code、或任何 coding agent）在开始任何工作前必须完整阅读本文件。  
 > 本文件是所有 Agent 的行为基准和上下文入口。
 
 ---
 
-## 0. 每次任务开始前（必做 Checklist）
+## 0. 研发方法论：Spec-Driven + Test-Driven
 
-### 0.1 理解当前状态
+### 核心理念
+
+**先定义「是什么」（Spec），再定义「怎么验」（Test），最后才写「怎么实现」（Code）。**
+
+```
+Spec（规格） → Test（测试） → Code（实现）
+```
+
+### 基本原则
+
+1. **规格先行** — 每个功能开发前，先产出明确的规格文档，存放在 `specs/` 目录
+2. **测试护航** — 规格确定后，先写测试（或测试骨架），再写实现
+3. **质量为纲** — 粒度不做一刀切，唯一标准是高质量交付符合预期的结果
+
+### 规格层次
+
+| 层次 | 规格形式 | 测试形式 |
+|------|---------|---------|
+| 产品层 | PRD / User Story + 验收标准 | E2E 场景测试 |
+| API 层 | 接口契约 / OpenAPI | 契约测试 + 集成测试 |
+| 模块层 | 函数签名 + 行为描述 | 单元测试 |
+
+### AI 辅助策略
+
+- ✅ 允许从 spec 自动生成测试骨架
+- ✅ 允许从 spec + test 直接实现代码
+- AI 生成的所有产出仍需满足规格和测试要求
+
+### 工作流
+
+```
+1. 需求对齐 → 明确要做什么、为谁做、价值是什么
+2. 撰写 Spec → 存入 specs/，明确输入/输出/边界/验收标准
+3. 编写测试 → 基于 spec 写测试（AI 可辅助生成骨架）
+4. 实现代码 → 让测试通过（AI 可辅助实现）
+5. 验证交付 → 测试全绿 + 人工验收
+6. 复盘沉淀 → 更新方法论和最佳实践
+```
+
+---
+
+## 1. 每次任务开始前（必做 Checklist）
+
+### 1.1 理解当前状态
 1. `cat PROGRESS.md` — 当前进展
 2. `cat PLANNING.md` — 当前 Sprint 任务和优先级
 
-### 0.2 理解要做什么（规格驱动）
+### 1.2 理解要做什么（规格驱动）
 3. `cat 02_product/PRD.md` — 找到本次任务涉及的功能编号（F01-F10），阅读其 AC（验收标准）
 4. `cat 04_technical/API_DESIGN.md` — 找到本次任务涉及的 API 端点，阅读请求/响应 schema
 5. `cat 05_implementation/shared/types.ts` — 权威类型定义，代码必须与此文件一致
 
-### 0.3 理解上下文约束
+### 1.3 理解上下文约束
 6. `cat DECISIONS.md` — 所有已决策项（特别是 DEC-026~030）
 
 **不要重复做已完成的工作。不要在不了解当前状态和规格的情况下开始写代码。**
 
 ---
 
-## 1. 项目一句话定位
+## 2. 项目一句话定位
 
 SAGE 是一个**餐饮智能体（Dining Agent）**。核心价值：用户拍菜单 → AI 感知场景 → 对话推荐 → 30 秒完成点餐决策。
 
@@ -31,7 +74,7 @@ SAGE 是一个**餐饮智能体（Dining Agent）**。核心价值：用户拍�
 
 ---
 
-## 2. 核心设计哲学（禁止违反）
+## 3. 核心设计哲学（禁止违反）
 
 | 原则 | 含义 | 禁止行为 |
 |------|------|---------|
@@ -42,12 +85,13 @@ SAGE 是一个**餐饮智能体（Dining Agent）**。核心价值：用户拍�
 
 ---
 
-## 3. 项目目录结构
+## 4. 项目目录结构
 
 ```
 SAGE_Next_Gen/
 ├── README.md              # 人类文档
-├── CLAUDE.md              # 本文件（Agent 必读）
+├── AGENTS.md              # 本文件（Agent 必读）
+├── specs/                 # 功能规格文档（Spec-Driven 的载体）
 ├── PLANNING.md            # 工作计划 & Sprint
 ├── PROGRESS.md            # 实时进展（每完成一项立即更新）
 ├── DECISIONS.md           # 重要决策记录（仅追加，不修改历史）
@@ -78,7 +122,7 @@ SAGE_Next_Gen/
 
 ---
 
-## 4. 常用命令
+## 5. 常用命令
 
 ```bash
 # 前端开发
@@ -99,7 +143,7 @@ cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
 
 ---
 
-## 5. 技术栈约定
+## 6. 技术栈约定
 
 | 层 | 技术 | 注意事项 |
 |----|------|---------|
@@ -125,7 +169,7 @@ cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
 
 ---
 
-## 6. 安全约定（红线）
+## 7. 安全约定（红线）
 
 - **❌ 禁止**将任何 API Key 写入前端代码或 git 仓库
 - **❌ 禁止** console.log 残留在 production 代码
@@ -135,7 +179,7 @@ cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
 
 ---
 
-## 7. 质量标准（三级门控）⭐⭐⭐
+## 8. 质量标准（三级门控）⭐⭐⭐
 
 ### Level 1：编译（必过）
 - [ ] `tsc --noEmit` 零错误（前端 + Worker 都要检查）
@@ -165,7 +209,7 @@ cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
 
 ---
 
-## 7.1 强制 Codex 审计（DEC-029）
+## 8.1 强制 Codex 审计（DEC-029）
 
 **规则：Claude Code 完成任何任务后，必须立即触发 Codex 审计，无例外。**
 
@@ -216,9 +260,9 @@ cat AUDIT_TASK.md | codex exec --full-auto
 
 ---
 
-## 8. 前后端契约规则（红线）⭐⭐⭐
+## 9. 前后端契约规则（红线）⭐⭐⭐
 
-### 8.1 唯一类型源
+### 9.1 唯一类型源
 
 ```
 05_implementation/shared/types.ts  ← 唯一权威
@@ -227,13 +271,13 @@ app/src/types/index.ts    worker/schemas/*.ts
 (re-export + 加 UI 类型)  (Zod 运行时校验，z.infer<> 必须兼容)
 ```
 
-### 8.2 禁止行为
+### 9.2 禁止行为
 
 - ❌ 在 `app/src/types/index.ts` 重新定义 `MenuItem`、`MenuData`、`ChatRequest` 等已在 shared 中定义的接口
 - ❌ 在 TASK.md 中内联 API schema（应写"参照 `shared/types.ts` 的 `ChatRequest` 接口"）
 - ❌ 凭记忆/猜测 API 字段名，必须先 `cat shared/types.ts` 确认
 
-### 8.3 新增字段流程
+### 9.3 新增字段流程
 
 ```
 1. 修改 shared/types.ts
@@ -244,7 +288,7 @@ app/src/types/index.ts    worker/schemas/*.ts
 
 ---
 
-## 9. 记忆与状态管理约定
+## 10. 记忆与状态管理约定
 
 ### Agent 工作时必须遵守：
 1. **读先于写** — 每次开始工作前先读 §0 清单
@@ -254,7 +298,7 @@ app/src/types/index.ts    worker/schemas/*.ts
 
 ---
 
-## 10. Multi-Agent 协作协议
+## 11. Multi-Agent 协作协议
 
 当多个 Agent 并行工作时：
 
@@ -272,7 +316,7 @@ app/src/types/index.ts    worker/schemas/*.ts
 
 ---
 
-## 11. 里程碑定义
+## 12. 里程碑定义
 
 | 里程碑 | 定义 | 验收标准 |
 |--------|------|---------|
@@ -283,7 +327,7 @@ app/src/types/index.ts    worker/schemas/*.ts
 
 ---
 
-## 12. 沟通规范
+## 13. 沟通规范
 
 - 里程碑完成时，主动向 Mr. Xia 推送进度（通过 OpenClaw 消息）
 - 遇到阻塞（无法独立解决）时立即上报，不要卡着不动
