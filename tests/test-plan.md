@@ -101,7 +101,7 @@
 
 ### Sprint 0 → Sprint 1（进入写代码阶段前）
 - [ ] 所有文档写完，经 Mr. Xia 确认
-- [ ] CLAUDE.md 被至少一个新 Agent 读取后能独立执行
+- [ ] AGENTS.md 被至少一个新 Agent 读取后能独立执行
 
 ### Sprint 1 → Sprint 2（Alpha → 接入感知）
 - [ ] `pnpm build` 零错误零警告

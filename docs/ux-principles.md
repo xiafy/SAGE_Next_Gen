@@ -2,7 +2,7 @@
 
 > 版本: v1.0
 > 日期: 2026-02-25
-> 上游文档: `01_strategy/VISION.md`、`02_product/PRD.md`
+> 上游文档: `docs/vision.md`、`docs/prd.md`
 
 ---
 

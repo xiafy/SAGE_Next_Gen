@@ -8,10 +8,10 @@
 
 ## 当前状态
 
-**阶段**: Sprint 1 完成 → 复盘改进完成 → Sprint 2 待开始
-**当前子阶段**: 流程改进全部落地（shared types + CLAUDE.md 重写 + TASK 模板化）
-**整体进度**: Sprint 1 ██████████ 100% ✅ | 流程改进 ██████████ 100% ✅
-**最后更新**: 2026-02-26 18:30
+**阶段**: Sprint 1 完成 → 工程治理完成 → Sprint 2 待开始
+**当前子阶段**: 研发方法论确立 + AI-First 项目重构（DEC-035/036）
+**整体进度**: Sprint 1 ██████████ 100% ✅ | 工程治理 ██████████ 100% ✅
+**最后更新**: 2026-02-27
 
 ## 🌐 线上地址
 - **App**: https://sage-next-gen.pages.dev
@@ -36,8 +36,8 @@
 | 3 | App/Worker tsconfig 加入 shared include | ✅ |
 | 4 | `chat.ts` 重写：使用 shared ChatRequest 类型 + 正确的 preferences 转换 | ✅ |
 | 5 | `analyze.ts` 重写：使用 shared AnalyzeRequest 类型 + TIMEOUTS 常量 | ✅ |
-| 6 | CLAUDE.md 全面重写（§0 必读清单 + §7 三级门控 + §8 契约规则）（DEC-032）| ✅ |
-| 7 | 创建 TASK_TEMPLATE.md（DEC-033）| ✅ |
+| 6 | AGENTS.md 全面重写（§0 必读清单 + §7 三级门控 + §8 契约规则）（DEC-032）| ✅ |
+| 7 | 创建 TASK_TEMPLATE.md（DEC-033，已归档至 archive/）| ✅ |
 | 8 | DECISIONS.md 记录 DEC-031/032/033 | ✅ |
 | 9 | 前端 `tsc --noEmit` 零错误验证 | ✅ |
 | 10 | 前端 `vite build` 成功（286 KB JS）| ✅ |
@@ -66,21 +66,21 @@
 | 完成时间 | 文件/任务 | 说明 |
 |---------|------|------|
 | 2026-02-25 | 目录结构 | 六层目录体系建立 |
-| 2026-02-25 | `README.md` / `CLAUDE.md` | 人类文档 + Agent 工作手册 |
+| 2026-02-25 | `README.md` / `AGENTS.md` | 人类文档 + Agent 工作手册 |
 | 2026-02-25 | `PLANNING.md` / `PROGRESS.md` / `DECISIONS.md` | 核心管理文档 |
-| 2026-02-25 | `01_strategy/VISION.md` v1.1 | 产品愿景，已与 Mr. Xia 对齐 |
-| 2026-02-25 | `01_strategy/COMPETITIVE_ANALYSIS.md` | 竞品分析 v1.0 |
-| 2026-02-25 | `02_product/PRD.md` v1.4 | F01-F10 全部对齐（DEC-016~027）|
-| 2026-02-25 | `02_product/USER_STORIES.md` | 20 个用户故事，6 组场景 |
-| 2026-02-25 | `03_design/UX_PRINCIPLES.md` | 10 条 UX 原则 + 反模式清单 |
-| 2026-02-25 | `03_design/VISUAL_DESIGN.md` | 完整视觉规范 + Tailwind v4 配置 |
-| 2026-02-25 | `03_design/ICEBREAKER_STATE_MACHINE.md` v1.1 | Pre-Chat 状态机设计（DEC-027）|
-| 2026-02-26 | `04_technical/ARCHITECTURE.md` v1.1 | OQ3/OQ4 解决，TBD 全清，DEC-028 更新 |
-| 2026-02-26 | `04_technical/API_DESIGN.md` v1.0 | 完整 API 契约（错误码/超时/重试/Prompt）|
-| 2026-02-26 | `04_technical/TECH_STACK.md` v1.0 | 技术栈选型说明 |
-| 2026-02-26 | `04_technical/DEPLOYMENT.md` v1.0 | CI/CD + Secret + 回滚 + 成本 |
-| 2026-02-26 | `06_testing/TEST_PLAN.md` v1.0 | 5 层测试策略 |
-| 2026-02-26 | `06_testing/TEST_CASES.md` v1.0 | 60+ 用例，L1-L5 |
+| 2026-02-25 | `docs/vision.md` v1.1 | 产品愿景，已与 Mr. Xia 对齐 |
+| 2026-02-25 | `docs/competitive-analysis.md` | 竞品分析 v1.0 |
+| 2026-02-25 | `docs/prd.md` v1.4 | F01-F10 全部对齐（DEC-016~027）|
+| 2026-02-25 | `docs/user-stories.md` | 20 个用户故事，6 组场景 |
+| 2026-02-25 | `docs/ux-principles.md` | 10 条 UX 原则 + 反模式清单 |
+| 2026-02-25 | `docs/visual-design.md` | 完整视觉规范 + Tailwind v4 配置 |
+| 2026-02-25 | `docs/icebreaker-state-machine.md` v1.1 | Pre-Chat 状态机设计（DEC-027）|
+| 2026-02-26 | `docs/architecture.md` v1.1 | OQ3/OQ4 解决，TBD 全清，DEC-028 更新 |
+| 2026-02-26 | `docs/api-design.md` v1.0 | 完整 API 契约（错误码/超时/重试/Prompt）|
+| 2026-02-26 | `docs/tech-stack.md` v1.0 | 技术栈选型说明 |
+| 2026-02-26 | `docs/deployment.md` v1.0 | CI/CD + Secret + 回滚 + 成本 |
+| 2026-02-26 | `tests/test-plan.md` v1.0 | 5 层测试策略 |
+| 2026-02-26 | `tests/test-cases.md` v1.0 | 60+ 用例，L1-L5 |
 
 ### Sprint 1 Phase 0 — Prompt Lab ✅
 
@@ -95,7 +95,7 @@
 | 2026-02-26 | Task 4: Streaming 速度测试 | ✅ PASS — 平均 TTFT 377ms（目标 <1.5s）|
 | 2026-02-26 | **DEC-028 发现并记录** | `enable_thinking: false` 必填，22x 速度提升 |
 
-关键产出（`05_implementation/prompt-lab/`）：
+关键产出（`tests/prompt-lab/`）：
 - `test-01-menu-recognition.mjs` — 菜单识别测试脚本
 - `test-02-pre-chat.mjs` / `test-02-pre-chat-v2.mjs` — Pre-Chat 测试（v2 通过）
 - `test-03-handoff.mjs` — Handoff + 主 Chat 测试

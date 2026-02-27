@@ -3,7 +3,7 @@
 > 版本: v1.1
 > 日期: 2026-02-26
 > 状态: ✅ OQ3/OQ4 已解决，TBD 全部填充（DEC-026）
-> 上游文档: `02_product/PRD.md v1.3`、`DECISIONS.md`
+> 上游文档: `docs/prd.md`、`DECISIONS.md`
 
 ---
 
@@ -73,7 +73,7 @@
 ### 2.2 目录结构
 
 ```
-05_implementation/app/
+app/
 ├── src/
 │   ├── main.tsx              # 入口，挂载 App
 │   ├── App.tsx               # 根组件，状态机控制视图切换

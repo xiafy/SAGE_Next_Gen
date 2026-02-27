@@ -3,7 +3,7 @@
 > 版本: v1.0
 > 日期: 2026-02-26
 > 状态: ✅ 完整版（含错误码/超时/重试/Payload 限制）
-> 上游文档: `ARCHITECTURE.md v1.1`、`PRD.md v1.3`、`DECISIONS.md`
+> 上游文档: `docs/architecture.md`、`docs/prd.md`、`DECISIONS.md`
 > 供应商: 阿里云百炼 DashScope（OpenAI 兼容模式）
 
 ---

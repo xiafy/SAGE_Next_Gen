@@ -4,6 +4,12 @@
 > 每条决策包含：背景、选项、决策结果、决策人、日期。  
 > 目的：防止"为什么当初这么做"的失忆问题，支持多 Agent 协作时的一致性。
 
+> ⚠️ **路径变更说明（2026-02-27）**：项目于 DEC-036 完成目录重构。  
+> 历史决策中的旧路径映射如下（历史文本不做修改）：  
+> `01_strategy/` → `docs/` | `02_product/` → `docs/` | `03_design/` → `docs/` | `04_technical/` → `docs/`  
+> `05_implementation/app/` → `app/` | `05_implementation/worker/` → `worker/` | `05_implementation/shared/` → `shared/`  
+> `06_testing/` → `tests/` | `CLAUDE.md` → `AGENTS.md` | `TASK_TEMPLATE.md` → `archive/TASK_TEMPLATE.md`
+
 ---
 
 ## 决策格式
@@ -466,3 +472,33 @@
 ---
 
 *后续决策按此格式追加，不修改以上历史记录。*
+
+---
+
+### [DEC-035] 研发方法论：Spec-Driven + Test-Driven
+
+- **日期**: 2026-02-27
+- **决策人**: Mr. Xia
+- **背景**: 确立 SAGE 项目的底层研发方法论，确保高质量交付和 AI agent 高效协作。
+- **决策**:
+  1. 采用 Spec → Test → Code 三步法
+  2. Spec 存放在代码仓库 `specs/` 目录，与代码同版本
+  3. 粒度灵活，以交付质量为准绳，在实践中迭代标准
+  4. AI agent 高权限起步（可生成测试骨架、从 spec+test 实现代码），根据产出动态调整
+- **影响**: `AGENTS.md` §0（新增研发方法论章节）、`specs/` 目录创建
+
+---
+
+### [DEC-036] AI-First 项目重构：扁平化目录 + AGENTS.md
+
+- **日期**: 2026-02-27
+- **决策人**: Mr. Xia
+- **背景**: 原项目结构（01-06 编号目录、三级嵌套实现目录、根目录散落临时文件）对 AI agent 不友好，影响开发效率。
+- **决策**:
+  1. `CLAUDE.md` → `AGENTS.md`（Codex + Claude Code 都自动读取）
+  2. 合并 `01_strategy/` ~ `04_technical/` → `docs/`（扁平、小写文件名）
+  3. `05_implementation/{app,worker,shared}/` → 根目录 `app/` `worker/` `shared/`
+  4. `06_testing/` → `tests/`
+  5. 所有临时文件（AUDIT_*、CODEX_*、TASK_*）→ `archive/`
+  6. 基本原则：AI 友好、AI First
+- **影响**: 全项目目录结构、AGENTS.md 路径引用、README.md、PLANNING.md、PROGRESS.md

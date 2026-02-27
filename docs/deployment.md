@@ -3,7 +3,7 @@
 > 版本: v1.0
 > 日期: 2026-02-26
 > 状态: ✅ 完整版（含 CI/CD、环境管理、Secret 管理、回滚策略）
-> 上游文档: `ARCHITECTURE.md v1.1`、`TECH_STACK.md v1.0`
+> 上游文档: `docs/architecture.md`、`docs/tech-stack.md`
 
 ---
 
@@ -51,7 +51,7 @@ Project name: sage-next-gen
 Production branch: main
 Build command: pnpm build
 Build output directory: dist
-Root directory: 05_implementation/app
+Root directory: app
 Node.js version: 22
 ```
 
@@ -192,7 +192,7 @@ wrangler --version # >= 3.0
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/xiafy/SAGE_Next_Gen
-cd SAGE_Next_Gen/05_implementation/app
+cd SAGE_Next_Gen/app
 
 # 2. 安装依赖
 pnpm install
