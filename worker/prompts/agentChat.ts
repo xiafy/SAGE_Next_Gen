@@ -63,10 +63,11 @@ interface AgentChatSystemOptions {
     timestamp: number;
     location?: { lat: number; lng: number };
   };
+  weather?: { temp: number; description: string } | null;
 }
 
 export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
-  const { menu, preferences, context } = opts;
+  const { menu, preferences, context, weather } = opts;
   const lang = context.language;
   const mealType = getMealType(context.timestamp, lang);
   const location = context.location
@@ -94,7 +95,7 @@ export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
 
 当前场景：
 - 时间：${new Date(context.timestamp).toLocaleTimeString('zh-CN')}（${mealType}时段）— 可用于辅助预判用户意图，但不限制用户选择。如果用户意图与时段不符，尊重用户。禁止说出与事实矛盾的时间描述（如深夜说"适合下午茶"）。
-- 位置：${location}
+- 位置：${location}${weather ? `\n- 天气：${weather.temp}°C，${weather.description}` : ''}
 - 用户偏好：${prefSummary}
 
 菜单（${menu.menuType}，价格档次 ${menu.priceLevel}/3，${menu.detectedLanguage}）${sampled}：
@@ -130,7 +131,7 @@ ${menuSummary}
 
 Current context:
 - Time: ${new Date(context.timestamp).toLocaleTimeString('en-US')} (${mealType}) — Use as a hint for user intent, but never restrict user choices. If the user's intent contradicts the time, respect it. NEVER use time descriptions that contradict reality (e.g. saying "perfect for afternoon tea" at midnight).
-- Location: ${location}
+- Location: ${location}${weather ? `\n- Weather: ${weather.temp}°C, ${weather.description}` : ''}
 - User preferences: ${prefSummary}
 
 Menu (${menu.menuType}, price level ${menu.priceLevel}/3, language: ${menu.detectedLanguage})${sampled}:

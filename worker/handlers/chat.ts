@@ -3,6 +3,7 @@ import { checkRateLimit } from '../utils/rateLimit.js';
 import { streamPassthrough } from '../utils/bailian.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
+import { getWeather } from '../utils/weather.js';
 import { ChatRequestSchema } from '../schemas/chatSchema.js';
 import { getPreChatSystem } from '../prompts/preChat.js';
 import { buildAgentChatSystem } from '../prompts/agentChat.js';
@@ -55,15 +56,21 @@ export async function handleChat(
       return errorResponse('INVALID_REQUEST', request, env, requestId, 'menuData schema invalid');
     }
 
+    // 获取天气信息（有位置时，不阻塞主流程）
+    const weather = context.location
+      ? await getWeather(context.location.lat, context.location.lng, context.language)
+      : null;
+
     systemPrompt = buildAgentChatSystem({
       menu:        menuValidated.data,
       preferences,
       context,
+      weather,
     });
   }
 
-  // TODO: qwen3.5-plus 返回 403，暂时统一用 flash，待百炼权限确认后切回
-  const model = mode === 'pre_chat' ? 'qwen3.5-flash' : 'qwen3.5-flash';
+  // pre_chat 用 flash（轻量快速），主 chat 用 plus（质量优先）
+  const model = mode === 'pre_chat' ? 'qwen3.5-flash' : 'qwen3.5-plus';
 
   const bailianMessages = [
     { role: 'system' as const, content: systemPrompt },

@@ -1,30 +1,19 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30000,
-  retries: 1,
   use: {
     baseURL: 'http://localhost:5173',
     screenshot: 'only-on-failure',
-    // iPhone 14 Pro viewport, but run with chromium
-    viewport: { width: 390, height: 844 },
-    deviceScaleFactor: 3,
-    isMobile: true,
-    hasTouch: true,
+    ...devices['iPhone 14 Pro'],
   },
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 60000,
+    reuseExistingServer: !process.env.CI,
   },
   projects: [
-    {
-      name: 'chromium-mobile',
-      use: {
-        browserName: 'chromium',
-      },
-    },
+    { name: 'chromium', use: { browserName: 'chromium', ...devices['iPhone 14 Pro'] } },
   ],
 });
