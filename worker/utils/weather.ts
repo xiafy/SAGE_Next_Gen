@@ -53,8 +53,12 @@ export async function getWeather(
   lang: 'zh' | 'en' = 'zh',
 ): Promise<WeatherInfo | null> {
   try {
+    // 输入校验：lat [-90,90], lng [-180,180]
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weather_code&timezone=auto`;
-    const resp = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    const resp = await fetch(url, { signal: AbortSignal.timeout(500) });
     if (!resp.ok) return null;
 
     const data = (await resp.json()) as {

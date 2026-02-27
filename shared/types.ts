@@ -200,6 +200,8 @@ export interface ApiError {
   messageZh: string;
   messageEn: string;
   retryable: boolean;
+  suggestion?: string;
+  suggestionZh?: string;
 }
 
 export interface ApiErrorResponse {

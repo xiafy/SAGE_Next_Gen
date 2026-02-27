@@ -189,3 +189,103 @@ export function streamPassthrough(
     },
   });
 }
+
+export interface BailianCallWithFallbackOptions extends BailianCallOptions {
+  fallbackModel?: string;
+}
+
+/**
+ * 带 fallback 的流式透传
+ * 首选模型返回 403/5xx 时自动降级到 fallbackModel
+ */
+export function streamPassthroughWithFallback(
+  opts: BailianCallWithFallbackOptions,
+): ReadableStream<Uint8Array> {
+  const { model, messages, apiKey, timeoutMs = DEFAULT_TIMEOUT_MS, requestId, fallbackModel } = opts;
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const doStream = async (currentModel: string): Promise<void> => {
+        const res = await fetch(`${BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: currentModel,
+            messages,
+            stream: true,
+            enable_thinking: false,
+          }),
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+
+        if (!res.ok) {
+          // 如果有 fallback 且是可降级的错误（403 权限/5xx 服务端），自动重试
+          if (fallbackModel && currentModel !== fallbackModel && (res.status === 403 || res.status >= 500)) {
+            logger.warn('bailian: model failed, falling back', { requestId, model: currentModel, fallback: fallbackModel, status: res.status });
+            await res.body?.cancel();
+            return doStream(fallbackModel);
+          }
+          const errData = JSON.stringify({
+            ok: false,
+            error: { code: 'AI_UNAVAILABLE', message: `Upstream ${res.status}` },
+          });
+          controller.enqueue(encoder.encode(`data: ${errData}\n\n`));
+          return;
+        }
+
+        const reader = res.body!.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]') {
+              controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+              continue;
+            }
+            try {
+              const chunk = JSON.parse(raw) as {
+                choices?: Array<{ delta?: StreamDelta }>;
+              };
+              const delta = chunk.choices?.[0]?.delta;
+              if (delta?.content !== undefined) {
+                const clean = {
+                  choices: [{ delta: { content: delta.content } }],
+                };
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(clean)}\n\n`));
+              }
+            } catch {
+              // 非 JSON 行忽略
+            }
+          }
+        }
+      };
+
+      try {
+        await doStream(model);
+      } catch (err) {
+        logger.error('streamPassthroughWithFallback error', { requestId, err: String(err) });
+        const errData = JSON.stringify({
+          ok: false,
+          error: { code: 'AI_TIMEOUT', message: 'Request timed out' },
+        });
+        controller.enqueue(encoder.encode(`data: ${errData}\n\n`));
+      } finally {
+        controller.close();
+      }
+    },
+  });
+}

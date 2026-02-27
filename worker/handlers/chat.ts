@@ -1,6 +1,6 @@
 import { type Env, getCorsHeaders } from '../middleware/cors.js';
 import { checkRateLimit } from '../utils/rateLimit.js';
-import { streamPassthrough } from '../utils/bailian.js';
+import { streamPassthroughWithFallback } from '../utils/bailian.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { getWeather } from '../utils/weather.js';
@@ -56,7 +56,7 @@ export async function handleChat(
       return errorResponse('INVALID_REQUEST', request, env, requestId, 'menuData schema invalid');
     }
 
-    // 获取天气信息（有位置时，不阻塞主流程）
+    // 获取天气信息（500ms 超时，失败不影响主流程）
     const weather = context.location
       ? await getWeather(context.location.lat, context.location.lng, context.language)
       : null;
@@ -69,8 +69,9 @@ export async function handleChat(
     });
   }
 
-  // pre_chat 用 flash（轻量快速），主 chat 用 plus（质量优先）
+  // pre_chat 用 flash，主 chat 用 plus（失败自动降级 flash）
   const model = mode === 'pre_chat' ? 'qwen3.5-flash' : 'qwen3.5-plus';
+  const fallback = mode === 'pre_chat' ? undefined : 'qwen3.5-flash';
 
   const bailianMessages = [
     { role: 'system' as const, content: systemPrompt },
@@ -79,11 +80,12 @@ export async function handleChat(
 
   logger.info('chat: streaming', { requestId, mode, model, msgCount: messages.length });
 
-  const stream = streamPassthrough({
+  const stream = streamPassthroughWithFallback({
     model,
     messages: bailianMessages,
     apiKey:   env.BAILIAN_API_KEY,
     requestId,
+    fallbackModel: fallback,
   });
 
   const corsHeaders = getCorsHeaders(origin, env);
