@@ -5,25 +5,29 @@
 
 ---
 
-## 当前阶段：Sprint 1 完成 → Sprint 2 待启动
+## 当前阶段：Sprint 2 进行中
 
-**进度**: Sprint 0 ✅ | Sprint 1 ✅ | **Sprint 2 ⏳ 待开始**
+**进度**: Sprint 0 ✅ | Sprint 1 ✅ | **Sprint 2 ██████░░░░ 60%**
 
 ---
 
-## Sprint 2 — 感知体系接入（待启动）
+## Sprint 2 — 感知体系接入（进行中）
 
 **前置条件**: Sprint 1 Alpha 稳定 ✅  
 **目标**: 接入 4+1 维感知，体验从"工具"升级为"智能体"
 
-### 任务清单（待细化）
-- [ ] GPS 位置获取（空间维度）
-- [ ] 系统时间注入（时间维度）
-- [ ] 天气 API 接入（环境维度）
-- [ ] 历史记忆系统（localStorage 持久化）
-- [ ] Prompt 工程：将 4+1 维数据融入 System Prompt
-- [ ] 偏好学习（从对话中自动提炼偏好关键词）
+### 任务清单
+- [x] GPS 位置获取（空间维度）— Sprint 1 已实现
+- [x] 系统时间注入（时间维度）— Sprint 1 已实现
+- [x] 天气 API 接入（环境维度）— Open-Meteo, 500ms 超时
+- [x] 历史记忆系统（localStorage 持久化）— Sprint 1 已实现
+- [x] Prompt 工程：将 4+1 维数据融入 System Prompt — 天气已注入
+- [x] 偏好学习（从对话中自动提炼偏好关键词）— F09 完成
+- [x] qwen3.5-plus 切回（带 flash fallback）
+- [x] 错误信息优化（suggestion 字段）
+- [x] E2E 冒烟测试（Playwright, 5 tests）
 - [ ] Paywall 实现（免费 5 次，DEC-030）
+- [ ] Path B（随便聊聊）评估
 
 ---
 
