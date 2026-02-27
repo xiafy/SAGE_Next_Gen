@@ -55,9 +55,9 @@ Spec（规格） → Test（测试） → Code（实现）
 2. `cat PLANNING.md` — 当前 Sprint 任务和优先级
 
 ### 1.2 理解要做什么（规格驱动）
-3. `cat 02_product/PRD.md` — 找到本次任务涉及的功能编号（F01-F10），阅读其 AC（验收标准）
-4. `cat 04_technical/API_DESIGN.md` — 找到本次任务涉及的 API 端点，阅读请求/响应 schema
-5. `cat 05_implementation/shared/types.ts` — 权威类型定义，代码必须与此文件一致
+3. `cat docs/prd.md` — 找到本次任务涉及的功能编号（F01-F10），阅读其 AC（验收标准）
+4. `cat docs/api-design.md` — 找到本次任务涉及的 API 端点，阅读请求/响应 schema
+5. `cat shared/types.ts` — 权威类型定义，代码必须与此文件一致
 
 ### 1.3 理解上下文约束
 6. `cat DECISIONS.md` — 所有已决策项（特别是 DEC-026~030）
@@ -70,7 +70,7 @@ Spec（规格） → Test（测试） → Code（实现）
 
 SAGE 是一个**餐饮智能体（Dining Agent）**。核心价值：用户拍菜单 → AI 感知场景 → 对话推荐 → 30 秒完成点餐决策。
 
-详见 `01_strategy/VISION.md`。
+详见 `docs/vision.md`。
 
 ---
 
@@ -89,35 +89,31 @@ SAGE 是一个**餐饮智能体（Dining Agent）**。核心价值：用户拍�
 
 ```
 SAGE_Next_Gen/
+├── AGENTS.md              # 本文件（Agent 必读，Codex/Claude Code 自动加载）
 ├── README.md              # 人类文档
-├── AGENTS.md              # 本文件（Agent 必读）
-├── specs/                 # 功能规格文档（Spec-Driven 的载体）
 ├── PLANNING.md            # 工作计划 & Sprint
 ├── PROGRESS.md            # 实时进展（每完成一项立即更新）
 ├── DECISIONS.md           # 重要决策记录（仅追加，不修改历史）
-├── TASK_TEMPLATE.md       # 编码任务下发模板（必须使用）
-├── 01_strategy/           # 产品战略层
-│   └── VISION.md
-├── 02_product/            # 产品需求层
-│   ├── PRD.md             # ⭐ 功能规格 + 验收标准
-│   └── USER_STORIES.md
-├── 03_design/             # 设计规范层
-│   ├── UX_PRINCIPLES.md
-│   └── VISUAL_DESIGN.md
-├── 04_technical/          # 技术方案层
-│   ├── ARCHITECTURE.md
-│   ├── API_DESIGN.md      # ⭐ API 契约（请求/响应 schema）
-│   ├── TECH_STACK.md
-│   └── DEPLOYMENT.md
-├── 05_implementation/     # 代码实现
-│   ├── shared/            # ⭐ 前后端共享类型（唯一权威）
-│   │   └── types.ts
-│   ├── app/               # 前端应用
-│   └── worker/            # Cloudflare Worker API
-└── 06_testing/            # 测试
-    ├── TEST_PLAN.md
-    ├── TEST_CASES.md
-    └── reports/
+├── specs/                 # ⭐ 功能规格文档（Spec-Driven 的载体）
+├── docs/                  # 产品 + 技术文档
+│   ├── vision.md          # 产品战略
+│   ├── prd.md             # ⭐ 功能规格 + 验收标准
+│   ├── user-stories.md    # 用户故事
+│   ├── api-design.md      # ⭐ API 契约（请求/响应 schema）
+│   ├── architecture.md    # 技术架构
+│   ├── tech-stack.md      # 技术栈
+│   ├── deployment.md      # 部署方案
+│   ├── ux-principles.md   # UX 原则
+│   └── visual-design.md   # 视觉设计
+├── shared/                # ⭐ 前后端共享类型（唯一权威）
+│   └── types.ts
+├── app/                   # 前端应用（Vite + React）
+├── worker/                # Cloudflare Worker API
+├── tests/                 # 测试
+│   ├── test-plan.md
+│   ├── test-cases.md
+│   └── prompt-lab/        # AI Prompt 测试
+└── archive/               # 历史文件归档（不再活跃）
 ```
 
 ---
@@ -126,19 +122,19 @@ SAGE_Next_Gen/
 
 ```bash
 # 前端开发
-cd 05_implementation/app
+cd app
 pnpm install
 pnpm dev          # 启动 dev server，默认 http://localhost:5173
 pnpm build        # 必须零 TS 错误、零 build 警告才算通过
 pnpm preview      # 预览 build 产物
 
 # Worker 开发
-cd 05_implementation/worker
+cd worker
 npx wrangler dev  # 启动本地 Worker，默认 http://localhost:8787
 
 # 类型检查（从项目根运行）
-cd 05_implementation/app && npx tsc --noEmit    # 前端类型检查
-cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
+cd app && npx tsc --noEmit    # 前端类型检查
+cd worker && npx tsc --noEmit  # Worker 类型检查
 ```
 
 ---
@@ -152,7 +148,7 @@ cd 05_implementation/worker && npx tsc --noEmit  # Worker 类型检查
 | 状态管理 | React hooks（useState/useReducer/Context） | 不引入 Redux/Zustand，保持简单 |
 | API 层 | Cloudflare Workers | 所有 AI API Key 只在 Worker 端，禁止前端暴露 |
 | AI 模型 | 阿里云百炼 DashScope（Qwen3 系列）| 所有调用必须 `enable_thinking: false`（DEC-028）|
-| 共享类型 | `05_implementation/shared/types.ts` | 前后端都 import，禁止重复定义 |
+| 共享类型 | `shared/types.ts` | 前后端都 import，禁止重复定义 |
 
 ### Tailwind CSS v4 配置方式
 ```css
@@ -265,7 +261,7 @@ cat AUDIT_TASK.md | codex exec --full-auto
 ### 9.1 唯一类型源
 
 ```
-05_implementation/shared/types.ts  ← 唯一权威
+shared/types.ts  ← 唯一权威
      ↑ import              ↑ import
 app/src/types/index.ts    worker/schemas/*.ts
 (re-export + 加 UI 类型)  (Zod 运行时校验，z.infer<> 必须兼容)
