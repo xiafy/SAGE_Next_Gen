@@ -154,6 +154,17 @@ export async function handleAnalyze(
 
   const result = { ...validated.data, processingMs: Date.now() - startMs };
 
+  // Guardrail: empty items should be treated as recognition failure (not a successful empty menu)
+  if (result.items.length === 0) {
+    logger.warn('analyze: zero items extracted', {
+      requestId,
+      processingMs: result.processingMs,
+      categoryCount: result.categories.length,
+      lang: result.detectedLanguage,
+    });
+    return errorResponse('AI_INVALID_RESPONSE', request, env, requestId, 'No menu items extracted');
+  }
+
   logger.info('analyze: success', {
     requestId,
     processingMs: result.processingMs,
