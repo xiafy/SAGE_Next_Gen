@@ -21,7 +21,7 @@ export function MascotImage({
 }: MascotImageProps) {
   return (
     <img
-      src={`/mascot/generated/sage-${expression}.jpg`}
+      src={`/mascot/generated/sage-${expression}.png`}
       alt={`Sage ${expression}`}
       width={size}
       height={size}
