@@ -241,6 +241,9 @@
   - `worker/prompts/menuAnalysis.ts` 增加 `contains_seafood` 误判约束
   - `worker/prompts/preChat.ts` 增加“便宜点”预算偏好标准化映射
 - 验证：`worker npx tsc --noEmit` ✅，`app npm run build` ✅
+- 新增可执行回归脚本：`tests/test-06-sprint2-backfill-regression.mjs`
+  - 覆盖 fallback / weather / error suggestion 三项回补验收
+  - 执行结果：`node tests/test-06-sprint2-backfill-regression.mjs` ✅
 
 ### 2026-02-26（Sprint 1 开发日）
 
