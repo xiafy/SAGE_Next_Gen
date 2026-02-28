@@ -58,13 +58,29 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'NAV_TO':
       return { ...state, currentView: action.view };
 
-    case 'SET_MENU_DATA':
+    case 'SET_MENU_DATA': {
+      // Path C（补充菜单）: merge new items/categories into existing data
+      const merged = (state.isSupplementing && state.menuData !== null)
+        ? (() => {
+            const existingNames = new Set(state.menuData.items.map(i => i.nameOriginal));
+            const newItems = action.data.items.filter(i => !existingNames.has(i.nameOriginal));
+            const existingCatNames = new Set(state.menuData.categories.map(c => c.nameOriginal));
+            const newCats = action.data.categories.filter(c => !existingCatNames.has(c.nameOriginal));
+            return {
+              ...state.menuData,
+              items: [...state.menuData.items, ...newItems],
+              categories: [...state.menuData.categories, ...newCats],
+              imageCount: state.menuData.imageCount + action.data.imageCount,
+            };
+          })()
+        : action.data;
       return {
         ...state,
-        menuData: action.data,
+        menuData: merged,
         // Path C（补充菜单）时保持 chatting，不触发 handoff
         chatPhase: state.isSupplementing ? 'chatting' : 'handing_off',
       };
+    }
 
     case 'SET_CHAT_PHASE':
       return { ...state, chatPhase: action.phase };

@@ -28,15 +28,21 @@ const MenuItemSchema = z.object({
   // F12: 饮食标签
   allergens:            z.array(z.object({
     type: z.string(),
-    uncertain: z.boolean().default(false),
-  })).default([]).transform(
+    uncertain: z.union([z.boolean(), z.string()]).default(false).transform(
+      (v) => v === true || v === 'true'
+    ),
+  }).passthrough()).default([]).transform(
     (arr) => arr.filter((a) => (VALID_ALLERGENS as readonly string[]).includes(a.type))
   ),
   dietaryFlags:         z.array(z.string()).default([]).transform(
     (arr) => arr.filter((f) => (VALID_DIETARY_FLAGS as readonly string[]).includes(f))
   ),
-  spiceLevel:           z.number().min(0).max(5).default(0),
-  calories:             z.number().nullable().default(null),
+  spiceLevel:           z.union([z.number(), z.string()]).default(0).transform(
+    (v) => { const n = Number(v); return isNaN(n) ? 0 : Math.min(5, Math.max(0, Math.round(n))); }
+  ),
+  calories:             z.union([z.number(), z.string(), z.null()]).default(null).transform(
+    (v) => { if (v === null || v === '' || v === 'null') return null; const n = Number(v); return isNaN(n) ? null : Math.round(n); }
+  ),
 });
 
 const CategorySchema = z.object({

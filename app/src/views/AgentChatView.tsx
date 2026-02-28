@@ -12,6 +12,7 @@ import { analyzeMenu } from '../api/analyze';
 import type { Message, PreferenceUpdate } from '../types';
 import { toUserFacingError } from '../utils/errorMessage';
 import { dlog } from '../utils/debugLog';
+import { mapDietaryToAllergens } from '../utils/allergenMapping';
 
 interface Recommendation {
   itemId: string;
@@ -39,12 +40,7 @@ export function AgentChatView() {
 
   // Map dietary prefs to AllergenType values for DishCard allergen matching
   const userAllergens = useMemo(() => {
-    const map: Record<string, string[]> = {
-      contains_nuts: ['peanut', 'tree_nut'],
-      contains_seafood: ['shellfish'],
-      gluten_free: ['gluten'],
-    };
-    return state.preferences.dietary.flatMap((d) => map[d] ?? []);
+    return mapDietaryToAllergens(state.preferences.dietary);
   }, [state.preferences.dietary]);
 
   const priceFmt = useMemo(() => {
@@ -173,14 +169,17 @@ export function AgentChatView() {
 
       if (state.isSupplementing) {
         dlog('chat', '📸 supplement done, notifying user');
+        const existingNames = new Set(state.menuData?.items.map(i => i.nameOriginal) ?? []);
+        const newItemCount = result.items.filter(i => !existingNames.has(i.nameOriginal)).length;
+        const totalCount = (state.menuData?.items.length ?? 0) + newItemCount;
         dispatch({
           type: 'ADD_MESSAGE',
           message: {
             id: `sys_supplement_${Date.now()}`,
             role: 'assistant',
             content: isZh
-              ? `补充菜单已识别！现在共有 ${result.items.length} 道菜。有什么想问的吗？`
-              : `Menu updated! Now showing ${result.items.length} items. What would you like to know?`,
+              ? `补充菜单已识别！现在共有 ${totalCount} 道菜。有什么想问的吗？`
+              : `Menu updated! Now showing ${totalCount} items. What would you like to know?`,
             timestamp: Date.now(),
           },
         });
@@ -233,11 +232,36 @@ export function AgentChatView() {
         processAIResponse(fullText, mode);
       },
       (err) => {
-        dlog('chat', '❌ stream ERROR:', err);
+        dlog('chat', '❌ stream ERROR:', err, 'fullText.len=', fullText.length);
         setIsStreaming(false);
+
+        // Preserve partial content if any was streamed
+        if (fullText.length > 0) {
+          dispatch({
+            type: 'ADD_MESSAGE',
+            message: {
+              id: `ai_partial_${Date.now()}`,
+              role: 'assistant',
+              content: fullText,
+              timestamp: Date.now(),
+            },
+          });
+        }
         setStreamingText('');
+
         if (state.chatPhase === 'handing_off') {
           dispatch({ type: 'SET_CHAT_PHASE', phase: 'failed' });
+          showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'chat' }));
+        } else if (state.chatPhase === 'chatting') {
+          dispatch({
+            type: 'ADD_MESSAGE',
+            message: {
+              id: `sys_err_${Date.now()}`,
+              role: 'assistant',
+              content: isZh ? 'AI 回复中断，已保留已有内容。' : 'AI response interrupted. Partial content preserved.',
+              timestamp: Date.now(),
+            },
+          });
           showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'chat' }));
         } else {
           showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'chat' }));
@@ -304,7 +328,7 @@ export function AgentChatView() {
     dispatch({ type: 'ADD_MESSAGE', message: userMsg });
     setInputValue('');
 
-    const mode = state.chatPhase === 'chatting' ? 'chat' : 'pre_chat';
+    const mode = (state.chatPhase === 'chatting' || state.chatPhase === 'handing_off') ? 'chat' : 'pre_chat';
     sendToAI(mode, [userMsg]);
   }
 
@@ -319,7 +343,7 @@ export function AgentChatView() {
     };
     dispatch({ type: 'ADD_MESSAGE', message: userMsg });
 
-    const mode = state.chatPhase === 'chatting' ? 'chat' : 'pre_chat';
+    const mode = (state.chatPhase === 'chatting' || state.chatPhase === 'handing_off') ? 'chat' : 'pre_chat';
     sendToAI(mode, [userMsg]);
   }
 

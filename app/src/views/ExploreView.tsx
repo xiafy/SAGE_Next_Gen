@@ -5,6 +5,7 @@ import { Chip } from '../components/Chip';
 import { Button3D } from '../components/Button3D';
 import { MascotImage } from '../components/MascotImage';
 import { DishCard } from '../components/DishCard';
+import { mapDietaryToAllergens } from '../utils/allergenMapping';
 
 export function ExploreView() {
   const { state, dispatch } = useAppState();
@@ -14,12 +15,7 @@ export function ExploreView() {
 
   // Map dietary prefs to AllergenType values for DishCard allergen matching
   const userAllergens = useMemo(() => {
-    const map: Record<string, string[]> = {
-      contains_nuts: ['peanut', 'tree_nut'],
-      contains_seafood: ['shellfish'],
-      gluten_free: ['gluten'],
-    };
-    return state.preferences.dietary.flatMap((d) => map[d] ?? []);
+    return mapDietaryToAllergens(state.preferences.dietary);
   }, [state.preferences.dietary]);
 
   // Scroll active tab into view
