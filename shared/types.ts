@@ -36,7 +36,7 @@ export type MenuItemTag =
 // ─────────────────────────────────────────────
 
 export type AllergenType =
-  | 'peanut' | 'shellfish' | 'gluten' | 'dairy'
+  | 'peanut' | 'shellfish' | 'fish' | 'gluten' | 'dairy'
   | 'egg' | 'soy' | 'tree_nut' | 'sesame';
 
 export interface AllergenTag {
@@ -48,7 +48,7 @@ export type DietaryFlag =
   | 'halal' | 'vegetarian' | 'vegan' | 'raw' | 'contains_alcohol';
 
 export const VALID_ALLERGENS: readonly AllergenType[] = [
-  'peanut', 'shellfish', 'gluten', 'dairy',
+  'peanut', 'shellfish', 'fish', 'gluten', 'dairy',
   'egg', 'soy', 'tree_nut', 'sesame',
 ] as const;
 

@@ -6,7 +6,7 @@ const VALID_TAGS = [
   'contains_alcohol', 'popular', 'signature',
 ] as const;
 
-const VALID_ALLERGENS = ['peanut', 'shellfish', 'gluten', 'dairy', 'egg', 'soy', 'tree_nut', 'sesame'] as const;
+const VALID_ALLERGENS = ['peanut', 'shellfish', 'fish', 'gluten', 'dairy', 'egg', 'soy', 'tree_nut', 'sesame'] as const;
 const VALID_DIETARY_FLAGS = ['halal', 'vegetarian', 'vegan', 'raw', 'contains_alcohol'] as const;
 
 const MenuItemSchema = z.object({

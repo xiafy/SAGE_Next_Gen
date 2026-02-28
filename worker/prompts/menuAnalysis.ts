@@ -29,12 +29,16 @@ export const MENU_ANALYSIS_SYSTEM = `你是 SAGE，一个专业的全球餐饮�
 
 ## F12 饮食标签（每个 item 必填）
 - **allergens**（数组）：过敏原标签，每项格式 {“type”:”过敏原类型”,”uncertain”:false}
-  - type 值域：peanut / shellfish / gluten / dairy / egg / soy / tree_nut / sesame（仅限这 8 种）
+  - type 值域：peanut / shellfish / fish / gluten / dairy / egg / soy / tree_nut / sesame（仅限这 9 种）
+  - **shellfish = 甲壳类（shrimp/crab/lobster）; fish = 鱼类（salmon/tuna/mackerel/anchovy）— 二者严格区分**
   - uncertain=true 表示”可能含有”，uncertain=false 表示”确定含有”
   - **菜单上已标注的饮食信息（如 V=Vegetarian, GF=Gluten Free, 🌶）优先采用，AI 可补充菜单未标注的维度**
   - **过敏原不确定时标 uncertain:true，宁可多标不漏标**（注意：这与旧 tags 的策略相反）
   - 完全无法判断时返回空数组
 - **dietaryFlags**（数组）：值域 halal / vegetarian / vegan / raw / contains_alcohol（仅限这 5 种）
+  - **vegetarian/vegan 极其严格，宁可不标**：
+  - 以下情况绝对不标 vegetarian：菜名含 Pork/Chicken/Prawn/Beef/Fish/肉/鸡/虾/鱼/猪；菜单提供蛋白质选项（如 Pork 70 / Chicken 70 / Vegetarian 70）；Pad Thai、炒饭(Fried Rice)、罗勒炒(Basil Stir-fry)、蒜香炒(Garlic Stir-fry) 等默认含肉的菜
+  - 仅在以下情况标 vegetarian：菜品名称明确为纯素菜品（如 "枝豆/Edamame"、"冷やっこ/Cold Tofu"、"沙拉/Salad"），且无任何肉类选项
 - **spiceLevel**（整数）：辣度 0-5，0=不辣或无法判断
 - **calories**（整数或 null）：估算卡路里（kcal），无法估算时返回 null
 

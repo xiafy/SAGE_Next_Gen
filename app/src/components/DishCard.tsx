@@ -9,6 +9,7 @@ import type { OrderItem } from '../types';
 const ALLERGEN_LABELS: Record<AllergenType, { zh: string; en: string }> = {
   peanut: { zh: '花生', en: 'Peanut' },
   shellfish: { zh: '甲壳类', en: 'Shellfish' },
+  fish: { zh: '鱼类', en: 'Fish' },
   gluten: { zh: '麸质', en: 'Gluten' },
   dairy: { zh: '乳制品', en: 'Dairy' },
   egg: { zh: '蛋', en: 'Egg' },
