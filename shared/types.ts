@@ -31,6 +31,33 @@ export type MenuItemTag =
   | 'contains_nuts' | 'contains_seafood' | 'contains_pork'
   | 'contains_alcohol' | 'popular' | 'signature';
 
+// ─────────────────────────────────────────────
+// F12: 过敏原与饮食标签 (DEC-037)
+// ─────────────────────────────────────────────
+
+export type AllergenType =
+  | 'peanut' | 'shellfish' | 'gluten' | 'dairy'
+  | 'egg' | 'soy' | 'tree_nut' | 'sesame';
+
+export interface AllergenTag {
+  type: AllergenType;
+  uncertain: boolean;  // true = "可能含有"
+}
+
+export type DietaryFlag =
+  | 'halal' | 'vegetarian' | 'vegan' | 'raw' | 'contains_alcohol';
+
+export const VALID_ALLERGENS: readonly AllergenType[] = [
+  'peanut', 'shellfish', 'gluten', 'dairy',
+  'egg', 'soy', 'tree_nut', 'sesame',
+] as const;
+
+export const VALID_DIETARY_FLAGS: readonly DietaryFlag[] = [
+  'halal', 'vegetarian', 'vegan', 'raw', 'contains_alcohol',
+] as const;
+
+// ─────────────────────────────────────────────
+
 export interface MenuItem {
   id: string;
   nameOriginal: string;
@@ -38,8 +65,18 @@ export interface MenuItem {
   descriptionTranslated?: string;
   price?: number;
   priceText?: string;
-  tags: MenuItemTag[];
+  tags: MenuItemTag[];                // 旧标签系统，保留兼容
   imageSource?: 'menu';
+
+  // F11: 菜品概要 (DEC-037, R011-01~03)
+  brief: string;                      // 一句话概要（食材+味道）
+  briefDetail?: string;               // 展开详情（类比+文化背景）
+
+  // F12: 饮食标签 (DEC-037, R012-01~06)
+  allergens: AllergenTag[];           // 过敏原标签
+  dietaryFlags: DietaryFlag[];        // 饮食方式标签
+  spiceLevel: number;                 // 辣度 0-5（0=未知/不辣）
+  calories: number | null;            // 卡路里估算（kcal），null=无数据
 }
 
 export interface MenuCategory {

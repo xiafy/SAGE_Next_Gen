@@ -5,8 +5,8 @@ import { ChatBubble } from '../components/ChatBubble';
 import { QuickReplies } from '../components/QuickReplies';
 import { LoadingDots } from '../components/LoadingDots';
 import { MascotImage } from '../components/MascotImage';
-import { Card3D } from '../components/Card3D';
 import { Button3D } from '../components/Button3D';
+import { DishCard } from '../components/DishCard';
 import { streamChat, buildChatParams } from '../api/chat';
 import { analyzeMenu } from '../api/analyze';
 import type { Message, PreferenceUpdate } from '../types';
@@ -36,6 +36,16 @@ export function AgentChatView() {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const isZh = state.preferences.language === 'zh';
+
+  // Map dietary prefs to AllergenType values for DishCard allergen matching
+  const userAllergens = useMemo(() => {
+    const map: Record<string, string[]> = {
+      contains_nuts: ['peanut', 'tree_nut'],
+      contains_seafood: ['shellfish'],
+      gluten_free: ['gluten'],
+    };
+    return state.preferences.dietary.flatMap((d) => map[d] ?? []);
+  }, [state.preferences.dietary]);
 
   const priceFmt = useMemo(() => {
     const code = state.menuData?.currency?.toUpperCase();
@@ -471,34 +481,21 @@ export function AgentChatView() {
             {recommendations.map((rec) => {
               const item = state.menuData?.items.find((i) => i.id === rec.itemId);
               if (!item) return null;
-              const alreadyAdded = state.orderItems.some((oi) => oi.menuItem.id === rec.itemId);
+              const orderItem = state.orderItems.find((oi) => oi.menuItem.id === rec.itemId);
               return (
-                <Card3D key={rec.itemId} className="animate-slide-up">
-                  <p className="text-sm font-bold text-[var(--color-sage-text)]">{item.nameOriginal}</p>
-                  <p className="text-xs text-[var(--color-sage-text-secondary)]">{item.nameTranslated}</p>
-                  {item.priceText && (
-                    <p className="text-base font-bold text-[var(--color-sage-primary)] mt-1">{item.priceText}</p>
-                  )}
+                <div key={rec.itemId} className="animate-slide-up">
+                  <DishCard
+                    item={item}
+                    isZh={isZh}
+                    userAllergens={userAllergens}
+                    orderItem={orderItem}
+                    onAdd={() => handleAddToOrder(rec)}
+                    onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: rec.itemId, quantity: qty })}
+                  />
                   {rec.reason && (
-                    <p className="text-xs text-[var(--color-sage-text-secondary)] mt-1">{rec.reason}</p>
+                    <p className="text-xs text-[var(--color-sage-text-secondary)] mt-1 ml-3">{rec.reason}</p>
                   )}
-                  <div className="mt-2">
-                    {alreadyAdded ? (
-                      <span className="inline-flex items-center px-3 py-1.5 text-xs font-bold text-[var(--color-sage-success)] bg-green-50 rounded-[var(--radius-sm)]">
-                        {isZh ? '✓ 已加入' : '✓ Added'}
-                      </span>
-                    ) : (
-                      <Button3D
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleAddToOrder(rec)}
-                        aria-label={isZh ? '加入点单' : 'Add to order'}
-                      >
-                        {isZh ? '+ 加入点餐单' : '+ Add to Order'}
-                      </Button3D>
-                    )}
-                  </div>
-                </Card3D>
+                </div>
               );
             })}
           </div>

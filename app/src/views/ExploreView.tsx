@@ -1,29 +1,26 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { TopBar } from '../components/TopBar';
 import { Chip } from '../components/Chip';
-import { Card3D } from '../components/Card3D';
 import { Button3D } from '../components/Button3D';
 import { MascotImage } from '../components/MascotImage';
-
-const TAG_LABELS: Record<string, { zh: string; en: string }> = {
-  vegetarian: { zh: '素食', en: 'Vegetarian' },
-  vegan: { zh: '纯素', en: 'Vegan' },
-  spicy: { zh: '辣', en: 'Spicy' },
-  popular: { zh: '人气', en: 'Popular' },
-  signature: { zh: '招牌', en: 'Signature' },
-  gluten_free: { zh: '无麸质', en: 'GF' },
-  contains_nuts: { zh: '坚果', en: 'Nuts' },
-  contains_seafood: { zh: '海鲜', en: 'Seafood' },
-  contains_pork: { zh: '猪肉', en: 'Pork' },
-  contains_alcohol: { zh: '含酒精', en: 'Alcohol' },
-};
+import { DishCard } from '../components/DishCard';
 
 export function ExploreView() {
   const { state, dispatch } = useAppState();
   const isZh = state.preferences.language === 'zh';
   const [activeCategory, setActiveCategory] = useState('all');
   const tabsRef = useRef<HTMLDivElement>(null);
+
+  // Map dietary prefs to AllergenType values for DishCard allergen matching
+  const userAllergens = useMemo(() => {
+    const map: Record<string, string[]> = {
+      contains_nuts: ['peanut', 'tree_nut'],
+      contains_seafood: ['shellfish'],
+      gluten_free: ['gluten'],
+    };
+    return state.preferences.dietary.flatMap((d) => map[d] ?? []);
+  }, [state.preferences.dietary]);
 
   // Scroll active tab into view
   useEffect(() => {
@@ -132,69 +129,17 @@ export function ExploreView() {
         ) : (
           <div className="flex flex-col gap-3">
             {dedupedItems.map((item) => {
-              const displayTags = item.tags.slice(0, 2);
+              const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
               return (
-                <Card3D key={item.id} className="!p-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-[var(--color-sage-text)]">
-                        {item.nameTranslated}
-                      </p>
-                      <p className="text-xs text-[var(--color-sage-text-secondary)]">{item.nameOriginal}</p>
-                      {item.descriptionTranslated && (
-                        <p className="text-xs text-[var(--color-sage-text-secondary)] mt-0.5 line-clamp-2">
-                          {item.descriptionTranslated}
-                        </p>
-                      )}
-                      {displayTags.length > 0 && (
-                        <div className="flex gap-1 mt-1.5">
-                          {displayTags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-sage-primary-light)] text-[var(--color-sage-primary)] font-medium"
-                            >
-                              {isZh ? TAG_LABELS[tag]?.zh ?? tag : TAG_LABELS[tag]?.en ?? tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0 ml-3">
-                      {item.priceText && (
-                        <span className="text-sm font-bold text-[var(--color-sage-primary)]">
-                          {item.priceText}
-                        </span>
-                      )}
-                      {(() => {
-                        const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
-                        if (orderItem) {
-                          return (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: orderItem.quantity - 1 })}
-                                className="w-7 h-7 rounded-full border-2 border-[var(--color-sage-border)] flex items-center justify-center text-[var(--color-sage-text-secondary)] hover:border-[var(--color-sage-primary)] hover:text-[var(--color-sage-primary)] transition-colors text-sm"
-                              >−</button>
-                              <span className="text-sm font-bold w-4 text-center">{orderItem.quantity}</span>
-                              <button
-                                onClick={() => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: orderItem.quantity + 1 })}
-                                className="w-7 h-7 rounded-full bg-[var(--color-sage-primary)] hover:bg-[var(--color-sage-primary-dark)] text-white flex items-center justify-center transition-colors text-sm"
-                              >+</button>
-                            </div>
-                          );
-                        }
-                        return (
-                          <Button3D
-                            size="sm"
-                            onClick={() => dispatch({ type: 'ADD_TO_ORDER', item })}
-                            aria-label={isZh ? `添加 ${item.nameTranslated} 到点单` : `Add ${item.nameTranslated} to order`}
-                          >
-                            {isZh ? '加入' : 'Add'}
-                          </Button3D>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </Card3D>
+                <DishCard
+                  key={item.id}
+                  item={item}
+                  isZh={isZh}
+                  userAllergens={userAllergens}
+                  orderItem={orderItem}
+                  onAdd={() => dispatch({ type: 'ADD_TO_ORDER', item })}
+                  onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: qty })}
+                />
               );
             })}
           </div>

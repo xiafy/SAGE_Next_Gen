@@ -6,6 +6,9 @@ const VALID_TAGS = [
   'contains_alcohol', 'popular', 'signature',
 ] as const;
 
+const VALID_ALLERGENS = ['peanut', 'shellfish', 'gluten', 'dairy', 'egg', 'soy', 'tree_nut', 'sesame'] as const;
+const VALID_DIETARY_FLAGS = ['halal', 'vegetarian', 'vegan', 'raw', 'contains_alcohol'] as const;
+
 const MenuItemSchema = z.object({
   id:                   z.string().min(1),
   nameOriginal:         z.string().min(1),
@@ -19,6 +22,21 @@ const MenuItemSchema = z.object({
       (VALID_TAGS as readonly string[]).includes(t)
     )
   ),
+  // F11: 菜品概要
+  brief:                z.string().default(''),
+  briefDetail:          z.string().optional(),
+  // F12: 饮食标签
+  allergens:            z.array(z.object({
+    type: z.string(),
+    uncertain: z.boolean().default(false),
+  })).default([]).transform(
+    (arr) => arr.filter((a) => (VALID_ALLERGENS as readonly string[]).includes(a.type))
+  ),
+  dietaryFlags:         z.array(z.string()).default([]).transform(
+    (arr) => arr.filter((f) => (VALID_DIETARY_FLAGS as readonly string[]).includes(f))
+  ),
+  spiceLevel:           z.number().min(0).max(5).default(0),
+  calories:             z.number().nullable().default(null),
 });
 
 const CategorySchema = z.object({

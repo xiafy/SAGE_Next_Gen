@@ -1,0 +1,208 @@
+# F11 菜品概要 + F12 饮食标签 — Rule Spec
+# 版本: v1.0
+# 日期: 2026-07-23
+# 来源: PRD v1.5 F11/F12 AC + DEC-037
+
+# ═══════════════════════════════════════════════
+# F11: 菜品概要 (Dish Brief)
+# ═══════════════════════════════════════════════
+
+- rule_id: R011-01
+  feature: F11-DishBrief
+  summary: "每道菜必须有一句话概要"
+  severity: P0
+  given: "AI 完成菜单识别，返回 MenuData"
+  when: "构建 MenuItem 数据"
+  then:
+    - "每个 MenuItem 包含 brief 字段（string，非空）"
+    - "brief 内容为食材组成+味道类型，一句话"
+    - "brief 语言与用户 context.language 一致"
+  boundary:
+    - input: "菜单含 20 道菜"
+      expected: "20 道菜每道都有 brief，无遗漏"
+    - input: "菜品信息极少（仅名称，无描述）"
+      expected: "AI 基于菜名推断生成 brief，不留空"
+    - input: "language=en 但菜单是泰文"
+      expected: "brief 用英文撰写"
+  exception:
+    - "AI 无法推断时 → brief 为菜名翻译+「Ask your server for details」"
+  assertions:
+    - "grep -q 'brief' shared/types.ts"
+    - "每个 MenuItem JSON 的 brief 字段长度 > 0"
+  trace: "PRD F11 AC1, AC3"
+
+- rule_id: R011-02
+  feature: F11-DishBrief
+  summary: "概要支持展开查看详情"
+  severity: P1
+  given: "菜品卡片显示一句话概要"
+  when: "用户点击展开"
+  then:
+    - "展示 briefDetail 字段（类比+文化背景）"
+    - "展开/折叠有动画过渡"
+    - "默认折叠"
+  boundary:
+    - input: "briefDetail 为空（AI 未生成）"
+      expected: "不显示展开按钮，只显示 brief"
+    - input: "连续快速点击展开/折叠"
+      expected: "无 UI 闪烁或重叠"
+  exception:
+    - "briefDetail undefined → 隐藏展开入口"
+  assertions:
+    - "grep -q 'briefDetail' shared/types.ts"
+  trace: "PRD F11 AC2, AC5"
+
+- rule_id: R011-03
+  feature: F11-DishBrief
+  summary: "概要在识别阶段一并生成，不额外调 API"
+  severity: P0
+  given: "用户提交菜单图片"
+  when: "/api/analyze 处理完成"
+  then:
+    - "响应中每个 MenuItem 已包含 brief 和 briefDetail"
+    - "不额外调用独立 API 生成概要"
+  boundary:
+    - input: "5 张图片，30 道菜"
+      expected: "一次 API 调用返回所有概要"
+  exception:
+    - "无"
+  assertions:
+    - "Worker analyze handler 的 Prompt 包含概要生成指令"
+  trace: "PRD F11 AC4"
+
+# ═══════════════════════════════════════════════
+# F12: 饮食标签与过敏原 (Dietary Tags)
+# ═══════════════════════════════════════════════
+
+- rule_id: R012-01
+  feature: F12-DietaryTags
+  summary: "标签体系完整覆盖"
+  severity: P0
+  given: "AI 识别完成一道菜"
+  when: "构建 MenuItem 标签数据"
+  then:
+    - "allergens 数组：8 大过敏原（peanut/shellfish/gluten/dairy/egg/soy/tree_nut/sesame）"
+    - "dietaryFlags 数组：halal/vegetarian/vegan/raw/contains_alcohol"
+    - "spiceLevel：0-5 整数"
+    - "calories：正整数或 null（单位 kcal）"
+  boundary:
+    - input: "明确的素食菜品（如 Pad Pak）"
+      expected: "dietaryFlags 包含 'vegetarian'，allergens 不含肉类相关"
+    - input: "菜品信息不足以判断卡路里"
+      expected: "calories = null，前端不显示卡路里标签"
+    - input: "spiceLevel 无法判断"
+      expected: "spiceLevel = 0，前端不显示辣度标签"
+  exception:
+    - "allergens 无法判断 → 空数组（不标注）"
+    - "AI 不确定某过敏原 → 加入 allergens 并标记 uncertain=true"
+  assertions:
+    - "grep -q 'allergens' shared/types.ts"
+    - "grep -q 'spiceLevel' shared/types.ts"
+    - "grep -q 'calories' shared/types.ts"
+  trace: "PRD F12 AC1, AC5"
+
+- rule_id: R012-02
+  feature: F12-DietaryTags
+  summary: "菜单标注优先于 AI 推断"
+  severity: P0
+  given: "菜单上已标注饮食信息（如 V=Vegetarian, GF=Gluten Free）"
+  when: "AI 提取标签"
+  then:
+    - "菜单明确标注的信息直接采用，不被 AI 推断覆盖"
+    - "AI 可补充菜单未标注的维度"
+  boundary:
+    - input: "菜单标了 V 但 AI 推断含蛋"
+      expected: "保留 vegetarian 标签，同时标注 allergens 含 egg"
+    - input: "菜单无任何标注"
+      expected: "全部由 AI 推断"
+  exception:
+    - "菜单标注与 AI 推断矛盾 → 以菜单标注为准"
+  assertions:
+    - "Worker Prompt 中包含'菜单标注优先'指令"
+  trace: "PRD F12 AC2"
+
+- rule_id: R012-03
+  feature: F12-DietaryTags
+  summary: "不确定的过敏原标注「可能含有」"
+  severity: P0
+  given: "AI 推断某菜品可能含某过敏原但不确定"
+  when: "构建 allergens 数据"
+  then:
+    - "过敏原加入 allergens 数组，uncertain 字段设为 true"
+    - "前端显示为「⚠️ 可能含有 XX」"
+  boundary:
+    - input: "Tom Yum Goong（确定含虾）"
+      expected: "allergens 含 {type:'shellfish', uncertain:false}"
+    - input: "Pad Thai（可能含花生碎）"
+      expected: "allergens 含 {type:'peanut', uncertain:true}"
+    - input: "白米饭"
+      expected: "allergens 空数组"
+  exception:
+    - "宁可多标不漏标 → uncertain=true 的阈值要低"
+  assertions:
+    - "grep -q 'uncertain' shared/types.ts"
+  trace: "PRD F12 AC3"
+
+- rule_id: R012-04
+  feature: F12-DietaryTags
+  summary: "与用户偏好(F09)联动：高亮+警告条"
+  severity: P0
+  given: "用户在 F09 设置了过敏原（如 peanut）"
+  when: "展示菜品卡片，该菜品 allergens 含 peanut"
+  then:
+    - "匹配的过敏原标签变红底白字 + ⚠️ 图标"
+    - "卡片顶部显示橙色警告条：'⚠️ 可能含有您标记的过敏原：花生'"
+  boundary:
+    - input: "用户设了 peanut+shellfish，菜品含 peanut"
+      expected: "只高亮 peanut，警告条提 peanut"
+    - input: "用户设了 peanut，菜品 allergens 空"
+      expected: "无高亮，无警告条"
+    - input: "用户未设任何过敏原"
+      expected: "标签正常展示，无高亮无警告条"
+    - input: "uncertain=true 的过敏原匹配用户设置"
+      expected: "同样高亮+警告条（宁可多提醒）"
+  exception:
+    - "F09 preferences 加载失败 → 降级为无联动，标签正常显示"
+  assertions:
+    - "前端代码中有 allergen 匹配 + 高亮逻辑"
+  trace: "PRD F12 AC4"
+
+- rule_id: R012-05
+  feature: F12-DietaryTags
+  summary: "卡路里展示格式"
+  severity: P1
+  given: "菜品 calories 有值"
+  when: "前端渲染标签"
+  then:
+    - "展示为 '~XXX kcal' 格式"
+    - "calories 为 null 时不展示卡路里标签"
+  boundary:
+    - input: "calories = 350"
+      expected: "显示 '~350 kcal'"
+    - input: "calories = null"
+      expected: "不显示卡路里标签"
+    - input: "calories = 0"
+      expected: "不显示（0 无意义，视为无数据）"
+  exception:
+    - "无"
+  assertions:
+    - "前端渲染逻辑中有 calories > 0 判断"
+  trace: "PRD F12 AC5"
+
+- rule_id: R012-06
+  feature: F12-DietaryTags
+  summary: "标签在识别阶段一并生成"
+  severity: P0
+  given: "用户提交菜单图片"
+  when: "/api/analyze 处理完成"
+  then:
+    - "响应中每个 MenuItem 已包含 allergens/dietaryFlags/spiceLevel/calories"
+    - "不额外调用独立 API"
+  boundary:
+    - input: "5 张图片，30 道菜"
+      expected: "一次 API 调用返回所有标签"
+  exception:
+    - "无"
+  assertions:
+    - "Worker analyze Prompt 包含标签生成指令"
+  trace: "PRD F12 AC7"
