@@ -368,7 +368,13 @@ export function AgentChatView() {
     <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
       <TopBar
         title="SAGE"
-        onBack={() => dispatch({ type: 'NAV_TO', view: 'home' })}
+        onBack={() => {
+          const msg = isZh ? '退出会清空当前会话，确定吗？' : 'Leaving will clear your session. Are you sure?';
+          if (window.confirm(msg)) {
+            dispatch({ type: 'RESET_SESSION' });
+            dispatch({ type: 'NAV_TO', view: 'home' });
+          }
+        }}
         rightAction={
           <div className="flex items-center gap-2">
             {state.menuData && (

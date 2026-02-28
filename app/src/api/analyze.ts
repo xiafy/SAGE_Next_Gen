@@ -174,10 +174,21 @@ export async function analyzeMenu(
   dlog('analyze', '📤 POST /api/analyze, images:', imagePayloads.length, 'bodySize=', bodySize);
   dlog('analyze', 'WORKER_BASE=', WORKER_BASE);
 
-  const timeoutSignal = AbortSignal.timeout(TIMEOUTS.ANALYZE_CLIENT);
-  const combinedSignal = signal
-    ? AbortSignal.any([signal, timeoutSignal])
-    : timeoutSignal;
+  // Polyfill: AbortSignal.timeout / AbortSignal.any not available on older iOS Safari
+  let combinedSignal: AbortSignal;
+  const timeoutController = new AbortController();
+  const timeoutId = setTimeout(() => timeoutController.abort(), TIMEOUTS.ANALYZE_CLIENT);
+
+  if (signal) {
+    // If caller provided a signal, abort on either
+    const merged = new AbortController();
+    const onAbort = () => merged.abort();
+    signal.addEventListener('abort', onAbort, { once: true });
+    timeoutController.signal.addEventListener('abort', onAbort, { once: true });
+    combinedSignal = merged.signal;
+  } else {
+    combinedSignal = timeoutController.signal;
+  }
 
   let response: Response;
   try {
@@ -187,8 +198,10 @@ export async function analyzeMenu(
       body: JSON.stringify(body),
       signal: combinedSignal,
     });
+    clearTimeout(timeoutId);
     dlog('analyze', '📥 response status:', response.status);
   } catch (err) {
+    clearTimeout(timeoutId);
     dlog('analyze', '❌ fetch threw:', err);
     throw err;
   }

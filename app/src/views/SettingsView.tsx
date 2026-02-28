@@ -83,11 +83,6 @@ export function SettingsView() {
     });
   }
 
-  function handleReset() {
-    dispatch({ type: 'RESET_SESSION' });
-    dispatch({ type: 'NAV_TO', view: 'home' });
-  }
-
   return (
     <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
       {/* TopBar */}
@@ -246,17 +241,8 @@ export function SettingsView() {
           <p className="text-xs text-[var(--color-sage-text-secondary)] mt-1">Powered by Alibaba Cloud Bailian</p>
         </Card3D>
 
-        {/* Section 6: Reset */}
-        <div className="pt-2 pb-4">
-          <Button3D
-            variant="danger"
-            className="w-full"
-            onClick={handleReset}
-            aria-label={isZh ? '开始新会话' : 'Start new session'}
-          >
-            {isZh ? '开始新会话' : 'Start New Session'}
-          </Button3D>
-        </div>
+        {/* Spacer */}
+        <div className="pt-2 pb-4" />
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MascotImage } from '../components/MascotImage';
 import { Button3D } from '../components/Button3D';
@@ -24,15 +23,19 @@ export function HomeView() {
   const { state, dispatch } = useAppState();
   const isZh = state.preferences.language === 'zh';
   const greeting = getGreeting(isZh);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  function handleChatPlaceholder() {
-    setToastMsg(isZh ? '即将推出' : 'Coming soon');
-    setTimeout(() => setToastMsg(null), 2000);
-  }
+  const hasSession = !!state.menuData;
 
   return (
-    <div className="flex flex-col items-center min-h-dvh bg-[var(--color-sage-bg)] px-6 pt-12 pb-24">
+    <div className="relative flex flex-col items-center min-h-dvh bg-[var(--color-sage-bg)] px-6 pt-12 pb-24">
+      {/* Settings gear – top right */}
+      <button
+        className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full text-xl text-[var(--color-sage-text-secondary)] hover:bg-black/5 active:bg-black/10 transition-colors"
+        onClick={() => dispatch({ type: 'NAV_TO', view: 'settings' })}
+        aria-label={isZh ? '设置' : 'Settings'}
+      >
+        ⚙
+      </button>
+
       {/* Mascot */}
       <div className="animate-bounce-in">
         <MascotImage expression="default" size={200} />
@@ -48,43 +51,48 @@ export function HomeView() {
 
       {/* Actions */}
       <div className="w-full flex flex-col gap-4 mt-10">
-        <Button3D
-          variant="primary"
-          size="lg"
-          className="w-full"
-          onClick={() => dispatch({ type: 'NAV_TO', view: 'scanner' })}
-          aria-label={isZh ? '扫描菜单' : 'Scan Menu'}
-        >
-          <span className="flex flex-col items-center gap-0.5">
-            <span>{isZh ? '📷 扫描菜单' : '📷 Scan Menu'}</span>
-            <span className="text-sm font-semibold opacity-80">
-              {isZh ? '拍照识别，智能推荐' : 'Snap a photo, get smart picks'}
-            </span>
-          </span>
-        </Button3D>
+        {hasSession ? (
+          <>
+            <Button3D
+              variant="primary"
+              size="lg"
+              className="w-full"
+              onClick={() => dispatch({ type: 'NAV_TO', view: 'chat' })}
+              aria-label={isZh ? '继续上次用餐' : 'Continue last meal'}
+            >
+              {isZh ? '🍽 继续上次用餐' : '🍽 Continue Last Meal'}
+            </Button3D>
 
-        <Button3D
-          variant="secondary"
-          size="md"
-          className="w-full"
-          onClick={handleChatPlaceholder}
-          aria-label={isZh ? '随便聊聊' : 'Just Chat'}
-        >
-          <span className="flex flex-col items-center gap-0.5">
-            <span>{isZh ? '💬 随便聊聊' : '💬 Just Chat'}</span>
-            <span className="text-sm font-semibold opacity-60">
-              {isZh ? '不看菜单，直接推荐' : 'Skip the menu, get recs'}
+            <Button3D
+              variant="secondary"
+              size="md"
+              className="w-full"
+              onClick={() => {
+                dispatch({ type: 'RESET_SESSION' });
+                dispatch({ type: 'NAV_TO', view: 'scanner' });
+              }}
+              aria-label={isZh ? '新的一餐' : 'New meal'}
+            >
+              {isZh ? '🔄 新的一餐' : '🔄 New Meal'}
+            </Button3D>
+          </>
+        ) : (
+          <Button3D
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={() => dispatch({ type: 'NAV_TO', view: 'scanner' })}
+            aria-label={isZh ? '扫描菜单' : 'Scan Menu'}
+          >
+            <span className="flex flex-col items-center gap-0.5">
+              <span>{isZh ? '📷 扫描菜单' : '📷 Scan Menu'}</span>
+              <span className="text-sm font-semibold opacity-80">
+                {isZh ? '拍照识别，智能推荐' : 'Snap a photo, get smart picks'}
+              </span>
             </span>
-          </span>
-        </Button3D>
+          </Button3D>
+        )}
       </div>
-
-      {/* Toast */}
-      {toastMsg && (
-        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-[var(--color-sage-text)] text-white text-sm px-4 py-2.5 rounded-[var(--radius-md)] shadow-sage z-50 text-center animate-fade-in">
-          {toastMsg}
-        </div>
-      )}
     </div>
   );
 }

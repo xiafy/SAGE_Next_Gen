@@ -123,15 +123,24 @@ export function WaiterModeView() {
         )}
       </div>
 
-      {/* Done button — white 3D */}
-      <div className="px-6 pb-10">
+      {/* Action buttons */}
+      <div className="px-6 pb-10 flex flex-col gap-3">
         <Button3D
           variant="white"
           className="w-full"
           onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
         >
-          {isZh ? '完成' : 'Done'}
+          {isZh ? '继续点菜' : 'Continue Ordering'}
         </Button3D>
+        <button
+          className="w-full py-3 rounded-2xl text-white/60 text-sm font-bold hover:text-white/90 hover:bg-white/10 transition-colors"
+          onClick={() => {
+            dispatch({ type: 'RESET_SESSION' });
+            dispatch({ type: 'NAV_TO', view: 'home' });
+          }}
+        >
+          {isZh ? '结束用餐' : 'End Meal'}
+        </button>
       </div>
     </div>
   );
