@@ -17,6 +17,7 @@ export const MENU_ANALYSIS_SYSTEM = `你是 SAGE，一个专业的全球餐饮�
 - price：数值，priceText：含货币符号原文
 - tags 只从以下选择：spicy, vegetarian, vegan, gluten_free, contains_nuts, contains_seafood, contains_pork, contains_alcohol, popular, signature
 - 不确定时不加 tag（宁可漏标，不要误标）
+- contains_seafood 仅在菜名/描述明确出现鱼/虾/蟹/贝/海鲜等食材时添加；不要因为“海椒/海量/海派”等字样误判为海鲜
 - 不输出 agentRole 或 agentGreeting
 - **配料/口味/蛋白质选项（如 Pork/Chicken/Prawn）不是独立菜品，合并到主菜的 description 中**
 - **加价选项（如 +20）写入 description，不拆为独立 item**

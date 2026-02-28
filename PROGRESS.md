@@ -227,11 +227,20 @@
 
 ## 📝 工作日志
 
-### 2026-02-28（流程固化）
+### 2026-02-28（流程固化 + 任务 1/4/5 启动）
 
 - 新增 `docs/engineering-guardrails.md`：将本次 Scanner 4 轮迭代教训固化为强制流程（Spec → Test → Code → 本地预览 → Build → Deploy 回归）
 - 新增 Hotfix 硬规则：公共组件全局回归、进度条绑定状态机、overflow-hidden 裁切检查、缓存优先排查
 - 新增提交前 Checklist，作为后续 UI/bugfix 任务的门禁
+- 新增 Sprint2 回补 specs：
+  - `specs/sprint2-model-fallback-spec.md`
+  - `specs/sprint2-weather-api-spec.md`
+  - `specs/sprint2-error-suggestion-spec.md`
+- 新增测试清单：`tests/sprint2-backfill-test-checklist.md`
+- Prompt 质量修复（KI-001 / KI-002）：
+  - `worker/prompts/menuAnalysis.ts` 增加 `contains_seafood` 误判约束
+  - `worker/prompts/preChat.ts` 增加“便宜点”预算偏好标准化映射
+- 验证：`worker npx tsc --noEmit` ✅，`app npm run build` ✅
 
 ### 2026-02-26（Sprint 1 开发日）
 
