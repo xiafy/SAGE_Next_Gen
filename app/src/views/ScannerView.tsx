@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { Button3D } from '../components/Button3D';
+import { Card3D } from '../components/Card3D';
+import { MascotImage } from '../components/MascotImage';
 import { dlog } from '../utils/debugLog';
-type ScannerMode = 'single' | 'multi';
 
 interface ScannerViewProps {
   isSupplementing?: boolean;
@@ -10,16 +11,12 @@ interface ScannerViewProps {
 
 export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
   const { state, dispatch } = useAppState();
-  const [scannerMode, setScannerMode] = useState<ScannerMode>('single');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [cameraError, setCameraError] = useState<'denied' | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const albumInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isZh = state.preferences.language === 'zh';
 
-  // Cleanup previews on unmount
   useEffect(() => {
     return () => {
       previews.forEach((url) => URL.revokeObjectURL(url));
@@ -27,31 +24,18 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Simple handleConfirm function (not wrapped in useCallback)
-  function handleConfirm(filesToConfirm: File[]) {
-    if (filesToConfirm.length === 0) return;
-    dlog('scanner', '✅ handleConfirm:', filesToConfirm.length, 'files');
-    filesToConfirm.forEach((file, idx) => {
-      dlog('scanner', `  confirm[${idx}]: name="${file.name}", type="${file.type}", size=${file.size}`);
-    });
-    dlog('scanner', 'dispatching NAV_TO chat + START_ANALYZE');
+  function handleConfirm() {
+    if (files.length === 0) return;
+    dlog('scanner', '✅ handleConfirm:', files.length, 'files');
     dispatch({ type: 'NAV_TO', view: 'chat' });
-    dispatch({ type: 'START_ANALYZE', files: filesToConfirm });
-    dlog('scanner', 'dispatch done');
+    dispatch({ type: 'START_ANALYZE', files });
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files;
     dlog('scanner', '📸 handleFileChange triggered, files:', selected?.length || 0);
 
-    if (!selected || selected.length === 0) {
-      dlog('scanner', '⚠️ no files selected (user cancelled?)');
-      return;
-    }
-
-    Array.from(selected).forEach((file, idx) => {
-      dlog('scanner', `file[${idx}]: name="${file.name}", type="${file.type}", size=${file.size}`);
-    });
+    if (!selected || selected.length === 0) return;
 
     const remaining = 5 - files.length;
     const newFiles = Array.from(selected).slice(0, remaining);
@@ -66,35 +50,10 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
     }
 
     const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
-    setCameraError(null);
     e.target.value = '';
 
-    if (scannerMode === 'single') {
-      // Single mode: immediately confirm and navigate
-      const firstFile = newFiles[0] as File;
-      const firstPreview = newPreviews[0] as string;
-      // Clean up unused previews
-      newPreviews.slice(1).forEach((url) => URL.revokeObjectURL(url));
-      setFiles([firstFile]);
-      setPreviews([firstPreview]);
-      dlog('scanner', '🔄 single mode: auto-confirming');
-      handleConfirm([firstFile]);
-    } else {
-      // Multi mode: append to existing
-      setFiles((prev) => [...prev, ...newFiles].slice(0, 5));
-      setPreviews((prev) => [...prev, ...newPreviews].slice(0, 5));
-      console.log('[SAGE Scanner] multi mode: added', newFiles.length, 'files, total:', files.length + newFiles.length);
-    }
-  }
-
-  function openCameraPicker() {
-    console.log('[SAGE Scanner] opening camera picker');
-    cameraInputRef.current?.click();
-  }
-
-  function openAlbumPicker() {
-    console.log('[SAGE Scanner] opening album picker');
-    albumInputRef.current?.click();
+    setFiles((prev) => [...prev, ...newFiles].slice(0, 5));
+    setPreviews((prev) => [...prev, ...newPreviews].slice(0, 5));
   }
 
   function removeFile(index: number) {
@@ -102,32 +61,18 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
     if (url) URL.revokeObjectURL(url);
     setFiles((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
-    console.log('[SAGE Scanner] removed file at index', index);
   }
 
   function handleBack() {
-    if (isSupplementing) {
-      dispatch({ type: 'NAV_TO', view: 'chat' });
-    } else {
-      dispatch({ type: 'NAV_TO', view: 'home' });
-    }
+    dispatch({ type: 'NAV_TO', view: isSupplementing ? 'chat' : 'home' });
   }
 
   const atLimit = files.length >= 5;
 
   return (
-    <div className="flex flex-col min-h-dvh bg-[#1a1a2e] text-white">
+    <div className="flex flex-col min-h-dvh bg-[var(--color-sage-bg)]">
       <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        capture="environment"
-        className="hidden"
-        onChange={handleFileChange}
-      />
-      <input
-        ref={albumInputRef}
+        ref={fileInputRef}
         type="file"
         accept="image/*"
         multiple
@@ -139,133 +84,111 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={handleBack}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors text-lg"
-          aria-label={isZh ? '返回' : 'Go back'}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--color-sage-text)] hover:text-[var(--color-sage-primary)] transition-colors text-base font-bold"
         >
           ← {isZh ? '返回' : 'Back'}
         </button>
-        <span className="text-white/60 text-sm">
+        <span className="text-[var(--color-sage-text-secondary)] text-sm font-bold">
           {files.length}/5
         </span>
       </div>
 
-      {/* Main area */}
-      <div className="flex-1 flex items-center justify-center px-6">
-        {files.length === 0 && !cameraError ? (
-          <button
-            onClick={openCameraPicker}
-            className="w-full aspect-[3/4] border-2 border-dashed border-white/30 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-white/50 transition-colors"
-          >
-            <span className="text-4xl">📷</span>
-            <p className="text-white/50 text-sm">
-              {isZh ? '点击拍摄或选择菜单照片' : 'Tap to capture or select menu photos'}
-            </p>
-            <p className="text-white/30 text-xs">
-              {isZh ? '最多 5 张' : 'Up to 5 images'}
-            </p>
-          </button>
-        ) : cameraError ? (
-          <div className="flex flex-col items-center gap-4 bg-white/10 rounded-2xl px-6 py-8 w-full">
-            <span className="text-4xl">⚠️</span>
-            <p className="text-white/70 text-sm text-center">
-              {isZh
-                ? '相机权限被拒绝。请在系统设置中允许相机访问后重试。'
-                : 'Camera permission is denied. Please allow camera access in system settings.'}
-            </p>
-            <p className="text-white/50 text-xs text-center">
-              {isZh
-                ? '你仍然可以继续从相册选择菜单照片。'
-                : 'You can still continue by selecting menu photos from your album.'}
-            </p>
-            <Button3D
-              variant="secondary"
-              onClick={openAlbumPicker}
-              className="!bg-white/20 !border-white/40 !text-white"
-            >
-              {isZh ? '从相册选择' : 'Choose from Album'}
-            </Button3D>
-          </div>
-        ) : null}
-      </div>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center px-5 pt-4 pb-8 gap-6">
 
-      {/* Thumbnail strip + Analyze button (multi mode only) */}
-      {scannerMode === 'multi' && files.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-[rgba(255,107,53,0.1)]">
-          <div className="flex gap-2 overflow-x-auto flex-1">
-            {previews.map((url, idx) => (
-              <div key={url} className="relative shrink-0">
-                <img
-                  src={url}
-                  alt={`${isZh ? '菜单照片' : 'Menu photo'} ${idx + 1}`}
-                  className="w-14 h-14 rounded-lg object-cover"
-                />
-                <button
-                  onClick={() => removeFile(idx)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center leading-none"
-                  aria-label={`${isZh ? '删除照片' : 'Remove photo'} ${idx + 1}`}
-                >
-                  ×
-                </button>
+        {/* Upload area */}
+        {files.length === 0 ? (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full flex-1 max-h-[420px]"
+          >
+            <Card3D className="w-full h-full min-h-[320px] flex flex-col items-center justify-center gap-4 border-dashed !border-2 !border-[var(--color-sage-border)] hover:!border-[var(--color-sage-primary)] transition-colors cursor-pointer">
+              <MascotImage expression="thinking" size={120} />
+              <p className="text-[var(--color-sage-text)] font-bold text-lg">
+                {isZh ? '拍照或选择菜单照片' : 'Take or choose menu photos'}
+              </p>
+              <p className="text-[var(--color-sage-text-secondary)] text-sm">
+                {isZh ? '支持 1-5 张，AI 会自动识别菜品' : '1-5 photos, AI auto-recognizes dishes'}
+              </p>
+            </Card3D>
+          </button>
+        ) : (
+          <>
+            {/* Photo grid */}
+            <div className="w-full">
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {previews.map((url, idx) => (
+                  <div key={url} className="relative shrink-0">
+                    <img
+                      src={url}
+                      alt={`${isZh ? '菜单照片' : 'Menu photo'} ${idx + 1}`}
+                      className="w-28 h-28 rounded-2xl object-cover border-2 border-[var(--color-sage-border)]"
+                    />
+                    <button
+                      onClick={() => removeFile(idx)}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--color-sage-error)] rounded-full text-white text-sm font-bold flex items-center justify-center shadow-md"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+
+                {/* Add more button */}
+                {!atLimit && (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-28 h-28 shrink-0 rounded-2xl border-2 border-dashed border-[var(--color-sage-border)] flex flex-col items-center justify-center gap-1 hover:border-[var(--color-sage-primary)] transition-colors"
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-sage-text-secondary)" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M12 5V19M5 12H19" />
+                    </svg>
+                    <span className="text-[var(--color-sage-text-secondary)] text-xs font-bold">
+                      {isZh ? '添加' : 'Add'}
+                    </span>
+                  </button>
+                )}
               </div>
-            ))}
-          </div>
-          <Button3D
-            onClick={() => handleConfirm(files)}
-            className="shrink-0"
-          >
-            {isZh ? '确认并分析' : 'Analyze'}
-          </Button3D>
-        </div>
-      )}
+            </div>
 
-      {/* Bottom toolbar */}
-      <div className="flex flex-col items-center gap-3 px-6 pb-8 pt-4">
-        {/* Single/Multi toggle — capsule with orange selected state */}
-        <div className="flex bg-white/10 rounded-full p-0.5">
-          <button
-            onClick={() => setScannerMode('single')}
-            className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
-              scannerMode === 'single'
-                ? 'bg-[var(--color-sage-primary)] text-white'
-                : 'text-white/70 hover:text-white'
-            }`}
-          >
-            {isZh ? '单页' : 'Single'}
-          </button>
-          <button
-            onClick={() => setScannerMode('multi')}
-            className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
-              scannerMode === 'multi'
-                ? 'bg-[var(--color-sage-primary)] text-white'
-                : 'text-white/70 hover:text-white'
-            }`}
-          >
-            {isZh ? '多页' : 'Multi'}
-          </button>
-        </div>
+            {/* Mascot encouragement */}
+            <div className="flex items-center gap-3">
+              <MascotImage expression="excited" size={56} />
+              <p className="text-[var(--color-sage-text-secondary)] text-sm font-semibold">
+                {isZh
+                  ? `已选 ${files.length} 张照片${files.length < 3 ? '，多拍几张识别更准确哦' : '，看起来不错！'}`
+                  : `${files.length} photo${files.length > 1 ? 's' : ''} selected${files.length < 3 ? '. More photos = better results!' : '. Looks good!'}`
+                }
+              </p>
+            </div>
+          </>
+        )}
 
-        {/* Shutter row: album (left) + shutter (center) + placeholder (right) */}
-        <div className="flex items-center gap-8">
-          <button
-            onClick={openAlbumPicker}
-            className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors disabled:opacity-40"
-            aria-label={isZh ? '从相册选择' : 'Upload from album'}
-            disabled={atLimit}
-          >
-            🖼
-          </button>
+        {/* Spacer */}
+        <div className="flex-1" />
 
-          {/* Orange shutter button with white border + active scale */}
-          <button
-            onClick={openCameraPicker}
-            className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
-            aria-label={isZh ? '拍照' : 'Take photo'}
-            disabled={atLimit || cameraError === 'denied'}
-          >
-            <div className="w-14 h-14 rounded-full bg-[var(--color-sage-primary)]" />
-          </button>
-
-          <div className="w-12" />
+        {/* Action buttons */}
+        <div className="w-full flex flex-col gap-3">
+          {files.length === 0 ? (
+            <Button3D
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full"
+              size="lg"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2 -mt-0.5">
+                <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+              {isZh ? '拍照或选择照片' : 'Take or Choose Photos'}
+            </Button3D>
+          ) : (
+            <Button3D
+              onClick={handleConfirm}
+              className="w-full"
+              size="lg"
+            >
+              {isZh ? `确认并分析（${files.length}张）` : `Analyze ${files.length} Photo${files.length > 1 ? 's' : ''}`}
+            </Button3D>
+          )}
         </div>
       </div>
     </div>
