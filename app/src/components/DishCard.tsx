@@ -44,8 +44,14 @@ export interface DishCardProps {
 export function DishCard({ item, isZh, userAllergens, orderItem, onAdd, onUpdateQty }: DishCardProps) {
   const [expanded, setExpanded] = useState(false);
 
+  // Safe access for new fields (backward compat with cached old data)
+  const allergens = item.allergens ?? [];
+  const dietaryFlags = item.dietaryFlags ?? [];
+  const spiceLevel = item.spiceLevel ?? 0;
+  const calories = item.calories ?? null;
+
   // Allergen matching
-  const matchedAllergens = item.allergens
+  const matchedAllergens = allergens
     .filter((a) => userAllergens.includes(a.type))
     .map((a) => a.type);
   const hasAllergenWarning = matchedAllergens.length > 0;
@@ -107,7 +113,7 @@ export function DishCard({ item, isZh, userAllergens, orderItem, onAdd, onUpdate
           {/* F12: Dietary tags row */}
           <div className="flex flex-wrap gap-1 mt-1.5">
             {/* Allergen pills */}
-            {item.allergens.map((a) => {
+            {allergens.map((a) => {
               const isMatched = matchedAllergens.includes(a.type);
               const label = isZh ? ALLERGEN_LABELS[a.type].zh : ALLERGEN_LABELS[a.type].en;
               const prefix = a.uncertain ? '⚠️ ' : '';
@@ -126,7 +132,7 @@ export function DishCard({ item, isZh, userAllergens, orderItem, onAdd, onUpdate
             })}
 
             {/* Dietary flag pills */}
-            {item.dietaryFlags.map((flag) => {
+            {dietaryFlags.map((flag) => {
               const label = isZh ? DIETARY_LABELS[flag].zh : DIETARY_LABELS[flag].en;
               const isGreen = GREEN_DIETARY.includes(flag);
               return (
@@ -144,16 +150,16 @@ export function DishCard({ item, isZh, userAllergens, orderItem, onAdd, onUpdate
             })}
 
             {/* Spice level */}
-            {item.spiceLevel > 0 && (
+            {spiceLevel > 0 && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-600 font-medium">
-                {'🌶'.repeat(item.spiceLevel)}
+                {'🌶'.repeat(spiceLevel)}
               </span>
             )}
 
             {/* Calories */}
-            {item.calories != null && item.calories > 0 && (
+            {calories != null && calories > 0 && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">
-                ~{item.calories} kcal
+                ~{calories} kcal
               </span>
             )}
           </div>
