@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../hooks/useAppState';
+import { Button3D } from '../components/Button3D';
 import { dlog } from '../utils/debugLog';
 type ScannerMode = 'single' | 'multi';
 
@@ -138,7 +139,7 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
       <div className="flex items-center justify-between px-4 py-3">
         <button
           onClick={handleBack}
-          className="text-white/80 hover:text-white transition-colors text-lg"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors text-lg"
           aria-label={isZh ? '返回' : 'Go back'}
         >
           ← {isZh ? '返回' : 'Back'}
@@ -176,19 +177,20 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
                 ? '你仍然可以继续从相册选择菜单照片。'
                 : 'You can still continue by selecting menu photos from your album.'}
             </p>
-            <button
+            <Button3D
+              variant="secondary"
               onClick={openAlbumPicker}
-              className="px-5 py-2.5 bg-white/20 hover:bg-white/30 rounded-button text-sm font-medium transition-colors"
+              className="!bg-white/20 !border-white/40 !text-white"
             >
               {isZh ? '从相册选择' : 'Choose from Album'}
-            </button>
+            </Button3D>
           </div>
         ) : null}
       </div>
 
       {/* Thumbnail strip + Analyze button (multi mode only) */}
       {scannerMode === 'multi' && files.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2">
+        <div className="flex items-center gap-2 px-4 py-2 bg-[rgba(255,107,53,0.1)]">
           <div className="flex gap-2 overflow-x-auto flex-1">
             {previews.map((url, idx) => (
               <div key={url} className="relative shrink-0">
@@ -207,24 +209,24 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
               </div>
             ))}
           </div>
-          <button
+          <Button3D
             onClick={() => handleConfirm(files)}
-            className="shrink-0 px-4 py-2 bg-brand hover:bg-brand-hover text-white text-sm font-semibold rounded-button transition-colors"
+            className="shrink-0"
           >
-            {isZh ? '去分析' : 'Analyze'}
-          </button>
+            {isZh ? '确认并分析' : 'Analyze'}
+          </Button3D>
         </div>
       )}
 
       {/* Bottom toolbar */}
       <div className="flex flex-col items-center gap-3 px-6 pb-8 pt-4">
-        {/* Single/Multi toggle */}
+        {/* Single/Multi toggle — capsule with orange selected state */}
         <div className="flex bg-white/10 rounded-full p-0.5">
           <button
             onClick={() => setScannerMode('single')}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+            className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
               scannerMode === 'single'
-                ? 'bg-white text-gray-900'
+                ? 'bg-[var(--color-sage-primary)] text-white'
                 : 'text-white/70 hover:text-white'
             }`}
           >
@@ -232,9 +234,9 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
           </button>
           <button
             onClick={() => setScannerMode('multi')}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+            className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
               scannerMode === 'multi'
-                ? 'bg-white text-gray-900'
+                ? 'bg-[var(--color-sage-primary)] text-white'
                 : 'text-white/70 hover:text-white'
             }`}
           >
@@ -253,13 +255,14 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
             🖼
           </button>
 
+          {/* Orange shutter button with white border + active scale */}
           <button
             onClick={openCameraPicker}
-            className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center disabled:opacity-40"
+            className="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center disabled:opacity-40 active:scale-90 transition-transform"
             aria-label={isZh ? '拍照' : 'Take photo'}
             disabled={atLimit || cameraError === 'denied'}
           >
-            <div className="w-14 h-14 rounded-full bg-white" />
+            <div className="w-14 h-14 rounded-full bg-[var(--color-sage-primary)]" />
           </button>
 
           <div className="w-12" />

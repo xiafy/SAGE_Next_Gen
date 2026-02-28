@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { TopBar } from '../components/TopBar';
+import { Card3D } from '../components/Card3D';
+import { Button3D } from '../components/Button3D';
+import { MascotImage } from '../components/MascotImage';
 
 function usePriceFormatter(currency?: string, language?: string) {
   return useMemo(() => {
@@ -26,40 +29,39 @@ export function OrderCardView() {
   );
 
   return (
-    <div className="flex flex-col min-h-dvh bg-surface">
+    <div className="flex flex-col min-h-dvh bg-[var(--color-sage-bg)]">
       <TopBar
         title={isZh ? '点餐单' : 'Order Card'}
         onBack={() => dispatch({ type: 'NAV_TO', view: 'chat' })}
       />
 
       {/* Order items */}
-      <div className="flex-1 px-4 py-4">
+      <div className="flex-1 px-4 py-4 space-y-3">
         {state.orderItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-text-muted">
-            <span className="text-4xl">🍽</span>
-            <p className="text-sm">{isZh ? '还没有加入菜品，去和 AI 聊聊吧～' : 'No dishes yet — chat with AI to get started!'}</p>
-            <button
-              onClick={() => dispatch({ type: 'NAV_TO', view: 'chat' })}
-              className="text-sm text-brand hover:text-brand-hover transition-colors"
-            >
-              {isZh ? '去聊聊' : 'Start chatting'}
-            </button>
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <MascotImage expression="confused" size={160} />
+            <p className="text-base font-bold text-[var(--color-sage-text)]">
+              {isZh ? '还没有加入菜品' : 'No dishes yet'}
+            </p>
+            <p className="text-sm text-[var(--color-sage-text-secondary)]">
+              {isZh ? '去扫描菜单，让 AI 帮你推荐！' : 'Scan a menu and let AI recommend dishes!'}
+            </p>
+            <Button3D onClick={() => dispatch({ type: 'NAV_TO', view: 'scanner' })}>
+              {isZh ? '去扫描菜单' : 'Scan Menu'}
+            </Button3D>
           </div>
         ) : (
           state.orderItems.map((oi) => (
-            <div
-              key={oi.menuItem.id}
-              className="flex items-center justify-between py-4 border-b border-border"
-            >
+            <Card3D key={oi.menuItem.id} className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary">
+                <p className="text-sm font-bold text-[var(--color-sage-text)]">
                   {oi.menuItem.nameOriginal}
                 </p>
-                <p className="text-xs text-text-muted">{oi.menuItem.nameTranslated}</p>
+                <p className="text-xs text-[var(--color-sage-text-secondary)]">{oi.menuItem.nameTranslated}</p>
               </div>
 
               {/* Quantity controls */}
-              <div className="flex items-center gap-3 mx-4">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() =>
                     dispatch({
@@ -68,12 +70,12 @@ export function OrderCardView() {
                       quantity: oi.quantity - 1,
                     })
                   }
-                  className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-text-secondary hover:border-brand hover:text-brand transition-colors text-sm"
+                  className="btn-3d btn-3d-secondary w-8 h-8 !p-0 flex items-center justify-center rounded-full text-sm"
                   aria-label={isZh ? `减少 ${oi.menuItem.nameOriginal}` : `Decrease ${oi.menuItem.nameOriginal}`}
                 >
                   −
                 </button>
-                <span className="text-sm font-medium w-5 text-center">
+                <span className="text-sm font-bold w-5 text-center text-[var(--color-sage-text)]">
                   {oi.quantity}
                 </span>
                 <button
@@ -84,45 +86,46 @@ export function OrderCardView() {
                       quantity: oi.quantity + 1,
                     })
                   }
-                  className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-text-secondary hover:border-brand hover:text-brand transition-colors text-sm"
+                  className="btn-3d btn-3d-secondary w-8 h-8 !p-0 flex items-center justify-center rounded-full text-sm"
                   aria-label={isZh ? `增加 ${oi.menuItem.nameOriginal}` : `Increase ${oi.menuItem.nameOriginal}`}
                 >
                   +
                 </button>
               </div>
 
-              <p className="text-sm font-semibold text-text-primary w-16 text-right">
+              <p className="text-sm font-bold text-[var(--color-sage-text)] w-16 text-right">
                 {fmt.format((oi.menuItem.price ?? 0) * oi.quantity)}
               </p>
 
               {/* Delete button */}
               <button
                 onClick={() => dispatch({ type: 'REMOVE_FROM_ORDER', itemId: oi.menuItem.id })}
-                className="ml-2 w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors text-sm"
+                className="ml-1 w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[var(--color-sage-text-secondary)] hover:text-[var(--color-sage-error)] hover:bg-[var(--color-sage-error)]/10 transition-colors text-sm"
                 aria-label={isZh ? `删除 ${oi.menuItem.nameOriginal}` : `Remove ${oi.menuItem.nameOriginal}`}
               >
                 ✕
               </button>
-            </div>
+            </Card3D>
           ))
         )}
       </div>
 
       {/* Footer */}
       {state.orderItems.length > 0 && (
-        <div className="px-4 pb-8 pt-4 border-t border-border">
+        <div className="px-4 pb-8 pt-4 border-t-2 border-[var(--color-sage-border)]">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-base font-medium text-text-secondary">
+            <span className="text-base font-bold text-[var(--color-sage-text-secondary)]">
               {isZh ? `共 ${totalQty} 道菜` : `${totalQty} items`}
             </span>
-            <span className="text-xl font-bold text-text-primary">{fmt.format(totalPrice)}</span>
+            <span className="text-2xl font-extrabold text-[var(--color-sage-primary)]">{fmt.format(totalPrice)}</span>
           </div>
-          <button
+          <Button3D
+            size="lg"
+            className="w-full text-lg"
             onClick={() => dispatch({ type: 'NAV_TO', view: 'waiter' })}
-            className="w-full py-4 bg-brand hover:bg-brand-hover text-white font-semibold rounded-button transition-colors"
           >
-            {isZh ? '展示给服务员' : 'Show to waiter'}
-          </button>
+            {isZh ? '展示给服务员' : 'Show to Waiter'}
+          </Button3D>
         </div>
       )}
     </div>
