@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
+import { MascotImage } from '../components/MascotImage';
+import { Button3D } from '../components/Button3D';
 
 interface WakeLockSentinelLike {
   released: boolean;
@@ -82,10 +84,18 @@ export function WaiterModeView() {
 
   return (
     <div className="flex flex-col min-h-dvh bg-black text-white">
+      {/* Mascot header */}
+      <div className="flex justify-center pt-6">
+        <MascotImage expression="waving" size={48} />
+      </div>
+
       {/* Menu items — large text for waiter readability */}
-      <div className="flex-1 flex flex-col justify-center px-8 py-12 gap-6">
+      <div className="flex-1 flex flex-col justify-center px-8 py-8 gap-4">
         {state.orderItems.map((oi) => (
-          <div key={oi.menuItem.id} className="flex items-baseline justify-between">
+          <div
+            key={oi.menuItem.id}
+            className="flex items-baseline justify-between rounded-xl bg-white/5 px-5 py-4"
+          >
             <div className="min-w-0">
               <span className="text-[30px] leading-tight font-semibold break-words">{oi.menuItem.nameOriginal}</span>
               <p className="text-lg text-white/60">×{oi.quantity}</p>
@@ -113,14 +123,15 @@ export function WaiterModeView() {
         )}
       </div>
 
-      {/* Done button */}
+      {/* Done button — white 3D */}
       <div className="px-6 pb-10">
-        <button
+        <Button3D
+          variant="white"
+          className="w-full"
           onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
-          className="w-full py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-button transition-colors text-base"
         >
           {isZh ? '完成' : 'Done'}
-        </button>
+        </Button3D>
       </div>
     </div>
   );

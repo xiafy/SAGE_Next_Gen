@@ -93,6 +93,14 @@ body {
   box-shadow: 0 4px 0 #D32F2F;
 }
 
+/* White (for dark backgrounds — waiter mode) */
+.btn-3d-white {
+  background: #fff;
+  color: var(--color-sage-text);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 0 #C8C8C8;
+}
+
 /* Ghost */
 .btn-3d-ghost {
   background: transparent;

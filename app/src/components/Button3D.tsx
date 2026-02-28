@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'white';
 type Size = 'sm' | 'md' | 'lg';
 
 interface Button3DProps extends ButtonHTMLAttributes<HTMLButtonElement> {
