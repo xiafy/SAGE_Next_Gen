@@ -95,6 +95,7 @@ export async function handleAnalyze(
   // 主模型：qwen3-vl-flash（速度优先，5x faster than plus）
   // 降级：qwen3-vl-plus（质量更高但慢）
   let rawText: string;
+  let modelUsed: 'qwen3-vl-flash' | 'qwen3-vl-plus' = 'qwen3-vl-flash';
   try {
     rawText = await streamAggregate({
       model:     'qwen3-vl-flash',
@@ -103,6 +104,7 @@ export async function handleAnalyze(
       timeoutMs: 30_000,
       requestId,
     });
+    modelUsed = 'qwen3-vl-flash';
   } catch (err) {
     const errStr = String(err);
     if (errStr.includes('429') || errStr.includes('rate')) {
@@ -120,49 +122,75 @@ export async function handleAnalyze(
         timeoutMs: 60_000,
         requestId,
       });
+      modelUsed = 'qwen3-vl-plus';
     } catch (fallbackErr) {
-      const isTimeout = String(fallbackErr).includes('timeout') || String(fallbackErr).includes('AbortError');
-      return errorResponse(
-        isTimeout ? 'AI_TIMEOUT' : 'AI_UNAVAILABLE',
-        request, env, requestId,
-      );
+      const err2 = String(fallbackErr);
+      const isTimeout = err2.includes('timeout') || err2.includes('AbortError');
+
+      // one last retry for transient upstream failures
+      if (!isTimeout) {
+        try {
+          rawText = await streamAggregate({
+            model:     'qwen3-vl-flash',
+            messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
+            apiKey:    env.BAILIAN_API_KEY,
+            timeoutMs: 30_000,
+            requestId,
+          });
+          modelUsed = 'qwen3-vl-flash';
+        } catch (lastErr) {
+          const isLastTimeout = String(lastErr).includes('timeout') || String(lastErr).includes('AbortError');
+          return errorResponse(isLastTimeout ? 'AI_TIMEOUT' : 'AI_UNAVAILABLE', request, env, requestId);
+        }
+      } else {
+        return errorResponse('AI_TIMEOUT', request, env, requestId);
+      }
     }
   }
 
-  // Zod 校验
-  let jsonStr: string;
+  async function parseAndValidate(text: string) {
+    const jsonStr = extractJson(text);
+    const aiResult = JSON.parse(jsonStr);
+    const validated = MenuAnalyzeResultSchema.safeParse(aiResult);
+    if (!validated.success) {
+      throw new Error('zod_invalid');
+    }
+    const result = { ...validated.data, processingMs: Date.now() - startMs };
+    if (result.items.length === 0) {
+      throw new Error('zero_items');
+    }
+    return result;
+  }
+
+  let result: ReturnType<typeof parseAndValidate> extends Promise<infer R> ? R : never;
   try {
-    jsonStr = extractJson(rawText);
-  } catch {
-    logger.error('analyze: failed to extract JSON', { requestId, raw: rawText.slice(0, 200) });
-    return errorResponse('AI_INVALID_RESPONSE', request, env, requestId);
-  }
-
-  let aiResult: unknown;
-  try {
-    aiResult = JSON.parse(jsonStr);
-  } catch {
-    logger.error('analyze: JSON parse failed', { requestId, raw: jsonStr.slice(0, 200) });
-    return errorResponse('AI_INVALID_RESPONSE', request, env, requestId);
-  }
-
-  const validated = MenuAnalyzeResultSchema.safeParse(aiResult);
-  if (!validated.success) {
-    logger.error('analyze: Zod validation failed', { requestId, issues: validated.error.issues, raw: jsonStr.slice(0, 300) });
-    return errorResponse('AI_INVALID_RESPONSE', request, env, requestId);
-  }
-
-  const result = { ...validated.data, processingMs: Date.now() - startMs };
-
-  // Guardrail: empty items should be treated as recognition failure (not a successful empty menu)
-  if (result.items.length === 0) {
-    logger.warn('analyze: zero items extracted', {
-      requestId,
-      processingMs: result.processingMs,
-      categoryCount: result.categories.length,
-      lang: result.detectedLanguage,
-    });
-    return errorResponse('AI_INVALID_RESPONSE', request, env, requestId, 'No menu items extracted');
+    result = await parseAndValidate(rawText);
+  } catch (firstParseErr) {
+    // flash occasionally returns malformed/incomplete JSON; retry once with plus
+    if (modelUsed === 'qwen3-vl-flash') {
+      logger.warn('analyze: flash parse/validation failed, retrying with plus', {
+        requestId,
+        err: String(firstParseErr),
+      });
+      try {
+        rawText = await streamAggregate({
+          model:     'qwen3-vl-plus',
+          messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
+          apiKey:    env.BAILIAN_API_KEY,
+          timeoutMs: 60_000,
+          requestId,
+        });
+        result = await parseAndValidate(rawText);
+        modelUsed = 'qwen3-vl-plus';
+      } catch (retryErr) {
+        const isTimeout = String(retryErr).includes('timeout') || String(retryErr).includes('AbortError');
+        logger.error('analyze: plus retry after parse failure also failed', { requestId, err: String(retryErr) });
+        return errorResponse(isTimeout ? 'AI_TIMEOUT' : 'AI_INVALID_RESPONSE', request, env, requestId);
+      }
+    } else {
+      logger.error('analyze: parse/validation failed', { requestId, err: String(firstParseErr) });
+      return errorResponse('AI_INVALID_RESPONSE', request, env, requestId);
+    }
   }
 
   logger.info('analyze: success', {

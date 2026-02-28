@@ -409,7 +409,7 @@ export function AgentChatView() {
           <p className="text-[var(--color-sage-text-secondary)] text-center text-sm font-semibold">
             {state.menuData
               ? (isZh ? 'AI 对话出现问题，要重试吗？' : 'AI chat failed. Try again?')
-              : (isZh ? '菜单识别失败，要重新拍摄吗？' : 'Menu recognition failed. Retake photo?')}
+              : (isZh ? '菜单识别未能完成，可能是网络波动，可以重试或重新拍摄' : 'Recognition failed. You can retry or take a new photo.')}
           </p>
           <div className="flex gap-3">
             {state.menuData ? (
@@ -437,17 +437,32 @@ export function AgentChatView() {
                 </Button3D>
               </>
             ) : (
-              <Button3D
-                variant="primary"
-                size="sm"
-                onClick={() => {
-                  dispatch({ type: 'SET_CHAT_PHASE', phase: 'pre_chat' });
-                  dispatch({ type: 'NAV_TO', view: 'scanner' });
-                }}
-                aria-label={isZh ? '重新扫描' : 'Rescan menu'}
-              >
-                {isZh ? '重新扫描' : 'Rescan Menu'}
-              </Button3D>
+              <>
+                {state.analyzingFiles && state.analyzingFiles.length > 0 && (
+                  <Button3D
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      analyzeTriggeredRef.current = false;
+                      dispatch({ type: 'SET_CHAT_PHASE', phase: 'pre_chat' });
+                    }}
+                    aria-label={isZh ? '重试识别' : 'Retry recognition'}
+                  >
+                    {isZh ? '重试' : 'Retry'}
+                  </Button3D>
+                )}
+                <Button3D
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    dispatch({ type: 'SET_CHAT_PHASE', phase: 'pre_chat' });
+                    dispatch({ type: 'NAV_TO', view: 'scanner' });
+                  }}
+                  aria-label={isZh ? '重新扫描' : 'Rescan menu'}
+                >
+                  {isZh ? '重新扫描' : 'Rescan'}
+                </Button3D>
+              </>
             )}
           </div>
         </div>
