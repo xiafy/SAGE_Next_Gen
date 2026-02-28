@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { MascotImage } from '../components/MascotImage';
 import { Button3D } from '../components/Button3D';
@@ -15,30 +15,7 @@ export function WaiterModeView() {
   const [wakeLockUnavailable, setWakeLockUnavailable] = useState(false);
   const isZh = state.preferences.language === 'zh';
 
-  const currencyCode = useMemo(() => {
-    const candidate = state.menuData?.currency?.toUpperCase();
-    return candidate && /^[A-Z]{3}$/.test(candidate) ? candidate : 'CNY';
-  }, [state.menuData?.currency]);
 
-  const priceFormatter = useMemo(() => {
-    try {
-      return new Intl.NumberFormat(state.preferences.language === 'zh' ? 'zh-CN' : 'en-US', {
-        style: 'currency',
-        currency: currencyCode,
-        maximumFractionDigits: 2,
-      });
-    } catch {
-      return new Intl.NumberFormat(state.preferences.language === 'zh' ? 'zh-CN' : 'en-US', {
-        style: 'decimal',
-        maximumFractionDigits: 2,
-      });
-    }
-  }, [currencyCode, state.preferences.language]);
-
-  const total = useMemo(
-    () => state.orderItems.reduce((sum, oi) => sum + (oi.menuItem.price ?? 0) * oi.quantity, 0),
-    [state.orderItems],
-  );
 
   useEffect(() => {
     const wakeLockApi = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> } }).wakeLock;
@@ -98,10 +75,9 @@ export function WaiterModeView() {
           >
             <div className="min-w-0">
               <span className="text-[30px] leading-tight font-semibold break-words">{oi.menuItem.nameOriginal}</span>
-              <p className="text-lg text-white/60">×{oi.quantity}</p>
             </div>
             <span className="text-[28px] font-medium ml-4 shrink-0">
-              {priceFormatter.format((oi.menuItem.price ?? 0) * oi.quantity)}
+              ×{oi.quantity}
             </span>
           </div>
         ))}
@@ -109,9 +85,8 @@ export function WaiterModeView() {
           <p className="text-white/40 text-center text-lg">{isZh ? '暂无点单' : 'No items ordered'}</p>
         )}
         {state.orderItems.length > 0 && (
-          <div className="pt-4 border-t border-white/20 flex items-center justify-between">
-            <span className="text-xl text-white/70">{isZh ? '合计' : 'Total'}</span>
-            <span className="text-[30px] font-bold">{priceFormatter.format(total)}</span>
+          <div className="pt-4 border-t border-white/20 flex items-center justify-center">
+            <span className="text-xl text-white/70">{isZh ? `共 ${state.orderItems.reduce((s, o) => s + o.quantity, 0)} 道菜` : `${state.orderItems.reduce((s, o) => s + o.quantity, 0)} items`}</span>
           </div>
         )}
         {wakeLockUnavailable && (

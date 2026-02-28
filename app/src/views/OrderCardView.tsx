@@ -54,14 +54,19 @@ export function OrderCardView() {
           state.orderItems.map((oi) => (
             <Card3D key={oi.menuItem.id} className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-[var(--color-sage-text)]">
+                <p className="text-sm font-bold text-[var(--color-sage-text)] truncate">
                   {oi.menuItem.nameOriginal}
                 </p>
-                <p className="text-xs text-[var(--color-sage-text-secondary)]">{oi.menuItem.nameTranslated}</p>
+                <p className="text-xs text-[var(--color-sage-text-secondary)] truncate">{oi.menuItem.nameTranslated}</p>
               </div>
 
+              {/* Price */}
+              <p className="text-sm font-bold text-[var(--color-sage-text)] shrink-0">
+                {fmt.format((oi.menuItem.price ?? 0) * oi.quantity)}
+              </p>
+
               {/* Quantity controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() =>
                     dispatch({
@@ -92,19 +97,6 @@ export function OrderCardView() {
                   +
                 </button>
               </div>
-
-              <p className="text-sm font-bold text-[var(--color-sage-text)] w-16 text-right">
-                {fmt.format((oi.menuItem.price ?? 0) * oi.quantity)}
-              </p>
-
-              {/* Delete button */}
-              <button
-                onClick={() => dispatch({ type: 'REMOVE_FROM_ORDER', itemId: oi.menuItem.id })}
-                className="ml-1 w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[var(--color-sage-text-secondary)] hover:text-[var(--color-sage-error)] hover:bg-[var(--color-sage-error)]/10 transition-colors text-sm"
-                aria-label={isZh ? `删除 ${oi.menuItem.nameOriginal}` : `Remove ${oi.menuItem.nameOriginal}`}
-              >
-                ✕
-              </button>
             </Card3D>
           ))
         )}
