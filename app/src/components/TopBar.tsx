@@ -11,10 +11,10 @@ export function TopBar({ title, onBack, rightAction }: TopBarProps) {
         {onBack && (
           <button
             onClick={onBack}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-sage-text-secondary)] hover:text-[var(--color-sage-text)] hover:bg-[var(--color-sage-primary-light)] transition-colors text-lg"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--color-sage-primary-light)] text-[var(--color-sage-primary)] hover:bg-[var(--color-sage-primary)] hover:text-white active:scale-90 transition-all font-bold"
             aria-label="Go back"
           >
-            ←
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18L9 12L15 6"/></svg>
           </button>
         )}
       </div>

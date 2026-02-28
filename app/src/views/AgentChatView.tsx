@@ -413,22 +413,33 @@ export function AgentChatView() {
         </div>
       )}
 
-      {/* Progress bar */}
-      {showProgressBar && (
-        <div className="px-4 py-3">
-          <div className="bg-[var(--color-sage-primary-light)] rounded-[var(--radius-md)] px-4 py-2.5 flex items-center gap-3">
-            <MascotImage expression="thinking" size={28} className="rounded-full" />
-            <div className="flex-1">
-              <div className="h-2 bg-[var(--color-sage-border)] rounded-full overflow-hidden">
-                <div className="h-full bg-[var(--color-sage-primary)] rounded-full animate-pulse w-2/3" />
+      {/* Progress bar - phase-aware */}
+      {showProgressBar && (() => {
+        // pre_chat: uploading & recognizing menu (0-60%)
+        // handing_off w/o menuData: still recognizing (40-60%)
+        // handing_off w/ menuData: AI analyzing (60-90%)
+        const isAnalyzing = state.chatPhase === 'handing_off' && state.menuData !== null;
+        const label = isAnalyzing
+          ? (isZh ? '分析推荐中…' : 'Analyzing…')
+          : (isZh ? '菜单识别中…' : 'Scanning menu…');
+        const progressClass = isAnalyzing ? 'animate-progress-analyze' : 'animate-progress-scan';
+
+        return (
+          <div className="px-4 py-3">
+            <div className="bg-[var(--color-sage-primary-light)] rounded-[var(--radius-md)] px-4 py-2.5 flex items-center gap-3">
+              <MascotImage expression="thinking" size={28} className="rounded-full" />
+              <div className="flex-1">
+                <div className="h-2.5 bg-[var(--color-sage-border)] rounded-full overflow-hidden">
+                  <div className={`h-full bg-gradient-to-r from-[var(--color-sage-primary)] to-[var(--color-sage-accent)] rounded-full transition-all ${progressClass}`} />
+                </div>
               </div>
+              <span className="text-sm text-[var(--color-sage-primary)] font-bold whitespace-nowrap">
+                {label}
+              </span>
             </div>
-            <span className="text-sm text-[var(--color-sage-primary)] font-bold whitespace-nowrap">
-              {state.chatPhase === 'handing_off' ? (isZh ? '分析中…' : 'Analyzing…') : (isZh ? '识别中…' : 'Scanning…')}
-            </span>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">

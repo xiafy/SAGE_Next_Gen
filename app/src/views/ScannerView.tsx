@@ -3,6 +3,7 @@ import { useAppState } from '../hooks/useAppState';
 import { Button3D } from '../components/Button3D';
 import { Card3D } from '../components/Card3D';
 import { MascotImage } from '../components/MascotImage';
+import { TopBar } from '../components/TopBar';
 import { dlog } from '../utils/debugLog';
 
 interface ScannerViewProps {
@@ -81,17 +82,10 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
       />
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <button
-          onClick={handleBack}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[var(--color-sage-text)] hover:text-[var(--color-sage-primary)] transition-colors text-base font-bold"
-        >
-          ← {isZh ? '返回' : 'Back'}
-        </button>
-        <span className="text-[var(--color-sage-text-secondary)] text-sm font-bold">
-          {files.length}/5
-        </span>
-      </div>
+      <TopBar
+        title={`${files.length}/5`}
+        onBack={handleBack}
+      />
 
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center px-5 pt-4 pb-8 gap-6">
@@ -114,19 +108,21 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
           </button>
         ) : (
           <>
-            {/* Photo grid */}
-            <div className="w-full">
-              <div className="flex gap-3 overflow-x-auto pb-2">
+            {/* Photo grid - 2 column layout */}
+            <div className="w-full flex-1 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4 pt-1 px-1">
                 {previews.map((url, idx) => (
-                  <div key={url} className="relative shrink-0">
-                    <img
-                      src={url}
-                      alt={`${isZh ? '菜单照片' : 'Menu photo'} ${idx + 1}`}
-                      className="w-28 h-28 rounded-2xl object-cover border-2 border-[var(--color-sage-border)]"
-                    />
+                  <div key={url} className="relative">
+                    <Card3D className="!p-0 overflow-hidden rounded-2xl">
+                      <img
+                        src={url}
+                        alt={`${isZh ? '菜单照片' : 'Menu photo'} ${idx + 1}`}
+                        className="w-full aspect-[4/3] object-cover"
+                      />
+                    </Card3D>
                     <button
                       onClick={() => removeFile(idx)}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--color-sage-error)] rounded-full text-white text-sm font-bold flex items-center justify-center shadow-md"
+                      className="absolute -top-2.5 -right-2.5 z-10 w-8 h-8 bg-[var(--color-sage-error)] rounded-full text-white text-base font-bold flex items-center justify-center shadow-md active:scale-90 transition-transform"
                     >
                       ×
                     </button>
@@ -137,12 +133,12 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
                 {!atLimit && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-28 h-28 shrink-0 rounded-2xl border-2 border-dashed border-[var(--color-sage-border)] flex flex-col items-center justify-center gap-1 hover:border-[var(--color-sage-primary)] transition-colors"
+                    className="aspect-[4/3] rounded-2xl border-3 border-dashed border-[var(--color-sage-border)] flex flex-col items-center justify-center gap-2 hover:border-[var(--color-sage-primary)] active:scale-95 transition-all"
                   >
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-sage-text-secondary)" strokeWidth="2.5" strokeLinecap="round">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-sage-text-secondary)" strokeWidth="2.5" strokeLinecap="round">
                       <path d="M12 5V19M5 12H19" />
                     </svg>
-                    <span className="text-[var(--color-sage-text-secondary)] text-xs font-bold">
+                    <span className="text-[var(--color-sage-text-secondary)] text-sm font-bold">
                       {isZh ? '添加' : 'Add'}
                     </span>
                   </button>
@@ -150,9 +146,9 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
               </div>
             </div>
 
-            {/* Mascot encouragement */}
-            <div className="flex items-center gap-3">
-              <MascotImage expression="excited" size={56} />
+            {/* Mascot encouragement - anchored near bottom */}
+            <div className="flex items-center gap-3 w-full px-2">
+              <MascotImage expression="excited" size={48} />
               <p className="text-[var(--color-sage-text-secondary)] text-sm font-semibold">
                 {isZh
                   ? `已选 ${files.length} 张照片${files.length < 3 ? '，多拍几张识别更准确哦' : '，看起来不错！'}`
@@ -162,9 +158,6 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
             </div>
           </>
         )}
-
-        {/* Spacer */}
-        <div className="flex-1" />
 
         {/* Action buttons */}
         <div className="w-full flex flex-col gap-3">

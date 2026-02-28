@@ -11,7 +11,7 @@
 **阶段**: Sprint 2 进行中
 **当前子阶段**: 感知体系接入 + 质量加固
 **整体进度**: Sprint 1 ██████████ 100% ✅ | Sprint 2 ██████░░░░░ 60%
-**最后更新**: 2026-02-27 15:21
+**最后更新**: 2026-02-28 14:55
 
 ## 🌐 线上地址
 - **App**: https://sage-next-gen.pages.dev
@@ -226,6 +226,12 @@
 ---
 
 ## 📝 工作日志
+
+### 2026-02-28（流程固化）
+
+- 新增 `docs/engineering-guardrails.md`：将本次 Scanner 4 轮迭代教训固化为强制流程（Spec → Test → Code → 本地预览 → Build → Deploy 回归）
+- 新增 Hotfix 硬规则：公共组件全局回归、进度条绑定状态机、overflow-hidden 裁切检查、缓存优先排查
+- 新增提交前 Checklist，作为后续 UI/bugfix 任务的门禁
 
 ### 2026-02-26（Sprint 1 开发日）
 

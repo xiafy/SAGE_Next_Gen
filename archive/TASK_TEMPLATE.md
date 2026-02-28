@@ -16,7 +16,19 @@
 - `02_product/PRD.md` 的 [F编号] 章节 — 验收标准
 - `04_technical/API_DESIGN.md` 的 [§编号] — API 契约
 - `05_implementation/shared/types.ts` — 权威类型定义
+- `docs/engineering-guardrails.md` — Hotfix/UI 研发门禁
 - [其他相关文件，如 worker handler 或现有 view 代码]
+
+## 硬门禁（必须按顺序执行）
+
+- [ ] G1 Spec：已补最小规格（问题/目标行为/AC）
+- [ ] G2 Test：已定义最小验证（人工用例或自动化 smoke）
+- [ ] G3 Code：再开始编码
+- [ ] G4 Local Preview：`npm run dev` 走完目标路径
+- [ ] G5 Build：`npm run build` 通过
+- [ ] G6 Deploy Regression：上线后回归 + 缓存排查（hash/强刷/独立 deployment URL）
+
+> 说明：任何 hotfix/UI 修复也不能跳过 G1/G2。
 
 ## PRD 验收标准清单（完成后逐条确认）
 
@@ -48,9 +60,13 @@ grep -n "import.*shared/types" src/api/         # 确认从 shared 导入
 
 1. `npx tsc --noEmit` — 零错误
 2. `pnpm build` — 零警告
-3. 上方"PRD 验收标准清单"全部打 ✅
-4. 上方"契约断言"全部 grep 通过
-5. 状态机 trace：手动确认主路径 home → scanner → chat → order → waiter 无断裂
+3. 上方“硬门禁 G1~G6”全部打 ✅
+4. 上方"PRD 验收标准清单"全部打 ✅
+5. 上方"契约断言"全部 grep 通过
+6. 若改了公共组件（TopBar/Button/Card 等），全局 grep 使用点并逐页回归
+7. 若涉及进度/动画，确认已映射真实状态机（禁止假进度）
+8. 若有浮层按钮，检查 `overflow-hidden` 裁切与点击热区
+9. 状态机 trace：手动确认主路径 home → scanner → chat → order → waiter 无断裂
 
 ## 完成信号
 
