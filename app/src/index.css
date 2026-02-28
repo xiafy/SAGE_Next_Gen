@@ -1,30 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #6366F1;
-  --color-brand-hover: #4f46e5;
-  --color-brand-light: #eef2ff;
-  --color-surface: #ffffff;
-  --color-surface-secondary: #f8fafc;
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-text-muted: #94a3b8;
-  --color-border: #e2e8f0;
-  --color-error: #ef4444;
-  --color-success: #22c55e;
-  --font-family-sans: 'Inter', system-ui, sans-serif;
-  --border-radius-card: 16px;
-  --border-radius-button: 12px;
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  /* ── SAGE Duolingo-style Color Tokens ── */
+  --color-sage-primary: #FF6B35;
+  --color-sage-primary-dark: #E55A2B;
+  --color-sage-primary-light: #FFF0E8;
+  --color-sage-secondary: #2EC4B6;
+  --color-sage-accent: #FFBF69;
+  --color-sage-success: #4CAF50;
+  --color-sage-error: #FF5252;
+  --color-sage-bg: #FFFBF5;
+  --color-sage-card: #FFFFFF;
+  --color-sage-text: #2D2D2D;
+  --color-sage-text-secondary: #8E8E8E;
+  --color-sage-border: #E8E0D8;
+
+  /* ── Radius Tokens ── */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* ── Font ── */
+  --font-family-sans: 'Nunito', 'PingFang SC', 'Noto Sans SC', system-ui, sans-serif;
+
+  /* ── Shadow ── */
+  --shadow-sage: 0 4px 0 #E8E0D8;
 }
 
+/* ── Global base ── */
 body {
   margin: 0;
   font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
+  background-color: var(--color-sage-bg);
+  color: var(--color-sage-text);
 }
 
 #root {
@@ -34,3 +45,133 @@ body {
   position: relative;
   overflow-x: hidden;
 }
+
+/* ── 3D Button System ── */
+.btn-3d {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: none !important;
+}
+.btn-3d:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Primary */
+.btn-3d-primary {
+  background: var(--color-sage-primary);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 0 var(--color-sage-primary-dark);
+}
+
+/* Secondary */
+.btn-3d-secondary {
+  background: #fff;
+  color: var(--color-sage-primary);
+  border: 2px solid var(--color-sage-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 0 var(--color-sage-border);
+}
+
+/* Danger */
+.btn-3d-danger {
+  background: var(--color-sage-error);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 0 #D32F2F;
+}
+
+/* Ghost */
+.btn-3d-ghost {
+  background: transparent;
+  color: var(--color-sage-text);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+.btn-3d-ghost:active {
+  transform: none;
+  background: var(--color-sage-primary-light);
+}
+
+/* Size: sm */
+.btn-3d-sm {
+  font-size: 14px;
+  padding: 8px 16px;
+}
+/* Size: md (default) */
+.btn-3d-md {
+  font-size: 16px;
+  padding: 14px 28px;
+}
+/* Size: lg */
+.btn-3d-lg {
+  font-size: 18px;
+  padding: 18px 36px;
+}
+
+/* ── 3D Card ── */
+.card-3d {
+  background: var(--color-sage-card);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-sage-border);
+  box-shadow: 0 4px 0 var(--color-sage-border);
+  padding: 16px;
+}
+
+/* ── Chip ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-sage-border);
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.15s;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  color: var(--color-sage-text-secondary);
+}
+.chip-selected {
+  background: var(--color-sage-primary-light);
+  border-color: var(--color-sage-primary);
+  color: var(--color-sage-primary);
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.animate-fade-in { animation: fadeIn 0.2s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+.animate-bounce-in { animation: bounceIn 0.5s ease-out; }
+
+/* ── Utility: hide scrollbar ── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

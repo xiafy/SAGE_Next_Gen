@@ -4,6 +4,9 @@ import { TopBar } from '../components/TopBar';
 import { ChatBubble } from '../components/ChatBubble';
 import { QuickReplies } from '../components/QuickReplies';
 import { LoadingDots } from '../components/LoadingDots';
+import { MascotImage } from '../components/MascotImage';
+import { Card3D } from '../components/Card3D';
+import { Button3D } from '../components/Button3D';
 import { streamChat, buildChatParams } from '../api/chat';
 import { analyzeMenu } from '../api/analyze';
 import type { Message, PreferenceUpdate } from '../types';
@@ -84,7 +87,6 @@ export function AgentChatView() {
   }, []);
 
   // ---------- Handoff detection ----------
-  // Wait for at least one user message in pre-chat, or 8s timeout
   useEffect(() => {
     if (
       state.chatPhase === 'handing_off' &&
@@ -96,10 +98,8 @@ export function AgentChatView() {
       dlog('chat', 'handoff ready: userMsgs=', userMsgCount);
 
       if (userMsgCount > 0) {
-        // User has interacted with pre-chat, proceed immediately
         doHandoff();
       } else {
-        // User hasn't responded yet — wait up to 8s then handoff anyway
         dlog('chat', '⏳ waiting for pre-chat interaction (max 8s)...');
         const timer = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
@@ -136,9 +136,6 @@ export function AgentChatView() {
   }, [state.messages, streamingText, isStreaming]);
 
   // ---------- Cleanup on unmount ----------
-  // NOTE: Do NOT abort analyzeAbortRef here — React StrictMode double-mounts
-  // would kill the in-flight analyze request. Analyze is long-running (30-60s)
-  // and should only be aborted by user action (e.g., navigating away from the app).
   useEffect(() => {
     return () => {
       chatAbortRef.current?.abort();
@@ -164,7 +161,6 @@ export function AgentChatView() {
       dlog('chat', '✅ performAnalyze: success, items=', result.items?.length, 'supplementing=', state.isSupplementing);
       dispatch({ type: 'SET_MENU_DATA', data: result });
 
-      // Path C: supplement — notify user, don't trigger handoff
       if (state.isSupplementing) {
         dlog('chat', '📸 supplement done, notifying user');
         dispatch({
@@ -335,7 +331,7 @@ export function AgentChatView() {
   const showInputArea = state.chatPhase !== 'failed';
 
   return (
-    <div className="flex flex-col h-dvh bg-surface">
+    <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
       <TopBar
         title="SAGE"
         onBack={() => dispatch({ type: 'NAV_TO', view: 'home' })}
@@ -344,7 +340,7 @@ export function AgentChatView() {
             {state.menuData && (
               <button
                 onClick={() => dispatch({ type: 'NAV_TO', view: 'explore' })}
-                className="text-text-secondary hover:text-text-primary transition-colors text-sm"
+                className="text-[var(--color-sage-text-secondary)] hover:text-[var(--color-sage-text)] transition-colors text-sm"
                 aria-label={isZh ? '浏览菜单' : 'Browse menu'}
               >
                 📋
@@ -353,11 +349,11 @@ export function AgentChatView() {
             {state.orderItems.length > 0 && (
               <button
                 onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
-                className="relative text-text-secondary hover:text-text-primary transition-colors text-sm"
+                className="relative text-[var(--color-sage-text-secondary)] hover:text-[var(--color-sage-text)] transition-colors text-sm"
                 aria-label={isZh ? '查看点单' : 'View order'}
               >
                 🍽
-                <span className="absolute -top-1 -right-2 bg-brand text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-2 bg-[var(--color-sage-primary)] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {state.orderItems.length}
                 </span>
               </button>
@@ -369,48 +365,49 @@ export function AgentChatView() {
       {/* Failed state */}
       {state.chatPhase === 'failed' && (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
-          <div className="text-5xl">{state.menuData ? '💬' : '⚠️'}</div>
-          <p className="text-text-secondary text-center text-sm">
+          <MascotImage expression="confused" size={120} />
+          <p className="text-[var(--color-sage-text-secondary)] text-center text-sm font-semibold">
             {state.menuData
               ? (isZh ? 'AI 对话出现问题，要重试吗？' : 'AI chat failed. Try again?')
               : (isZh ? '菜单识别失败，要重新拍摄吗？' : 'Menu recognition failed. Retake photo?')}
           </p>
           <div className="flex gap-3">
             {state.menuData ? (
-              // Chat failed after successful recognition: retry chat or rescan
               <>
-                <button
+                <Button3D
+                  variant="primary"
+                  size="sm"
                   onClick={() => {
                     handoffTriggeredRef.current = false;
                     dispatch({ type: 'SET_CHAT_PHASE', phase: 'handing_off' });
                   }}
-                  className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-medium rounded-button transition-colors"
                   aria-label={isZh ? '重试对话' : 'Retry chat'}
                 >
                   {isZh ? '重试' : 'Retry'}
-                </button>
-                <button
+                </Button3D>
+                <Button3D
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' });
                   }}
-                  className="px-5 py-2.5 bg-surface-secondary hover:bg-border text-text-secondary text-sm font-medium rounded-button border border-border transition-colors"
                   aria-label={isZh ? '继续对话' : 'Continue anyway'}
                 >
                   {isZh ? '继续对话' : 'Continue Anyway'}
-                </button>
+                </Button3D>
               </>
             ) : (
-              // Menu recognition failed: rescan
-              <button
+              <Button3D
+                variant="primary"
+                size="sm"
                 onClick={() => {
                   dispatch({ type: 'SET_CHAT_PHASE', phase: 'pre_chat' });
                   dispatch({ type: 'NAV_TO', view: 'scanner' });
                 }}
-                className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white text-sm font-medium rounded-button transition-colors"
                 aria-label={isZh ? '重新扫描' : 'Rescan menu'}
               >
                 {isZh ? '重新扫描' : 'Rescan Menu'}
-              </button>
+              </Button3D>
             )}
           </div>
         </div>
@@ -419,10 +416,15 @@ export function AgentChatView() {
       {/* Progress bar */}
       {showProgressBar && (
         <div className="px-4 py-3">
-          <div className="bg-brand-light rounded-button px-4 py-2.5 flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-brand font-medium">
-              {state.chatPhase === 'handing_off' ? (isZh ? '正在分析菜单…' : 'Analyzing menu…') : (isZh ? '菜单识别中…' : 'Scanning menu…')}
+          <div className="bg-[var(--color-sage-primary-light)] rounded-[var(--radius-md)] px-4 py-2.5 flex items-center gap-3">
+            <MascotImage expression="thinking" size={28} className="rounded-full" />
+            <div className="flex-1">
+              <div className="h-2 bg-[var(--color-sage-border)] rounded-full overflow-hidden">
+                <div className="h-full bg-[var(--color-sage-primary)] rounded-full animate-pulse w-2/3" />
+              </div>
+            </div>
+            <span className="text-sm text-[var(--color-sage-primary)] font-bold whitespace-nowrap">
+              {state.chatPhase === 'handing_off' ? (isZh ? '分析中…' : 'Analyzing…') : (isZh ? '识别中…' : 'Scanning…')}
             </span>
           </div>
         </div>
@@ -436,53 +438,56 @@ export function AgentChatView() {
 
         {/* Streaming bubble */}
         {isStreaming && streamingText && (
-          <div className="flex justify-start mb-3">
-            <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center shrink-0 mt-1 mr-2">
-              <span className="text-white text-xs font-semibold">S</span>
+          <div className="flex justify-start mb-3 animate-slide-up">
+            <div className="shrink-0 mt-1 mr-2">
+              <MascotImage expression="default" size={32} className="rounded-full" />
             </div>
-            <div className="max-w-[75%] px-4 py-2.5 text-sm leading-relaxed bg-surface-secondary text-text-primary rounded-[16px_16px_16px_4px] shadow-card">
+            <div className="max-w-[75%] px-4 py-2.5 text-[15px] leading-relaxed font-semibold bg-white text-[var(--color-sage-text)] rounded-[var(--radius-md)_var(--radius-md)_var(--radius-md)_4px] border-2 border-[var(--color-sage-border)] shadow-[0_4px_0_var(--color-sage-border)]">
               {streamingText}
-              <span className="inline-block w-0.5 h-4 bg-brand ml-0.5 animate-pulse align-text-bottom" />
+              <span className="inline-block w-0.5 h-4 bg-[var(--color-sage-primary)] ml-0.5 animate-pulse align-text-bottom" />
             </div>
           </div>
         )}
 
         {/* Loading dots */}
-        {isStreaming && !streamingText && <LoadingDots />}
+        {isStreaming && !streamingText && (
+          <LoadingDots text={isZh ? '正在分析菜单…' : 'Analyzing menu…'} />
+        )}
 
         {/* Recommendation cards */}
         {recommendations.length > 0 && !isStreaming && (
-          <div className="flex flex-col gap-2 mb-3 ml-9">
+          <div className="flex flex-col gap-3 mb-3 ml-10">
             {recommendations.map((rec) => {
               const item = state.menuData?.items.find((i) => i.id === rec.itemId);
               if (!item) return null;
               const alreadyAdded = state.orderItems.some((oi) => oi.menuItem.id === rec.itemId);
               return (
-                <div
-                  key={rec.itemId}
-                  className="bg-surface-secondary border border-border rounded-[var(--border-radius-card)] p-3 flex items-center justify-between"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary">{item.nameOriginal}</p>
-                    <p className="text-xs text-text-muted">{item.nameTranslated}</p>
-                    {rec.reason && (
-                      <p className="text-xs text-text-secondary mt-1">{rec.reason}</p>
+                <Card3D key={rec.itemId} className="animate-slide-up">
+                  <p className="text-sm font-bold text-[var(--color-sage-text)]">{item.nameOriginal}</p>
+                  <p className="text-xs text-[var(--color-sage-text-secondary)]">{item.nameTranslated}</p>
+                  {item.priceText && (
+                    <p className="text-base font-bold text-[var(--color-sage-primary)] mt-1">{item.priceText}</p>
+                  )}
+                  {rec.reason && (
+                    <p className="text-xs text-[var(--color-sage-text-secondary)] mt-1">{rec.reason}</p>
+                  )}
+                  <div className="mt-2">
+                    {alreadyAdded ? (
+                      <span className="inline-flex items-center px-3 py-1.5 text-xs font-bold text-[var(--color-sage-success)] bg-green-50 rounded-[var(--radius-sm)]">
+                        {isZh ? '✓ 已加入' : '✓ Added'}
+                      </span>
+                    ) : (
+                      <Button3D
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleAddToOrder(rec)}
+                        aria-label={isZh ? '加入点单' : 'Add to order'}
+                      >
+                        {isZh ? '+ 加入点餐单' : '+ Add to Order'}
+                      </Button3D>
                     )}
                   </div>
-                  {alreadyAdded ? (
-                    <span className="ml-3 shrink-0 px-3 py-1.5 bg-surface-secondary text-text-muted text-xs font-medium rounded-button border border-border">
-                      {isZh ? '✓ 已加入' : '✓ Added'}
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => handleAddToOrder(rec)}
-                      className="ml-3 shrink-0 px-3 py-1.5 bg-brand hover:bg-brand-hover text-white text-xs font-medium rounded-button transition-colors"
-                      aria-label={isZh ? '加入点单' : 'Add to order'}
-                    >
-                      {isZh ? '+ 加入' : '+ Add'}
-                    </button>
-                  )}
-                </div>
+                </Card3D>
               );
             })}
           </div>
@@ -500,13 +505,13 @@ export function AgentChatView() {
       {state.orderItems.length > 0 && (
         <button
           onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
-          className="mx-4 mb-2 py-2.5 bg-brand-light rounded-button flex items-center justify-between px-4"
+          className="mx-4 mb-2 py-2.5 bg-[var(--color-sage-primary-light)] rounded-[var(--radius-md)] flex items-center justify-between px-4 border-2 border-[var(--color-sage-primary)]"
           aria-label={isZh ? '查看点单' : 'View order'}
         >
-          <span className="text-sm text-brand font-medium">
+          <span className="text-sm text-[var(--color-sage-primary)] font-bold">
             {isZh ? `已点 ${state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0)} 道菜` : `${state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0)} items`}
           </span>
-          <span className="text-sm text-brand font-semibold">
+          <span className="text-sm text-[var(--color-sage-primary)] font-extrabold">
             {priceFmt.format(state.orderItems.reduce((sum, oi) => sum + (oi.menuItem.price ?? 0) * oi.quantity, 0))}
           </span>
         </button>
@@ -514,14 +519,14 @@ export function AgentChatView() {
 
       {/* Input area */}
       {showInputArea && (
-        <div className="flex items-center gap-2 px-4 py-3 border-t border-border bg-surface">
+        <div className="flex items-center gap-2 px-4 py-3 border-t-2 border-[var(--color-sage-border)] bg-white">
           {state.chatPhase === 'chatting' && (
             <button
               onClick={() => {
                 dispatch({ type: 'SET_SUPPLEMENTING', value: true });
                 dispatch({ type: 'NAV_TO', view: 'scanner' });
               }}
-              className="w-10 h-10 shrink-0 rounded-full bg-surface-secondary hover:bg-border text-text-secondary flex items-center justify-center transition-colors"
+              className="btn-3d btn-3d-ghost w-10 h-10 shrink-0 rounded-full flex items-center justify-center"
               aria-label={isZh ? '补充菜单照片' : 'Add more photos'}
             >
               📷
@@ -534,12 +539,12 @@ export function AgentChatView() {
             onKeyDown={handleKeyDown}
             placeholder={isZh ? '输入消息…' : 'Type a message…'}
             disabled={isStreaming}
-            className="flex-1 bg-surface-secondary rounded-button px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted border border-border focus:border-brand focus:outline-none transition-colors disabled:opacity-50"
+            className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
           />
           <button
             onClick={handleSend}
             disabled={!inputValue.trim() || isStreaming}
-            className="w-10 h-10 rounded-full bg-brand hover:bg-brand-hover disabled:opacity-40 text-white flex items-center justify-center transition-colors"
+            className="btn-3d btn-3d-primary w-10 h-10 rounded-full !p-0 flex items-center justify-center"
             aria-label="Send message"
           >
             ↑
@@ -549,7 +554,7 @@ export function AgentChatView() {
 
       {/* Toast */}
       {toastMsg && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-text-primary text-white text-sm px-4 py-2.5 rounded-button shadow-card z-50 max-w-[80%] text-center">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[var(--color-sage-text)] text-white text-sm font-semibold px-4 py-2.5 rounded-[var(--radius-md)] shadow-sage z-50 max-w-[80%] text-center animate-fade-in">
           {toastMsg}
         </div>
       )}

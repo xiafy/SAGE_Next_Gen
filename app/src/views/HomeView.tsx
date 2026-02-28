@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useAppState } from '../hooks/useAppState';
+import { MascotImage } from '../components/MascotImage';
+import { Button3D } from '../components/Button3D';
 
 function getGreeting(isZh: boolean): string {
   const hour = new Date().getHours();
-  
+
   if (isZh) {
     if (hour >= 5 && hour < 11) return '早安';
     if (hour >= 11 && hour < 14) return '午好';
@@ -21,47 +24,67 @@ export function HomeView() {
   const { state, dispatch } = useAppState();
   const isZh = state.preferences.language === 'zh';
   const greeting = getGreeting(isZh);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  function handleChatPlaceholder() {
+    setToastMsg(isZh ? '即将推出' : 'Coming soon');
+    setTimeout(() => setToastMsg(null), 2000);
+  }
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-dvh px-6 py-8">
-      {/* Settings icon */}
-      <div className="w-full flex justify-end">
-        <button
-          onClick={() => dispatch({ type: 'NAV_TO', view: 'settings' })}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:bg-surface-secondary transition-colors"
-          aria-label={isZh ? '设置' : 'Settings'}
-        >
-          ⚙
-        </button>
+    <div className="flex flex-col items-center min-h-dvh bg-[var(--color-sage-bg)] px-6 pt-12 pb-24">
+      {/* Mascot */}
+      <div className="animate-bounce-in">
+        <MascotImage expression="default" size={200} />
       </div>
 
-      {/* Center branding */}
-      <div className="flex flex-col items-center gap-3 -mt-8">
-        <h1 className="text-5xl font-bold text-brand tracking-tight">SAGE</h1>
-        <p className="text-text-secondary text-base">
-          {isZh ? '你的智能点餐伙伴' : 'Your dining companion'}
-        </p>
-      </div>
+      {/* Greeting */}
+      <h1 className="text-[28px] font-extrabold text-[var(--color-sage-text)] mt-4 text-center">
+        {greeting}{isZh ? '！' : '!'}
+      </h1>
+      <p className="text-base font-semibold text-[var(--color-sage-text-secondary)] mt-1 text-center">
+        {isZh ? '今天想吃什么？' : 'What are you craving today?'}
+      </p>
 
-      {/* Bottom actions */}
-      <div className="w-full flex flex-col items-center gap-4">
-        {/* Dynamic greeting */}
-        <p className="text-text-primary text-sm">
-          {greeting}
-          {isZh ? '，今天想吃什么？' : ', what are you craving today?'}
-        </p>
-
-        <button
+      {/* Actions */}
+      <div className="w-full flex flex-col gap-4 mt-10">
+        <Button3D
+          variant="primary"
+          size="lg"
+          className="w-full"
           onClick={() => dispatch({ type: 'NAV_TO', view: 'scanner' })}
-          className="w-full py-4 bg-brand hover:bg-brand-hover text-white font-semibold text-base rounded-button transition-colors"
           aria-label={isZh ? '扫描菜单' : 'Scan Menu'}
         >
-          {isZh ? '📷 扫描菜单' : '📷 Scan Menu'}
-        </button>
-        <p className="text-text-muted text-xs">
-          {isZh ? '拍照，发现美食' : 'Point camera at the menu'}
-        </p>
+          <span className="flex flex-col items-center gap-0.5">
+            <span>{isZh ? '📷 扫描菜单' : '📷 Scan Menu'}</span>
+            <span className="text-sm font-semibold opacity-80">
+              {isZh ? '拍照识别，智能推荐' : 'Snap a photo, get smart picks'}
+            </span>
+          </span>
+        </Button3D>
+
+        <Button3D
+          variant="secondary"
+          size="md"
+          className="w-full"
+          onClick={handleChatPlaceholder}
+          aria-label={isZh ? '随便聊聊' : 'Just Chat'}
+        >
+          <span className="flex flex-col items-center gap-0.5">
+            <span>{isZh ? '💬 随便聊聊' : '💬 Just Chat'}</span>
+            <span className="text-sm font-semibold opacity-60">
+              {isZh ? '不看菜单，直接推荐' : 'Skip the menu, get recs'}
+            </span>
+          </span>
+        </Button3D>
       </div>
+
+      {/* Toast */}
+      {toastMsg && (
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-[var(--color-sage-text)] text-white text-sm px-4 py-2.5 rounded-[var(--radius-md)] shadow-sage z-50 text-center animate-fade-in">
+          {toastMsg}
+        </div>
+      )}
     </div>
   );
 }
