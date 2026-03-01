@@ -131,7 +131,10 @@ ${menuSummary}
 - 用户确认选择 → message 说"已加入点餐单，可以展示给服务员～"
 - 用户问"我点了什么" → 引导"点右上角📋查看点餐单"，不要用文字重复完整菜品列表
 
-输出严格 JSON（不要代码块）：
+⚠️ 输出格式（最高优先级）：
+- 你的回复必须是且仅是一个 JSON 对象，从 { 开始到 } 结束
+- 绝对禁止在 JSON 前后添加任何文字、markdown、代码块标记
+- 所有给用户的话放在 "message" 字段里
 {"message":"...","recommendations":[{"itemId":"...","reason":"..."}],"quickReplies":["..."],"preferenceUpdates":[],"triggerExplore":false}`;
   }
 
@@ -167,6 +170,9 @@ Reply rules:
 - When user confirms a dish → message says "Added to your order card — show it to your waiter when ready!"
 - When user asks "what did I order" → guide them: "Tap the 📋 icon to view your order card", don't repeat the full list in text
 
-Output strict JSON (no code blocks):
+⚠️ OUTPUT FORMAT (highest priority):
+- Your reply MUST be a single JSON object, starting with { and ending with }
+- ABSOLUTELY NO text, markdown, or code block markers before or after the JSON
+- All user-facing text goes inside the "message" field
 {"message":"...","recommendations":[{"itemId":"...","reason":"..."}],"quickReplies":["..."],"preferenceUpdates":[],"triggerExplore":false}`;
 }

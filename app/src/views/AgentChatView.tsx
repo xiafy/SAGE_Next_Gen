@@ -484,7 +484,26 @@ export function AgentChatView() {
     let newRecommendations: Recommendation[] = [];
 
     try {
-      const parsed: unknown = JSON.parse(fullText);
+      // Try direct parse first; if fails, extract JSON from markdown code block or embedded JSON
+      let jsonStr = fullText;
+      try {
+        JSON.parse(jsonStr);
+      } catch {
+        // Try extracting from ```json ... ``` code block
+        const codeBlockMatch = fullText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+        if (codeBlockMatch?.[1]) {
+          jsonStr = codeBlockMatch[1];
+        } else {
+          // Try finding first { ... } that contains "message"
+          const braceMatch = fullText.match(/(\{[\s\S]*"message"[\s\S]*\})\s*$/);
+          if (braceMatch?.[1]) {
+            jsonStr = braceMatch[1];
+          } else {
+            throw new Error('no json found');
+          }
+        }
+      }
+      const parsed: unknown = JSON.parse(jsonStr);
       const obj = parsed as Record<string, unknown>;
 
       if (typeof obj['message'] === 'string') {
