@@ -7,7 +7,7 @@ import { logger } from '../utils/logger.js';
 import { AnalyzeRequestSchema } from '../schemas/chatSchema.js';
 import type { AnalyzeRequest } from '../schemas/chatSchema.js';
 import { MenuAnalyzeResultSchema } from '../schemas/menuSchema.js';
-import { MENU_ANALYSIS_SYSTEM, buildMenuAnalysisUserMessage } from '../prompts/menuAnalysis.js';
+import { MENU_ANALYSIS_SYSTEM, MENU_ENRICH_SYSTEM, buildMenuAnalysisUserMessage, buildEnrichUserMessage } from '../prompts/menuAnalysis.js';
 
 type AnalyzeErrorCode =
   | 'INVALID_REQUEST'
@@ -49,14 +49,25 @@ function estimateBase64Bytes(b64: string): number {
 /** 尝试从字符串中提取 JSON 对象 */
 function extractJson(raw: string): string {
   const trimmed = raw.trim();
-  if (trimmed.startsWith('{')) return trimmed;
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) return trimmed;
 
   const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (match?.[1]) return match[1].trim();
 
-  const start = trimmed.indexOf('{');
-  const end = trimmed.lastIndexOf('}');
-  if (start !== -1 && end > start) return trimmed.slice(start, end + 1);
+  // Try object first
+  const objStart = trimmed.indexOf('{');
+  const objEnd = trimmed.lastIndexOf('}');
+  // Try array
+  const arrStart = trimmed.indexOf('[');
+  const arrEnd = trimmed.lastIndexOf(']');
+
+  // Pick whichever comes first
+  if (arrStart !== -1 && arrEnd > arrStart && (objStart === -1 || arrStart < objStart)) {
+    return trimmed.slice(arrStart, arrEnd + 1);
+  }
+  if (objStart !== -1 && objEnd > objStart) {
+    return trimmed.slice(objStart, objEnd + 1);
+  }
 
   return trimmed;
 }
@@ -340,6 +351,98 @@ async function runAnalyzePipeline(
 
   try {
     const result = await parseAndValidate(rawText);
+
+    // ── Step 2: 文本模型补全语义字段（brief/allergens/spiceLevel）──
+    onProgress?.({
+      stage: 'enriching',
+      progress: 90,
+      message: context.language === 'zh' ? '正在补充菜品详情…' : 'Enriching dish details…',
+    });
+
+    try {
+      const enrichInput = result.items.map(i => ({
+        nameOriginal: i.nameOriginal,
+        nameTranslated: i.nameTranslated,
+        category: result.categories.find(c => c.itemIds.includes(i.id))?.nameOriginal,
+      }));
+
+      const enrichRaw = await streamAggregate({
+        model: 'qwen3.5-flash',
+        messages: [
+          { role: 'system', content: MENU_ENRICH_SYSTEM },
+          { role: 'user', content: buildEnrichUserMessage(enrichInput, context.language) },
+        ],
+        apiKey: env.BAILIAN_API_KEY,
+        timeoutMs: 15_000,
+        requestId: `${requestId}-enrich`,
+      });
+
+      const enrichJson = extractJson(enrichRaw);
+      const enrichData: unknown[] = JSON.parse(enrichJson);
+
+      if (Array.isArray(enrichData)) {
+        // Build lookup by nameOriginal
+        const enrichMap = new Map<string, Record<string, unknown>>();
+        for (const e of enrichData) {
+          if (e && typeof e === 'object' && 'nameOriginal' in (e as Record<string, unknown>)) {
+            const rec = e as Record<string, unknown>;
+            enrichMap.set(String(rec.nameOriginal), rec);
+          }
+        }
+
+        // Merge enrich data into items (exact match, then fuzzy startsWith)
+        for (const item of result.items) {
+          let enriched = enrichMap.get(item.nameOriginal);
+          if (!enriched) {
+            // Fuzzy: find enrichMap key that starts with or contains the item nameOriginal
+            for (const [key, val] of enrichMap.entries()) {
+              if (key.startsWith(item.nameOriginal) || item.nameOriginal.startsWith(key)) {
+                enriched = val;
+                break;
+              }
+            }
+          }
+          if (!enriched) continue;
+
+          if (typeof enriched.brief === 'string' && enriched.brief.length > 0) {
+            item.brief = enriched.brief;
+          }
+          if (typeof enriched.briefDetail === 'string' && enriched.briefDetail.length > 0) {
+            (item as Record<string, unknown>).briefDetail = enriched.briefDetail;
+          }
+          if (Array.isArray(enriched.allergens) && enriched.allergens.length > 0) {
+            // Validate allergen format
+            const validTypes = new Set(['peanut','shellfish','fish','gluten','dairy','egg','soy','tree_nut','sesame']);
+            const validAllergens = enriched.allergens
+              .filter((a: unknown) => a && typeof a === 'object' && 'type' in (a as Record<string, unknown>) && validTypes.has(String((a as Record<string, unknown>).type).toLowerCase()))
+              .map((a: unknown) => {
+                const rec = a as Record<string, unknown>;
+                return { type: String(rec.type).toLowerCase(), uncertain: Boolean(rec.uncertain) };
+              });
+            if (validAllergens.length > 0) {
+              item.allergens = validAllergens as typeof item.allergens;
+            }
+          }
+          if (Array.isArray(enriched.dietaryFlags)) {
+            const validFlags = new Set(['halal','vegetarian','vegan','raw','contains_alcohol']);
+            const flags = enriched.dietaryFlags
+              .map((f: unknown) => typeof f === 'string' ? f.toLowerCase() : '')
+              .filter((f: string) => validFlags.has(f));
+            if (flags.length > 0) {
+              item.dietaryFlags = flags as typeof item.dietaryFlags;
+            }
+          }
+          if (typeof enriched.spiceLevel === 'number' && enriched.spiceLevel >= 0 && enriched.spiceLevel <= 5) {
+            item.spiceLevel = enriched.spiceLevel;
+          }
+        }
+
+        logger.info('analyze: enrich success', { requestId, enrichedCount: enrichMap.size, totalItems: result.items.length });
+      }
+    } catch (enrichErr) {
+      // Enrich is best-effort — don't fail the whole pipeline
+      logger.warn('analyze: enrich failed (non-fatal)', { requestId, err: String(enrichErr).slice(0, 200) });
+    }
 
     const rawTextBytes = new TextEncoder().encode(rawText).length;
     const resultBytes = new TextEncoder().encode(JSON.stringify(result)).length;
