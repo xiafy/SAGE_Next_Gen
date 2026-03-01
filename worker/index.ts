@@ -12,6 +12,7 @@ import { errorResponse } from './utils/errors.js';
 import { handleHealth } from './handlers/health.js';
 import { handleAnalyze } from './handlers/analyze.js';
 import { handleChat } from './handlers/chat.js';
+import { handleTranscribe } from './handlers/transcribe.js';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -37,6 +38,11 @@ export default {
       // POST /api/chat
       if (request.method === 'POST' && url.pathname === '/api/chat') {
         return await handleChat(request, env, requestId);
+      }
+
+      // POST /api/transcribe — 音频转文字
+      if (request.method === 'POST' && url.pathname === '/api/transcribe') {
+        return await handleTranscribe(request, env, requestId);
       }
 
       // 404

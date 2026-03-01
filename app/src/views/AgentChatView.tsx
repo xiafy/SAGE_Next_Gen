@@ -9,6 +9,7 @@ import { Button3D } from '../components/Button3D';
 import { DishCard } from '../components/DishCard';
 import { streamChat, buildChatParams } from '../api/chat';
 import { analyzeMenu } from '../api/analyze';
+import { transcribeAudio } from '../api/transcribe';
 import type { Message, PreferenceUpdate } from '../types';
 import { toUserFacingError } from '../utils/errorMessage';
 import { dlog } from '../utils/debugLog';
@@ -19,22 +20,20 @@ interface Recommendation {
   reason: string;
 }
 
-// ── Web Speech API type shim ─────────────────────────────────────────────────
-type SpeechRecognitionLike = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives: number;
-  start: () => void;
-  stop: () => void;
-  onresult: ((e: { results: { [k: number]: { [k: number]: { transcript: string } } } }) => void) | null;
-  onerror: ((e: { error: string }) => void) | null;
-  onend: (() => void) | null;
-};
-const SpeechRecognitionCtor: (new () => SpeechRecognitionLike) | null =
-  (typeof window !== 'undefined' &&
-    ((window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ??
-      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition)) || null;
+// ── MediaRecorder voice support detection ────────────────────────────────────
+const voiceSupported = typeof window !== 'undefined' && typeof MediaRecorder !== 'undefined';
+
+function pickMimeType(): string {
+  if (typeof MediaRecorder === 'undefined') return 'audio/mp4';
+  if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
+  if (MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
+  if (MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
+  return '';
+}
+
+const VOICE_CANCEL_THRESHOLD = 80;  // px: slide up distance to cancel
+const VOICE_MIN_DURATION_MS = 500;  // ignore recordings shorter than 0.5s
+const VOICE_MAX_DURATION_MS = 60_000; // auto-stop at 60s
 
 export function AgentChatView() {
   const { state, dispatch } = useAppState();
@@ -44,7 +43,11 @@ export function AgentChatView() {
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [voiceMode, setVoiceMode] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isCancelZone, setIsCancelZone] = useState(false);
+  const [recordDuration, setRecordDuration] = useState(0);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const analyzeAbortRef = useRef<AbortController | null>(null);
@@ -53,9 +56,13 @@ export function AgentChatView() {
   const icebreakerSentRef = useRef(false);
   const analyzeTriggeredRef = useRef(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-
-  const voiceSupported = !!SpeechRecognitionCtor;
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordStartRef = useRef<number>(0);
+  const recordTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const recordMaxTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const pointerStartYRef = useRef<number>(0);
+  const cancelledRef = useRef(false);
 
   const isZh = state.preferences.language === 'zh';
 
@@ -167,6 +174,11 @@ export function AgentChatView() {
     return () => {
       chatAbortRef.current?.abort();
       clearTimeout(toastTimerRef.current);
+      clearInterval(recordTimerRef.current);
+      clearTimeout(recordMaxTimerRef.current);
+      if (recorderRef.current?.state === 'recording') {
+        recorderRef.current.stop();
+      }
     };
   }, []);
 
@@ -177,58 +189,150 @@ export function AgentChatView() {
     toastTimerRef.current = setTimeout(() => setToastMsg(null), 3000);
   }
 
-  // ---------- Voice input (F13) ----------
-  function handleVoiceStart() {
-    if (!SpeechRecognitionCtor || isStreaming) return;
+  // ---------- Voice input (F13 v2 — WeChat style + MediaRecorder + Server ASR) ----------
 
-    const rec = new SpeechRecognitionCtor();
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.lang = isZh ? 'zh-CN' : 'en-US';
-    rec.maxAlternatives = 1;
-
-    rec.onresult = (e) => {
-      const transcript = e.results[0]?.[0]?.transcript?.trim();
-      if (transcript) {
-        const userMsg: Message = {
-          id: `user_voice_${Date.now()}`,
-          role: 'user',
-          content: transcript,
-          timestamp: Date.now(),
-        };
-        dispatch({ type: 'ADD_MESSAGE', message: userMsg });
-        const mode = (state.chatPhase === 'chatting' || state.chatPhase === 'handing_off') ? 'chat' : 'pre_chat';
-        sendToAI(mode, [userMsg]);
-      }
-    };
-
-    rec.onerror = (e) => {
-      if (e.error === 'not-allowed') {
-        showToast(isZh ? '麦克风权限被拒绝，请在浏览器设置中允许' : 'Microphone permission denied');
-      } else if (e.error !== 'no-speech') {
-        showToast(isZh ? '语音识别失败，请重试' : 'Voice recognition failed, please try again');
-      }
-      setIsRecording(false);
-    };
-
-    rec.onend = () => {
-      setIsRecording(false);
-      recognitionRef.current = null;
-    };
-
-    recognitionRef.current = rec;
-    try {
-      rec.start();
-      setIsRecording(true);
-    } catch {
-      showToast(isZh ? '无法启动语音识别' : 'Could not start voice recognition');
-      setIsRecording(false);
-    }
+  function cleanupRecording() {
+    clearInterval(recordTimerRef.current);
+    clearTimeout(recordMaxTimerRef.current);
+    setIsRecording(false);
+    setIsCancelZone(false);
+    setRecordDuration(0);
+    cancelledRef.current = false;
   }
 
-  function handleVoiceStop() {
-    recognitionRef.current?.stop();
-    // isRecording will be reset by onend
+  async function handleVoicePointerDown(e: React.PointerEvent) {
+    if (isStreaming || isTranscribing) return;
+
+    pointerStartYRef.current = e.clientY;
+    cancelledRef.current = false;
+    audioChunksRef.current = [];
+
+    // Request microphone
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      showToast(isZh ? '麦克风权限被拒绝，请在浏览器设置中允许' : 'Microphone permission denied');
+      return;
+    }
+
+    const mimeType = pickMimeType();
+    if (!mimeType) {
+      showToast(isZh ? '当前浏览器不支持录音' : 'Recording not supported in this browser');
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+
+    let recorder: MediaRecorder;
+    try {
+      recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 16_000 });
+    } catch {
+      // Fallback: no options
+      recorder = new MediaRecorder(stream);
+    }
+
+    recorder.ondataavailable = (ev) => {
+      if (ev.data.size > 0) audioChunksRef.current.push(ev.data);
+    };
+
+    recorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+    };
+
+    recorderRef.current = recorder;
+    recordStartRef.current = Date.now();
+    recorder.start(200); // collect chunks every 200ms
+    setIsRecording(true);
+    setRecordDuration(0);
+
+    // Duration timer
+    recordTimerRef.current = setInterval(() => {
+      setRecordDuration(Math.floor((Date.now() - recordStartRef.current) / 1000));
+    }, 500);
+
+    // Max duration auto-stop
+    recordMaxTimerRef.current = setTimeout(() => {
+      if (recorderRef.current?.state === 'recording') {
+        finishRecording();
+      }
+    }, VOICE_MAX_DURATION_MS);
+  }
+
+  function handleVoicePointerMove(e: React.PointerEvent) {
+    if (!isRecording) return;
+    const dy = pointerStartYRef.current - e.clientY; // positive = up
+    const inCancel = dy > VOICE_CANCEL_THRESHOLD;
+    setIsCancelZone(inCancel);
+    cancelledRef.current = inCancel;
+  }
+
+  function handleVoicePointerUp() {
+    if (!isRecording) return;
+    finishRecording();
+  }
+
+  async function finishRecording() {
+    const recorder = recorderRef.current;
+    if (!recorder || recorder.state !== 'recording') {
+      cleanupRecording();
+      return;
+    }
+
+    const wasCancelled = cancelledRef.current;
+    const duration = Date.now() - recordStartRef.current;
+
+    // Stop recorder → triggers onstop (releases mic)
+    recorder.stop();
+    cleanupRecording();
+
+    if (wasCancelled) {
+      dlog('chat', '🎤 recording cancelled by user');
+      return;
+    }
+
+    if (duration < VOICE_MIN_DURATION_MS) {
+      showToast(isZh ? '说话时间太短' : 'Recording too short');
+      return;
+    }
+
+    // Wait a tick for final ondataavailable
+    await new Promise(r => setTimeout(r, 100));
+
+    const chunks = audioChunksRef.current;
+    if (chunks.length === 0) {
+      showToast(isZh ? '未录到声音' : 'No audio captured');
+      return;
+    }
+
+    const audioBlob = new Blob(chunks, { type: chunks[0]?.type || 'audio/mp4' });
+    dlog('chat', '🎤 audio recorded:', audioBlob.size, 'bytes,', duration, 'ms');
+
+    // Transcribe
+    setIsTranscribing(true);
+    try {
+      const text = await transcribeAudio(audioBlob, state.preferences.language);
+      dlog('chat', '🎤 transcribed:', text);
+
+      if (!text.trim()) {
+        showToast(isZh ? '未识别到语音内容' : 'No speech detected');
+        return;
+      }
+
+      const userMsg: Message = {
+        id: `user_voice_${Date.now()}`,
+        role: 'user',
+        content: text.trim(),
+        timestamp: Date.now(),
+      };
+      dispatch({ type: 'ADD_MESSAGE', message: userMsg });
+      const mode = (state.chatPhase === 'chatting' || state.chatPhase === 'handing_off') ? 'chat' : 'pre_chat';
+      sendToAI(mode, [userMsg]);
+    } catch (err) {
+      dlog('chat', '🎤 transcription error:', err);
+      showToast(isZh ? '语音识别失败，请重试' : 'Voice recognition failed, please try again');
+    } finally {
+      setIsTranscribing(false);
+    }
   }
 
   // ---------- Perform menu analysis ----------
@@ -649,10 +753,43 @@ export function AgentChatView() {
         </button>
       )}
 
-      {/* Input area */}
+      {/* Recording overlay — cancel zone indicator */}
+      {isRecording && (
+        <div className="fixed inset-0 z-40 pointer-events-none flex flex-col items-center justify-center">
+          <div className={`mb-20 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
+            isCancelZone
+              ? 'bg-red-500/90 text-white scale-110'
+              : 'bg-black/60 text-white'
+          }`}>
+            {isCancelZone
+              ? (isZh ? '松开 取消' : 'Release to cancel')
+              : (isZh ? `松开 发送 (${recordDuration}s)` : `Release to send (${recordDuration}s)`)}
+          </div>
+          {!isCancelZone && (
+            <div className="flex gap-1 items-center">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-1 bg-[var(--color-sage-primary)] rounded-full animate-pulse" style={{
+                  height: `${12 + Math.random() * 16}px`,
+                  animationDelay: `${i * 0.1}s`,
+                }} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Transcribing indicator */}
+      {isTranscribing && (
+        <div className="mx-4 mb-2 py-2 text-center text-sm font-semibold text-[var(--color-sage-primary)] animate-pulse">
+          {isZh ? '语音识别中…' : 'Transcribing…'}
+        </div>
+      )}
+
+      {/* Input area — WeChat style */}
       {showInputArea && (
         <div className="flex items-center gap-2 px-4 py-3 border-t-2 border-[var(--color-sage-border)] bg-white">
-          {state.chatPhase === 'chatting' && (
+          {/* Camera button (chatting phase only) */}
+          {state.chatPhase === 'chatting' && !voiceMode && (
             <button
               onClick={() => {
                 dispatch({ type: 'SET_SUPPLEMENTING', value: true });
@@ -664,40 +801,65 @@ export function AgentChatView() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" /><circle cx="12" cy="13" r="4" /></svg>
             </button>
           )}
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isZh ? '输入消息…' : 'Type a message…'}
-            disabled={isStreaming}
-            className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
-          />
-          {/* F13: Voice input button */}
+
+          {/* Voice/Keyboard toggle */}
           {voiceSupported && (
             <button
-              onPointerDown={handleVoiceStart}
-              onPointerUp={handleVoiceStop}
-              onPointerCancel={handleVoiceStop}
-              disabled={isStreaming}
-              className={`w-10 h-10 rounded-full !p-0 flex items-center justify-center shrink-0 transition-all select-none
-                ${isRecording
-                  ? 'bg-[var(--color-sage-primary)] text-white animate-pulse shadow-lg'
-                  : 'btn-3d btn-3d-ghost'
-                } disabled:opacity-40 disabled:cursor-not-allowed`}
-              aria-label={isZh ? (isRecording ? '录音中，松手发送' : '按住说话') : (isRecording ? 'Recording… release to send' : 'Hold to speak')}
+              onClick={() => setVoiceMode(!voiceMode)}
+              className="btn-3d btn-3d-ghost w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-lg"
+              aria-label={voiceMode ? (isZh ? '切换到键盘' : 'Switch to keyboard') : (isZh ? '切换到语音' : 'Switch to voice')}
             >
-              {isRecording ? '🔴' : '🎤'}
+              {voiceMode ? '⌨️' : '🎤'}
             </button>
           )}
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim() || isStreaming}
-            className="btn-3d btn-3d-primary w-10 h-10 rounded-full !p-0 flex items-center justify-center"
-            aria-label="Send message"
-          >
-            ↑
-          </button>
+
+          {/* Voice mode: Hold-to-talk button */}
+          {voiceMode ? (
+            <button
+              onPointerDown={handleVoicePointerDown}
+              onPointerMove={handleVoicePointerMove}
+              onPointerUp={handleVoicePointerUp}
+              onPointerCancel={handleVoicePointerUp}
+              disabled={isStreaming || isTranscribing}
+              className={`flex-1 py-3 rounded-[var(--radius-md)] text-sm font-bold select-none touch-none transition-all border-2 ${
+                isRecording
+                  ? isCancelZone
+                    ? 'bg-red-100 border-red-400 text-red-600'
+                    : 'bg-green-100 border-green-400 text-green-700'
+                  : 'bg-[var(--color-sage-bg)] border-[var(--color-sage-border)] text-[var(--color-sage-text-secondary)] active:bg-gray-200'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              aria-label={isZh ? '按住说话' : 'Hold to talk'}
+            >
+              {isRecording
+                ? (isCancelZone
+                    ? (isZh ? '↑ 松开取消' : '↑ Release to cancel')
+                    : (isZh ? `松开 发送 (${recordDuration}s)` : `Release to send (${recordDuration}s)`))
+                : isTranscribing
+                  ? (isZh ? '识别中…' : 'Transcribing…')
+                  : (isZh ? '按住 说话' : 'Hold to talk')}
+            </button>
+          ) : (
+            /* Text mode: input + send button */
+            <>
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isZh ? '输入消息…' : 'Type a message…'}
+                disabled={isStreaming}
+                className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!inputValue.trim() || isStreaming}
+                className="btn-3d btn-3d-primary w-10 h-10 rounded-full !p-0 flex items-center justify-center"
+                aria-label="Send message"
+              >
+                ↑
+              </button>
+            </>
+          )}
         </div>
       )}
 
