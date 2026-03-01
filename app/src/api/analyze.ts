@@ -92,6 +92,13 @@ async function compressImage(
   ctx.drawImage(img, 0, 0, w, h);
   dlog('compress', 'drawImage done');
 
+  // P1-E: Prefer WebP (25-35% smaller than JPEG at same quality), fallback to JPEG
+  const webpSupported = await new Promise<boolean>((resolve) => {
+    canvas.toBlob((b) => resolve(!!b && b.size > 0), 'image/webp', 0.5);
+  });
+  const outputType = webpSupported ? 'image/webp' : 'image/jpeg';
+  dlog('compress', 'output format:', outputType);
+
   for (const quality of [0.75, 0.6, 0.45, 0.3]) {
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
@@ -103,11 +110,11 @@ async function compressImage(
             reject(new Error('toBlob failed'));
           }
         },
-        'image/jpeg',
+        outputType,
         quality,
       );
     });
-    dlog('compress', 'q=', quality, 'size=', blob.size);
+    dlog('compress', 'q=', quality, 'size=', blob.size, 'type=', outputType);
     if (blob.size <= maxSizeBytes) {
       return blob;
     }
@@ -116,7 +123,7 @@ async function compressImage(
   const finalBlob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
-      'image/jpeg',
+      outputType,
       0.15,
     );
   });
@@ -142,7 +149,7 @@ async function normalizeImage(file: File): Promise<{ base64: string; mimeType: s
   const base64 = await fileToBase64(blob);
   dlog('normalize', '✅ base64 ready, length=', base64.length);
 
-  return { base64, mimeType: 'image/jpeg' };
+  return { base64, mimeType: blob.type || 'image/jpeg' };
 }
 
 export async function analyzeMenu(

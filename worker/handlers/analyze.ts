@@ -92,8 +92,9 @@ export async function handleAnalyze(
 
   const startMs = Date.now();
 
-  // 主模型：qwen3-vl-flash（速度优先，5x faster than plus）
-  // 降级：qwen3-vl-plus（质量更高但慢）
+  // 主模型：qwen3-vl-flash（速度优先）
+  // 降级：qwen3-vl-plus（仅在 flash 失败时使用一次）
+  // P0-A：简化降级链，flash 45s → 失败 → plus 50s → done
   let rawText: string;
   let modelUsed: 'qwen3-vl-flash' | 'qwen3-vl-plus' = 'qwen3-vl-flash';
   try {
@@ -101,50 +102,29 @@ export async function handleAnalyze(
       model:     'qwen3-vl-flash',
       messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
       apiKey:    env.BAILIAN_API_KEY,
-      timeoutMs: 30_000,
+      timeoutMs: 45_000,
       requestId,
     });
     modelUsed = 'qwen3-vl-flash';
   } catch (err) {
     const errStr = String(err);
-    if (errStr.includes('429') || errStr.includes('rate')) {
-      logger.warn('analyze: qwen3-vl-flash rate limited, trying fallback', { requestId });
-    } else {
-      logger.error('analyze: qwen3-vl-flash failed', { requestId, err: errStr });
-    }
+    logger.warn('analyze: flash failed, trying plus', { requestId, err: errStr.slice(0, 100) });
 
-    // 降级：qwen3-vl-plus
+    // 唯一降级：qwen3-vl-plus
     try {
       rawText = await streamAggregate({
         model:     'qwen3-vl-plus',
         messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
         apiKey:    env.BAILIAN_API_KEY,
-        timeoutMs: 60_000,
+        timeoutMs: 50_000,
         requestId,
       });
       modelUsed = 'qwen3-vl-plus';
     } catch (fallbackErr) {
       const err2 = String(fallbackErr);
       const isTimeout = err2.includes('timeout') || err2.includes('AbortError');
-
-      // one last retry for transient upstream failures
-      if (!isTimeout) {
-        try {
-          rawText = await streamAggregate({
-            model:     'qwen3-vl-flash',
-            messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
-            apiKey:    env.BAILIAN_API_KEY,
-            timeoutMs: 30_000,
-            requestId,
-          });
-          modelUsed = 'qwen3-vl-flash';
-        } catch (lastErr) {
-          const isLastTimeout = String(lastErr).includes('timeout') || String(lastErr).includes('AbortError');
-          return errorResponse(isLastTimeout ? 'AI_TIMEOUT' : 'AI_UNAVAILABLE', request, env, requestId);
-        }
-      } else {
-        return errorResponse('AI_TIMEOUT', request, env, requestId);
-      }
+      logger.error('analyze: plus fallback also failed', { requestId, err: err2.slice(0, 100) });
+      return errorResponse(isTimeout ? 'AI_TIMEOUT' : 'AI_UNAVAILABLE', request, env, requestId);
     }
   }
 
@@ -177,7 +157,7 @@ export async function handleAnalyze(
           model:     'qwen3-vl-plus',
           messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
           apiKey:    env.BAILIAN_API_KEY,
-          timeoutMs: 60_000,
+          timeoutMs: 50_000,
           requestId,
         });
         result = await parseAndValidate(rawText);
