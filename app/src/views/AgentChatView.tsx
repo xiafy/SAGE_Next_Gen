@@ -63,6 +63,7 @@ export function AgentChatView() {
   const recordMaxTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pointerStartYRef = useRef<number>(0);
   const cancelledRef = useRef(false);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   const isZh = state.preferences.language === 'zh';
 
@@ -179,6 +180,7 @@ export function AgentChatView() {
       if (recorderRef.current?.state === 'recording') {
         recorderRef.current.stop();
       }
+      micStreamRef.current?.getTracks().forEach(t => t.stop());
     };
   }, []);
 
@@ -200,26 +202,54 @@ export function AgentChatView() {
     cancelledRef.current = false;
   }
 
-  async function handleVoicePointerDown(e: React.PointerEvent) {
+  // Pre-warm microphone when entering voice mode (avoids async delay on pointerdown)
+  async function prewarmMic(): Promise<boolean> {
+    if (micStreamRef.current && micStreamRef.current.active) return true;
+    try {
+      micStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      return true;
+    } catch {
+      showToast(isZh ? '麦克风权限被拒绝，请在浏览器设置中允许' : 'Microphone permission denied');
+      return false;
+    }
+  }
+
+  function releaseMic() {
+    micStreamRef.current?.getTracks().forEach(t => t.stop());
+    micStreamRef.current = null;
+  }
+
+  async function toggleVoiceMode() {
+    if (voiceMode) {
+      // Switching to text mode — release mic
+      releaseMic();
+      setVoiceMode(false);
+    } else {
+      // Switching to voice mode — pre-warm mic
+      const ok = await prewarmMic();
+      if (ok) setVoiceMode(true);
+    }
+  }
+
+  function handleVoicePointerDown(e: React.PointerEvent) {
     if (isStreaming || isTranscribing) return;
+
+    const stream = micStreamRef.current;
+    if (!stream || !stream.active) {
+      // Mic not ready — try to re-acquire (shouldn't happen normally)
+      prewarmMic().then(ok => {
+        if (!ok) setVoiceMode(false);
+      });
+      return;
+    }
 
     pointerStartYRef.current = e.clientY;
     cancelledRef.current = false;
     audioChunksRef.current = [];
 
-    // Request microphone
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch {
-      showToast(isZh ? '麦克风权限被拒绝，请在浏览器设置中允许' : 'Microphone permission denied');
-      return;
-    }
-
     const mimeType = pickMimeType();
     if (!mimeType) {
       showToast(isZh ? '当前浏览器不支持录音' : 'Recording not supported in this browser');
-      stream.getTracks().forEach(t => t.stop());
       return;
     }
 
@@ -227,7 +257,6 @@ export function AgentChatView() {
     try {
       recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 16_000 });
     } catch {
-      // Fallback: no options
       recorder = new MediaRecorder(stream);
     }
 
@@ -235,9 +264,8 @@ export function AgentChatView() {
       if (ev.data.size > 0) audioChunksRef.current.push(ev.data);
     };
 
-    recorder.onstop = () => {
-      stream.getTracks().forEach(t => t.stop());
-    };
+    // Don't stop the stream on recorder stop — keep mic warm for next recording
+    recorder.onstop = () => { /* mic stays open */ };
 
     recorderRef.current = recorder;
     recordStartRef.current = Date.now();
@@ -805,7 +833,7 @@ export function AgentChatView() {
           {/* Voice/Keyboard toggle */}
           {voiceSupported && (
             <button
-              onClick={() => setVoiceMode(!voiceMode)}
+              onClick={toggleVoiceMode}
               className="btn-3d btn-3d-ghost w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-lg"
               aria-label={voiceMode ? (isZh ? '切换到键盘' : 'Switch to keyboard') : (isZh ? '切换到语音' : 'Switch to voice')}
             >
