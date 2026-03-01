@@ -318,9 +318,9 @@
 | KI-001 | 菜单识别 tag 准确度：夫妻肺片被标为 contains_seafood | P2 | 待 Prompt 迭代 |
 | KI-002 | Pre-Chat "便宜" 偏好提炼为 "低"（过于简略）| P3 | 待 Prompt 迭代 |
 | KI-003 | `claude` CLI 调用方式需用 `cat TASK.md \| claude -p`（已修复）| P0 | ✅ 已修复 |
-| KI-004 | 菜单展示不全：AI 生成的 item.id 与 category.itemIds 存在 mismatch，导致分类筛选时部分菜品消失 | P1 | 🔧 修复中 |
-| KI-005 | 空标签显示：category 下 itemIds 全部无效时，Tab 仍然显示该分类 | P1 | 🔧 修复中 |
-| KI-006 | Chat 推荐与菜单不一致：buildMenuSummary 跳过孤儿 items + AI 偶发幻觉 itemId，导致推荐找不到对应菜品 | P1 | 🔧 修复中 |
+| KI-004 | 菜单展示不全：AI 生成的 item.id 与 category.itemIds 存在 mismatch，导致分类筛选时部分菜品消失 | P1 | ✅ 已修复（孤儿 items 归入"其他"tab）|
+| KI-005 | 空标签显示：category 下 itemIds 全部无效时，Tab 仍然显示该分类 | P1 | ✅ 已修复（ExploreView 过滤空 category）|
+| KI-006 | Chat 推荐与菜单不一致：buildMenuSummary 跳过孤儿 items + AI 偶发幻觉 itemId，导致推荐找不到对应菜品 | P1 | ✅ 已修复（补全孤儿 items + 前端过滤无效 itemId）|
 
 ### Sprint 1 Phase 3.1 — Codex Review 修复 ✅
 

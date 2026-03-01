@@ -103,12 +103,18 @@ export function WaiterModeView() {
         <Button3D
           variant="white"
           className="w-full"
-          onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
+          onClick={() => dispatch({ type: 'NAV_TO', view: 'chat' })}
         >
-          {isZh ? '继续点菜' : 'Continue Ordering'}
+          {isZh ? '返回对话' : 'Back to Chat'}
         </Button3D>
         <button
           className="w-full py-3 rounded-2xl text-white/60 text-sm font-bold hover:text-white/90 hover:bg-white/10 transition-colors"
+          onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
+        >
+          {isZh ? '继续点菜' : 'Edit Order'}
+        </button>
+        <button
+          className="w-full py-2 rounded-2xl text-white/30 text-xs font-bold hover:text-white/60 transition-colors"
           onClick={() => {
             dispatch({ type: 'RESET_SESSION' });
             dispatch({ type: 'NAV_TO', view: 'home' });
