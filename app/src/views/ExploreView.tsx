@@ -56,12 +56,26 @@ export function ExploreView() {
 
   const { categories, items } = state.menuData;
 
+  // 建立有效 itemId 集合（items[] 中实际存在的 id）
+  const validItemIdSet = new Set(items.map(it => it.id));
+
+  // 过滤掉没有任何有效 item 的 category（KI-005）
+  const validCategories = categories.filter(cat =>
+    cat.itemIds.some(id => validItemIdSet.has(id))
+  );
+
+  // 找出孤儿 items（不被任何 category 引用，KI-004）
+  const referencedIds = new Set(categories.flatMap(c => c.itemIds));
+  const orphanItems = items.filter(it => !referencedIds.has(it.id));
+
   // Filter items by active category
   const filteredItems =
     activeCategory === 'all'
       ? items
+      : activeCategory === '__orphan__'
+      ? orphanItems
       : items.filter((item) => {
-          const cat = categories.find((c) => c.id === activeCategory);
+          const cat = validCategories.find((c) => c.id === activeCategory);
           return cat?.itemIds.includes(item.id);
         });
 
@@ -104,7 +118,7 @@ export function ExploreView() {
         >
           {isZh ? '全部' : 'All'}
         </Chip>
-        {categories.map((cat) => (
+        {validCategories.map((cat) => (
           <Chip
             key={cat.id}
             selected={activeCategory === cat.id}
@@ -114,6 +128,16 @@ export function ExploreView() {
             {isZh ? cat.nameTranslated : cat.nameOriginal}
           </Chip>
         ))}
+        {orphanItems.length > 0 && (
+          <Chip
+            key="__orphan__"
+            selected={activeCategory === '__orphan__'}
+            onClick={() => setActiveCategory('__orphan__')}
+            aria-label={isZh ? '其他' : 'Other'}
+          >
+            {isZh ? '其他' : 'Other'}
+          </Chip>
+        )}
       </div>
 
       {/* Item list */}

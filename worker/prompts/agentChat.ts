@@ -26,12 +26,25 @@ function sampleMenuItems(items: MenuItem[]): MenuItem[] {
 function buildMenuSummary(menu: MenuAnalyzeResult): string {
   const items = sampleMenuItems(menu.items);
   const lines: string[] = [];
+  const includedIds = new Set<string>();
 
   for (const cat of menu.categories) {
     const catItems = items.filter(it => cat.itemIds.includes(it.id));
     if (!catItems.length) continue;
     lines.push(`【${cat.nameTranslated}】`);
     for (const it of catItems) {
+      const tags = it.tags.length ? ` [${it.tags.join(',')}]` : '';
+      const price = it.priceText ? ` ${it.priceText}` : '';
+      lines.push(`  ${it.id}: ${it.nameOriginal}（${it.nameTranslated}）${price}${tags}`);
+      includedIds.add(it.id);
+    }
+  }
+
+  // 补充未被任何分类引用的孤儿 items（ID mismatch 场景）
+  const orphans = items.filter(it => !includedIds.has(it.id));
+  if (orphans.length) {
+    lines.push(`【其他】`);
+    for (const it of orphans) {
       const tags = it.tags.length ? ` [${it.tags.join(',')}]` : '';
       const price = it.priceText ? ` ${it.priceText}` : '';
       lines.push(`  ${it.id}: ${it.nameOriginal}（${it.nameTranslated}）${price}${tags}`);

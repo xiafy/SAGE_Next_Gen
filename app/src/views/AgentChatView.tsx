@@ -287,7 +287,11 @@ export function AgentChatView() {
         newQuickReplies = obj['quickReplies'] as string[];
       }
       if (Array.isArray(obj['recommendations'])) {
-        newRecommendations = obj['recommendations'] as Recommendation[];
+        // KI-006: 过滤 AI 幻觉 itemId，只保留 menuData 中实际存在的菜品
+        const validIds = new Set(state.menuData?.items.map(i => i.id) ?? []);
+        newRecommendations = (obj['recommendations'] as Recommendation[]).filter(
+          rec => typeof rec.itemId === 'string' && validIds.has(rec.itemId)
+        );
       }
       if (Array.isArray(obj['preferenceUpdates']) && (obj['preferenceUpdates'] as PreferenceUpdate[]).length > 0) {
         dispatch({ type: 'UPDATE_PREFERENCES', updates: obj['preferenceUpdates'] as PreferenceUpdate[] });
