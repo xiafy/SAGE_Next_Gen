@@ -71,8 +71,8 @@ export async function handleTranscribe(
 
   const isZh = body.language === 'zh';
   const systemPrompt = isZh
-    ? '你是一个语音转写助手。请将音频内容逐字转写为文字，只输出转写结果，不要添加任何标点符号以外的额外内容。如果音频中没有语音，输出空字符串。'
-    : 'You are a speech transcription assistant. Transcribe the audio content verbatim. Output only the transcription text. If there is no speech, output an empty string.';
+    ? '你是一个语音转写助手。请将音频内容转写为自然、可读的文字，需要添加正确的标点符号（逗号、句号、问号等）。只输出转写结果，不要添加任何额外说明。如果音频中没有语音，输出空字符串。'
+    : 'You are a speech transcription assistant. Transcribe the audio into natural, readable text with proper punctuation (commas, periods, question marks, etc.). Output only the transcription. If there is no speech, output an empty string.';
 
   logger.info('transcribe: start', {
     requestId,

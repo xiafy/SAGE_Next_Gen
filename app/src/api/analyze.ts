@@ -56,8 +56,8 @@ function loadImage(file: File): Promise<HTMLImageElement> {
  */
 async function compressImage(
   file: File,
-  maxDimension = 1280,
-  maxSizeBytes = 500 * 1024,
+  maxDimension = 1024,
+  maxSizeBytes = 400 * 1024,
 ): Promise<Blob> {
   dlog('compress', 'start, input size=', file.size, 'type=', file.type);
 

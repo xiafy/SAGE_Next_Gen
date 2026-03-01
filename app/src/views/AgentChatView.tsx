@@ -393,10 +393,27 @@ export function AgentChatView() {
         dispatch({ type: 'SET_SUPPLEMENTING', value: false });
       }
     } catch (err) {
-      dlog('chat', '❌ performAnalyze FAILED:', err);
-      if (err instanceof Error) {
-        dlog('chat', 'Error:', err.name, err.message);
+      dlog('chat', '❌ performAnalyze FAILED (attempt 1):', err);
+
+      // Auto-retry once on network/timeout errors
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const isRetryable = errMsg.includes('timeout') || errMsg.includes('AbortError') || errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('Failed to fetch');
+      if (isRetryable) {
+        dlog('chat', '🔄 auto-retrying analyze...');
+        showToast(isZh ? '网络波动，正在重试…' : 'Network issue, retrying…');
+        try {
+          const retryController = new AbortController();
+          analyzeAbortRef.current = retryController;
+          const result = await analyzeMenu(files, state.preferences.language, state.location, retryController.signal);
+          dlog('chat', '✅ performAnalyze retry success, items=', result.items?.length);
+          dispatch({ type: 'SET_MENU_DATA', data: result });
+          dispatch({ type: 'CLEAR_ANALYZING_FILES' });
+          return;
+        } catch (retryErr) {
+          dlog('chat', '❌ performAnalyze retry also FAILED:', retryErr);
+        }
       }
+
       dispatch({ type: 'SET_CHAT_PHASE', phase: 'failed' });
       showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'recognize' }));
     } finally {
