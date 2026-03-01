@@ -360,3 +360,20 @@ Codex Review 评分：修前 4/10 → 修后预估 7.5/10（契约一致+状态�
 | #4 Worker 错误信息优化（suggestion 字段）| ✅ | 2026-02-27 |
 | Codex Review 修复: model fallback + weather perf + type contract | ✅ | 2026-02-27 |
 | 线上部署（Worker + Pages）| ✅ | 2026-02-27 15:21 |
+
+### 2026-03-01（图片识别链路系统性重构）
+
+- 新增规格文档：`specs/sprint3-image-recognition-pipeline-refactor.md`
+- 前端 `app/src/api/analyze.ts`：base64 JSON → multipart 二进制上传；新增 SSE 进度流消费；压缩并发限制=2
+- 前端 `app/src/views/AgentChatView.tsx`：`performAnalyze` 接入进度事件并展示实时阶段文案/百分比
+- Worker `worker/handlers/analyze.ts`：支持 multipart 解析 + SSE 返回 `progress/result/error`；兼容旧 JSON 调用
+- Worker `worker/utils/bailian.ts`：默认超时 30s → 12s，避免遗漏 timeout 参数时长时间等待
+- Worker Analyze 超时策略：flash 9s + plus 7s；失败返回标准化错误
+- Prompt 优化：`worker/prompts/menuAnalysis.ts` v3，减少冗余 token，保留原 JSON 结构
+- 共享常量更新：`shared/types.ts` `TIMEOUTS.ANALYZE_CLIENT=20s`、`ANALYZE_WORKER=16s`
+- 文档同步：`docs/api-design.md` 更新 Analyze 契约（multipart + SSE + 新超时）
+- 验证：
+  - `cd app && npx tsc --noEmit` ✅
+  - `cd worker && npx tsc --noEmit` ✅
+  - `cd app && pnpm build` ✅
+  - `cd app && pnpm test:e2e` ⚠️ 当前环境端口权限限制（`EPERM ::1:5173`），未能执行

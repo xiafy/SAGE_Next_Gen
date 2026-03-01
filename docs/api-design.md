@@ -20,8 +20,13 @@
 ### 1.2 通用请求头
 
 ```http
-Content-Type: application/json
-Accept: application/json
+POST /api/analyze:
+  Content-Type: multipart/form-data
+  Accept: text/event-stream
+
+POST /api/chat:
+  Content-Type: application/json
+  Accept: text/event-stream
 ```
 
 > 无需前端传 Authorization，Key 仅在 Worker 环境变量中存储。
@@ -72,7 +77,7 @@ Accept: application/json
 
 | 端点 | 前端超时 | Worker 超时 | 说明 |
 |------|---------|-----------|------|
-| `POST /api/analyze` | 30s | 25s | Vision 推理较慢 |
+| `POST /api/analyze` | 20s | 16s | 二进制上传 + flash/plus 短超时降级链 |
 | `POST /api/chat` | 15s | 12s | 对话要求低延迟 |
 | `GET /api/health` | 5s | — | 健康检查 |
 
@@ -126,33 +131,20 @@ const ALLOWED_ORIGINS = [
 
 ### `POST /api/analyze`
 
-**功能**: 菜单图片识别，返回结构化菜单数据
+**功能**: 菜单图片识别，SSE 返回进度事件 + 最终结构化菜单数据
 
 #### 2.1 请求 Payload
 
 ```typescript
-interface AnalyzeRequest {
-  // 图片数组（同时提交，最多 5 张，DEC-026 OQ4）
-  images: {
-    data: string;           // Base64 编码图片内容（不含 data:image/ 前缀）
-    mimeType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/heic';
-  }[];
-
-  // 上下文（前端采集）
-  context: {
-    language: 'zh' | 'en';       // 用户 UI 语言
-    timestamp: number;            // Unix timestamp（毫秒）
-    location?: {                  // GPS（可选，DEC-013/021）
-      lat: number;
-      lng: number;
-      accuracy?: number;          // 精度（米）
-    };
-  };
-}
+// multipart/form-data
+// images: File[] (1-5)
+// context_language: 'zh' | 'en'
+// context_timestamp: string(number)
+// context_location?: string(JSON)
 ```
 
 **Payload 限制**（Server 侧校验）:
-- 单张图片最大: 4MB（编码后 Base64 约 5.3MB）
+- 单张图片最大: 4MB（二进制原始大小）
 - 全部图片总大小（原始）: ≤ 10MB
 - 图片数量: 1–5 张
 - 支持格式: `jpeg`, `png`, `webp`, `heic`
@@ -166,15 +158,21 @@ interface AnalyzeRequest {
 | `maxDimension` | **1280 px** | 长边不超过此值（等比缩放），手机 12MP 图输出约 1.23MP |
 | `maxSizeBytes` | **500 KB** | 压缩目标上限（远低于 Server 4MB 限制） |
 | Quality Ladder | `0.75 → 0.60 → 0.45 → 0.30 → 0.15` | 逐档尝试，首个满足 maxSizeBytes 的 quality 即用 |
-| 输出格式 | `image/jpeg` | 统一转 JPEG，iOS HEIC 等自动转换 |
+| 输出格式 | `image/webp` 优先，回退 `image/jpeg` | 兼顾体积和兼容性 |
 | iOS Canvas 上限 | 16 MP 兜底检查 | 超出时二次缩放，避免 Safari getContext 返回 null |
 
 > **决策依据（DEC-040）**：菜单识别为 OCR 类任务，有效像素量直接影响小字（价格、配料）的识别准确率。原参数 960px/350KB 对手机大图信息损失超 75%；升级至 1280px/500KB 后有效像素提升 78%，传输成本仅增 ~150KB，Server 侧仍有 8x 余量。
 
-#### 2.2 成功响应 Data
+#### 2.2 SSE 响应事件
 
 ```typescript
-interface AnalyzeResponse {
+interface AnalyzeProgressEvent {
+  stage: 'uploading' | 'preparing' | 'vision_flash' | 'vision_plus_fallback' | 'validating' | 'completed';
+  progress: number; // 0-100
+  message: string;
+}
+
+interface AnalyzeResponseData {
   // 菜单元信息
   menuType: 'restaurant' | 'bar' | 'dessert' | 'fastfood' | 'cafe' | 'other';
   detectedLanguage: string;       // ISO 639-1，如 "ja"、"th"、"ar"
@@ -212,12 +210,21 @@ interface AnalyzeResponse {
   processingMs: number;           // AI 处理耗时（毫秒）
   imageCount: number;             // 实际处理的图片数
 }
+
+// event: progress
+data: AnalyzeProgressEvent
+
+// event: result
+data: { ok: true; data: AnalyzeResponseData; requestId: string }
+
+// event: error
+data: { ok: false; error: ApiError; requestId: string }
 ```
 
 #### 2.3 降级模式
 
-当 `Qwen3-VL-Plus` 超时或报错：
-1. 自动切换到 `Qwen3-VL-Flash` 重试一次
+当 `Qwen3-VL-Flash` 超时或报错：
+1. 自动切换到 `Qwen3-VL-Plus` 重试一次
 2. 如仍失败，返回 `AI_UNAVAILABLE` 错误
 
 #### 2.4 Icebreaker 机制（前端本地）

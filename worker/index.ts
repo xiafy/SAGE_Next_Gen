@@ -3,7 +3,7 @@
  *
  * 端点:
  *   GET  /api/health   — 健康检查
- *   POST /api/analyze  — 菜单图片识别（聚合 SSE，返回完整 JSON）
+ *   POST /api/analyze  — 菜单图片识别（支持 multipart；SSE 进度 + 最终结果）
  *   POST /api/chat     — AI 对话（透传 SSE 给前端）
  */
 

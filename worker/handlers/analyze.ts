@@ -5,11 +5,41 @@ import { streamAggregate } from '../utils/bailian.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { AnalyzeRequestSchema } from '../schemas/chatSchema.js';
+import type { AnalyzeRequest } from '../schemas/chatSchema.js';
 import { MenuAnalyzeResultSchema } from '../schemas/menuSchema.js';
 import { MENU_ANALYSIS_SYSTEM, buildMenuAnalysisUserMessage } from '../prompts/menuAnalysis.js';
 
-const MAX_IMAGE_BYTES  = 4 * 1024 * 1024;   // 4 MB per image
-const MAX_TOTAL_BYTES  = 10 * 1024 * 1024;  // 10 MB total
+type AnalyzeErrorCode =
+  | 'INVALID_REQUEST'
+  | 'PAYLOAD_TOO_LARGE'
+  | 'AI_TIMEOUT'
+  | 'AI_UNAVAILABLE'
+  | 'AI_INVALID_RESPONSE'
+  | 'INTERNAL_ERROR';
+
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4 MB per image
+const MAX_TOTAL_BYTES = 10 * 1024 * 1024; // 10 MB total
+
+interface AnalyzeErrorPayload {
+  ok: false;
+  error: {
+    code: AnalyzeErrorCode;
+    message: string;
+    messageZh: string;
+    messageEn: string;
+    retryable: boolean;
+  };
+  requestId: string;
+}
+
+const STREAM_ERROR_MESSAGES: Record<AnalyzeErrorCode, { en: string; zh: string; retryable: boolean }> = {
+  INVALID_REQUEST: { en: 'Invalid request', zh: '请求格式错误', retryable: false },
+  PAYLOAD_TOO_LARGE: { en: 'Payload too large', zh: '请求体过大', retryable: false },
+  AI_TIMEOUT: { en: 'AI response timed out', zh: 'AI 响应超时，请重试', retryable: true },
+  AI_UNAVAILABLE: { en: 'AI service unavailable', zh: 'AI 服务暂时不可用', retryable: true },
+  AI_INVALID_RESPONSE: { en: 'AI returned invalid data', zh: 'AI 返回数据格式异常', retryable: true },
+  INTERNAL_ERROR: { en: 'Internal server error', zh: '服务器内部错误', retryable: true },
+};
 
 /** 从 base64 字符串估算字节数 */
 function estimateBase64Bytes(b64: string): number {
@@ -18,66 +48,126 @@ function estimateBase64Bytes(b64: string): number {
 
 /** 尝试从字符串中提取 JSON 对象 */
 function extractJson(raw: string): string {
-  // 先尝试直接解析
   const trimmed = raw.trim();
   if (trimmed.startsWith('{')) return trimmed;
 
-  // 从 ```json ... ``` 中提取
   const match = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (match?.[1]) return match[1].trim();
 
-  // 找第一个 { 和最后一个 }
   const start = trimmed.indexOf('{');
-  const end   = trimmed.lastIndexOf('}');
+  const end = trimmed.lastIndexOf('}');
   if (start !== -1 && end > start) return trimmed.slice(start, end + 1);
 
   return trimmed;
 }
 
-export async function handleAnalyze(
-  request: Request,
+function toAnalyzeErrorPayload(code: AnalyzeErrorCode, requestId: string, detail?: string): AnalyzeErrorPayload {
+  const meta = STREAM_ERROR_MESSAGES[code];
+  return {
+    ok: false,
+    error: {
+      code,
+      message: detail ?? meta.en,
+      messageZh: meta.zh,
+      messageEn: meta.en,
+      retryable: meta.retryable,
+    },
+    requestId,
+  };
+}
+
+function toSSE(event: string, payload: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+async function parseAnalyzeRequest(request: Request): Promise<unknown> {
+  const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+
+  if (contentType.includes('multipart/form-data')) {
+    const form = await request.formData();
+    const rawImages = form.getAll('images') as unknown[];
+    const imageFiles = rawImages.filter(
+      (item): item is Blob => typeof item === 'object' && item !== null && 'arrayBuffer' in item,
+    );
+
+    if (imageFiles.length === 0) {
+      return { images: [], context: {} };
+    }
+
+    const images = await Promise.all(
+      imageFiles.map(async (file: Blob) => {
+        const base64 = arrayBufferToBase64(await file.arrayBuffer());
+        const mimeType = file.type || 'image/jpeg';
+        return {
+          data: base64,
+          mimeType,
+        };
+      }),
+    );
+
+    const rawLocation = form.get('context_location');
+    let location: { lat: number; lng: number; accuracy?: number } | undefined;
+    if (typeof rawLocation === 'string' && rawLocation.trim().length > 0) {
+      try {
+        location = JSON.parse(rawLocation) as { lat: number; lng: number; accuracy?: number };
+      } catch {
+        // Let Zod handle invalid location shape
+      }
+    }
+
+    return {
+      images,
+      context: {
+        language: form.get('context_language'),
+        timestamp: Number(form.get('context_timestamp') ?? Date.now()),
+        ...(location ? { location } : {}),
+      },
+    };
+  }
+
+  return request.json();
+}
+
+async function runAnalyzePipeline(
+  normalizedRequest: AnalyzeRequest,
   env: Env,
   requestId: string,
-): Promise<Response> {
-  const ip     = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-  const origin = request.headers.get('Origin');
+  onProgress?: (event: { stage: string; progress: number; message: string }) => void,
+) {
+  const { images, context } = normalizedRequest;
 
-  // 速率限制：20次/小时
-  if (!checkRateLimit(`analyze:${ip}`, 20, 60 * 60 * 1000)) {
-    return errorResponse('RATE_LIMIT_EXCEEDED', request, env, requestId);
-  }
-
-  // 解析请求体
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return errorResponse('INVALID_REQUEST', request, env, requestId, 'Request body must be JSON');
-  }
-
-  const parsed = AnalyzeRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    logger.warn('analyze: invalid request', { requestId, issues: parsed.error.issues });
-    return errorResponse('INVALID_REQUEST', request, env, requestId, parsed.error.issues[0]?.message);
-  }
-
-  const { images, context } = parsed.data;
-
-  // 校验图片大小
   let totalBytes = 0;
   for (const img of images) {
     const bytes = estimateBase64Bytes(img.data);
     if (bytes > MAX_IMAGE_BYTES) {
-      return errorResponse('PAYLOAD_TOO_LARGE', request, env, requestId, `Image exceeds 4 MB`);
+      throw Object.assign(new Error('Image exceeds 4 MB'), { code: 'PAYLOAD_TOO_LARGE' as const });
     }
     totalBytes += bytes;
   }
   if (totalBytes > MAX_TOTAL_BYTES) {
-    return errorResponse('PAYLOAD_TOO_LARGE', request, env, requestId, 'Total images exceed 10 MB');
+    throw Object.assign(new Error('Total images exceed 10 MB'), { code: 'PAYLOAD_TOO_LARGE' as const });
   }
 
-  // 构造 Bailian 消息（content array，多图并发在同一 context）
-  const imageContents = images.map(img => ({
+  onProgress?.({
+    stage: 'preparing',
+    progress: 20,
+    message: context.language === 'zh' ? '图片上传完成，准备识别…' : 'Upload complete. Preparing vision analysis…',
+  });
+
+  const imageContents = images.map((img) => ({
     type: 'image_url' as const,
     image_url: { url: `data:${img.mimeType};base64,${img.data}` },
   }));
@@ -91,42 +181,55 @@ export async function handleAnalyze(
   };
 
   const startMs = Date.now();
-
-  // 主模型：qwen3-vl-flash（速度优先）
-  // 降级：qwen3-vl-plus（仅在 flash 失败时使用一次）
-  // P0-A：简化降级链，flash 45s → 失败 → plus 50s → done
   let rawText: string;
   let modelUsed: 'qwen3-vl-flash' | 'qwen3-vl-plus' = 'qwen3-vl-flash';
+
+  onProgress?.({
+    stage: 'vision_flash',
+    progress: 45,
+    message: context.language === 'zh' ? '正在识别菜单（快速模型）…' : 'Scanning menu with fast model…',
+  });
+
   try {
     rawText = await streamAggregate({
-      model:     'qwen3-vl-flash',
-      messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
-      apiKey:    env.BAILIAN_API_KEY,
-      timeoutMs: 45_000,
+      model: 'qwen3-vl-flash',
+      messages: [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
+      apiKey: env.BAILIAN_API_KEY,
+      timeoutMs: 30_000,
       requestId,
     });
-    modelUsed = 'qwen3-vl-flash';
   } catch (err) {
-    const errStr = String(err);
-    logger.warn('analyze: flash failed, trying plus', { requestId, err: errStr.slice(0, 100) });
+    logger.warn('analyze: flash failed, trying plus', { requestId, err: String(err).slice(0, 120) });
 
-    // 唯一降级：qwen3-vl-plus
+    onProgress?.({
+      stage: 'vision_plus_fallback',
+      progress: 65,
+      message: context.language === 'zh' ? '快速模型失败，切换增强模型…' : 'Fast model failed, switching to fallback model…',
+    });
+
     try {
       rawText = await streamAggregate({
-        model:     'qwen3-vl-plus',
-        messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
-        apiKey:    env.BAILIAN_API_KEY,
-        timeoutMs: 50_000,
+        model: 'qwen3-vl-plus',
+        messages: [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
+        apiKey: env.BAILIAN_API_KEY,
+        timeoutMs: 25_000,
         requestId,
       });
       modelUsed = 'qwen3-vl-plus';
     } catch (fallbackErr) {
-      const err2 = String(fallbackErr);
-      const isTimeout = err2.includes('timeout') || err2.includes('AbortError');
-      logger.error('analyze: plus fallback also failed', { requestId, err: err2.slice(0, 100) });
-      return errorResponse(isTimeout ? 'AI_TIMEOUT' : 'AI_UNAVAILABLE', request, env, requestId);
+      const errText = String(fallbackErr);
+      const timeout = errText.includes('timeout') || errText.includes('AbortError');
+      throw Object.assign(new Error('upstream failed'), {
+        code: timeout ? ('AI_TIMEOUT' as const) : ('AI_UNAVAILABLE' as const),
+      });
     }
   }
+
+  onProgress?.({
+    stage: 'validating',
+    progress: 85,
+    message: context.language === 'zh' ? '解析识别结果…' : 'Validating result…',
+  });
 
   async function parseAndValidate(text: string) {
     const jsonStr = extractJson(text);
@@ -142,46 +245,106 @@ export async function handleAnalyze(
     return result;
   }
 
-  let result: ReturnType<typeof parseAndValidate> extends Promise<infer R> ? R : never;
   try {
-    result = await parseAndValidate(rawText);
-  } catch (firstParseErr) {
-    // flash occasionally returns malformed/incomplete JSON; retry once with plus
-    if (modelUsed === 'qwen3-vl-flash') {
-      logger.warn('analyze: flash parse/validation failed, retrying with plus', {
-        requestId,
-        err: String(firstParseErr),
-      });
-      try {
-        rawText = await streamAggregate({
-          model:     'qwen3-vl-plus',
-          messages:  [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
-          apiKey:    env.BAILIAN_API_KEY,
-          timeoutMs: 50_000,
-          requestId,
-        });
-        result = await parseAndValidate(rawText);
-        modelUsed = 'qwen3-vl-plus';
-      } catch (retryErr) {
-        const isTimeout = String(retryErr).includes('timeout') || String(retryErr).includes('AbortError');
-        logger.error('analyze: plus retry after parse failure also failed', { requestId, err: String(retryErr) });
-        return errorResponse(isTimeout ? 'AI_TIMEOUT' : 'AI_INVALID_RESPONSE', request, env, requestId);
-      }
-    } else {
-      logger.error('analyze: parse/validation failed', { requestId, err: String(firstParseErr) });
-      return errorResponse('AI_INVALID_RESPONSE', request, env, requestId);
+    const result = await parseAndValidate(rawText);
+
+    logger.info('analyze: success', {
+      requestId,
+      modelUsed,
+      processingMs: result.processingMs,
+      itemCount: result.items.length,
+      lang: result.detectedLanguage,
+    });
+
+    return result;
+  } catch (parseError) {
+    logger.error('analyze: parse failed', { requestId, modelUsed, err: String(parseError) });
+    throw Object.assign(new Error('invalid response'), { code: 'AI_INVALID_RESPONSE' as const });
+  }
+}
+
+export async function handleAnalyze(
+  request: Request,
+  env: Env,
+  requestId: string,
+): Promise<Response> {
+  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+  const origin = request.headers.get('Origin');
+  const accept = request.headers.get('accept')?.toLowerCase() ?? '';
+  const wantsStream = accept.includes('text/event-stream');
+
+  if (!checkRateLimit(`analyze:${ip}`, 20, 60 * 60 * 1000)) {
+    return errorResponse('RATE_LIMIT_EXCEEDED', request, env, requestId);
+  }
+
+  let body: unknown;
+  try {
+    body = await parseAnalyzeRequest(request);
+  } catch {
+    return errorResponse('INVALID_REQUEST', request, env, requestId, 'Request body parse failed');
+  }
+
+  const parsed = AnalyzeRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    logger.warn('analyze: invalid request', { requestId, issues: parsed.error.issues });
+    return errorResponse('INVALID_REQUEST', request, env, requestId, parsed.error.issues[0]?.message);
+  }
+
+  if (!wantsStream) {
+    try {
+      const result = await runAnalyzePipeline(parsed.data, env, requestId);
+      return Response.json(
+        { ok: true, data: result, requestId },
+        { headers: getCorsHeaders(origin, env) },
+      );
+    } catch (err) {
+      const code = (err as { code?: AnalyzeErrorCode }).code ?? 'INTERNAL_ERROR';
+      return errorResponse(code, request, env, requestId, err instanceof Error ? err.message : undefined);
     }
   }
 
-  logger.info('analyze: success', {
-    requestId,
-    processingMs: result.processingMs,
-    itemCount:    result.items.length,
-    lang:         result.detectedLanguage,
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const emit = (event: string, payload: unknown) => {
+        controller.enqueue(encoder.encode(toSSE(event, payload)));
+      };
+
+      emit('progress', {
+        stage: 'uploading',
+        progress: 10,
+        message: parsed.data.context.language === 'zh' ? '收到图片，开始上传处理…' : 'Images received. Processing upload…',
+      });
+
+      try {
+        const result = await runAnalyzePipeline(parsed.data, env, requestId, (progress) => {
+          emit('progress', progress);
+        });
+
+        emit('result', { ok: true, data: result, requestId });
+        emit('progress', {
+          stage: 'completed',
+          progress: 100,
+          message: parsed.data.context.language === 'zh' ? '识别完成' : 'Completed',
+        });
+        emit('done', '[DONE]');
+      } catch (err) {
+        const code = (err as { code?: AnalyzeErrorCode }).code ?? 'INTERNAL_ERROR';
+        const detail = err instanceof Error ? err.message : undefined;
+        emit('error', toAnalyzeErrorPayload(code, requestId, detail));
+      } finally {
+        controller.close();
+      }
+    },
   });
 
-  return Response.json(
-    { ok: true, data: result, requestId },
-    { headers: getCorsHeaders(origin, env) },
-  );
+  return new Response(stream, {
+    headers: {
+      ...getCorsHeaders(origin, env),
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'X-Accel-Buffering': 'no',
+      'X-Request-Id': requestId,
+    },
+  });
 }

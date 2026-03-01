@@ -107,7 +107,7 @@ export interface MenuData {
 export type ImageMimeType = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/heic';
 
 export interface AnalyzeRequestImage {
-  data: string;         // Base64（不含 data:image/ 前缀）
+  data: string;         // Worker 内部标准化后的 Base64（不含 data:image/ 前缀）
   mimeType: ImageMimeType;
 }
 
@@ -120,6 +120,20 @@ export interface AnalyzeRequestContext {
 export interface AnalyzeRequest {
   images: AnalyzeRequestImage[];  // 1-5 张
   context: AnalyzeRequestContext;
+}
+
+export type AnalyzeProgressStage =
+  | 'uploading'
+  | 'preparing'
+  | 'vision_flash'
+  | 'vision_plus_fallback'
+  | 'validating'
+  | 'completed';
+
+export interface AnalyzeProgressEvent {
+  stage: AnalyzeProgressStage;
+  progress: number; // 0-100
+  message: string;
 }
 
 // ─────────────────────────────────────────────
@@ -255,8 +269,8 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 /** 各端点超时（毫秒）— 来源 API_DESIGN.md §1.5 */
 export const TIMEOUTS = {
-  ANALYZE_CLIENT: 70_000,   // flash 45s + plus 50s 降级链，客户端留余量
-  ANALYZE_WORKER: 50_000,
+  ANALYZE_CLIENT: 70_000,   // flash 30s + plus 25s 降级链，客户端留余量含重试
+  ANALYZE_WORKER: 55_000,   // flash 30s + plus 25s
   CHAT_CLIENT: 15_000,
   CHAT_WORKER: 12_000,
   HEALTH: 5_000,

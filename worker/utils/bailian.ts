@@ -9,6 +9,7 @@
 import { logger } from './logger.js';
 
 const BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+// 默认用于对话链路；vision 链路在调用处显式传超时
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 export interface BailianMessage {

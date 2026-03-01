@@ -1,32 +1,18 @@
 import { WORKER_BASE } from './config';
 import type {
-  GeoLocation,
-  MenuData,
-  AnalyzeRequest,
+  AnalyzeProgressEvent,
+  ApiErrorResponse,
   ApiSuccessResponse,
+  GeoLocation,
   Language,
+  MenuData,
 } from '../types';
 import { TIMEOUTS } from '../types';
 import { dlog } from '../utils/debugLog';
 
-/**
- * Convert File to base64 string (without data URL prefix)
- */
-function fileToBase64(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const b64 = result.split(',')[1] ?? '';
-      dlog('b64', 'FileReader done, length=', b64.length);
-      resolve(b64);
-    };
-    reader.onerror = () => {
-      dlog('b64', 'FileReader ERROR');
-      reject(new Error('Failed to read file'));
-    };
-    reader.readAsDataURL(file);
-  });
+interface AnalyzeMenuOptions {
+  signal?: AbortSignal;
+  onProgress?: (event: AnalyzeProgressEvent) => void;
 }
 
 /**
@@ -56,13 +42,12 @@ function loadImage(file: File): Promise<HTMLImageElement> {
  */
 async function compressImage(
   file: File,
-  maxDimension = 1024,
-  maxSizeBytes = 400 * 1024,
+  maxDimension = 1280,
+  maxSizeBytes = 500 * 1024,
 ): Promise<Blob> {
   dlog('compress', 'start, input size=', file.size, 'type=', file.type);
 
   const img = await loadImage(file);
-  dlog('compress', 'image loaded', img.naturalWidth, 'x', img.naturalHeight);
 
   let { naturalWidth: w, naturalHeight: h } = img;
   if (w > maxDimension || h > maxDimension) {
@@ -70,86 +55,96 @@ async function compressImage(
     w = Math.round(w * scale);
     h = Math.round(h * scale);
   }
-  dlog('compress', 'target canvas', w, 'x', h, 'pixels=', w * h);
 
-  // iOS Safari canvas size limit check (~16.7MP)
+  // iOS Safari canvas size limit check (~16MP)
   if (w * h > 16_000_000) {
-    dlog('compress', '⚠️ CANVAS TOO LARGE, scaling down further');
     const scale = Math.sqrt(16_000_000 / (w * h));
     w = Math.round(w * scale);
     h = Math.round(h * scale);
-    dlog('compress', 'rescaled to', w, 'x', h);
   }
 
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    dlog('compress', '❌ getContext(2d) returned null!');
-    throw new Error('Canvas not supported');
-  }
+  if (!ctx) throw new Error('Canvas not supported');
   ctx.drawImage(img, 0, 0, w, h);
-  dlog('compress', 'drawImage done');
 
-  // P1-E: Prefer WebP (25-35% smaller than JPEG at same quality), fallback to JPEG
   const webpSupported = await new Promise<boolean>((resolve) => {
     canvas.toBlob((b) => resolve(!!b && b.size > 0), 'image/webp', 0.5);
   });
   const outputType = webpSupported ? 'image/webp' : 'image/jpeg';
-  dlog('compress', 'output format:', outputType);
 
   for (const quality of [0.75, 0.6, 0.45, 0.3]) {
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (b) => {
-          if (b) {
-            resolve(b);
-          } else {
-            dlog('compress', '❌ toBlob returned null at q=', quality);
-            reject(new Error('toBlob failed'));
-          }
-        },
+        (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
         outputType,
         quality,
       );
     });
-    dlog('compress', 'q=', quality, 'size=', blob.size, 'type=', outputType);
-    if (blob.size <= maxSizeBytes) {
-      return blob;
-    }
+
+    if (blob.size <= maxSizeBytes) return blob;
   }
 
-  const finalBlob = await new Promise<Blob>((resolve, reject) => {
+  return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
       outputType,
       0.15,
     );
   });
-  dlog('compress', 'final q=0.15 size=', finalBlob.size);
-  return finalBlob;
 }
 
-/**
- * Normalize image: compress + convert to base64
- */
-async function normalizeImage(file: File): Promise<{ base64: string; mimeType: string }> {
-  dlog('normalize', file.name, 'type=', file.type, 'size=', file.size);
-
-  let blob: Blob;
+async function normalizeImage(file: File): Promise<Blob> {
   try {
-    blob = await compressImage(file);
-  } catch (err) {
-    dlog('normalize', '❌ compressImage threw:', err);
-    throw new Error('Image compression failed. Please try a smaller photo.');
+    return await compressImage(file);
+  } catch {
+    throw new Error('Image compression failed. Please try a clearer photo.');
+  }
+}
+
+async function normalizeImagesWithConcurrency(files: File[], concurrency = 2): Promise<Blob[]> {
+  const results = new Array<Blob>(files.length);
+  let index = 0;
+
+  async function workerTask(): Promise<void> {
+    while (index < files.length) {
+      const current = index;
+      index += 1;
+      results[current] = await normalizeImage(files[current]!);
+    }
   }
 
-  dlog('normalize', 'compressed to', blob.size, 'bytes, converting to base64...');
-  const base64 = await fileToBase64(blob);
-  dlog('normalize', '✅ base64 ready, length=', base64.length);
+  const workers = Array.from({ length: Math.min(concurrency, files.length) }, () => workerTask());
+  await Promise.all(workers);
+  return results;
+}
 
-  return { base64, mimeType: blob.type || 'image/jpeg' };
+function toMimeType(blob: Blob): 'image/jpeg' | 'image/png' | 'image/webp' | 'image/heic' {
+  const type = blob.type;
+  if (type === 'image/png' || type === 'image/webp' || type === 'image/heic') return type;
+  return 'image/jpeg';
+}
+
+function parseSSEEventBlock(block: string): { event: string; data: string } | null {
+  const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+  if (lines.length === 0) return null;
+
+  let event = 'message';
+  const dataParts: string[] = [];
+
+  for (const line of lines) {
+    if (line.startsWith('event:')) {
+      event = line.slice(6).trim();
+      continue;
+    }
+    if (line.startsWith('data:')) {
+      dataParts.push(line.slice(5).trim());
+    }
+  }
+
+  return { event, data: dataParts.join('\n') };
 }
 
 export async function analyzeMenu(
@@ -157,74 +152,118 @@ export async function analyzeMenu(
   language: Language = 'zh',
   location?: GeoLocation | null,
   signal?: AbortSignal,
+  onProgress?: AnalyzeMenuOptions['onProgress'],
 ): Promise<MenuData> {
-  dlog('analyze', '🚀 called with', images.length, 'images');
+  dlog('analyze', 'start analyzeMenu, images=', images.length);
 
-  const imagePayloads = await Promise.all(
-    images.map(async (file, idx) => {
-      dlog('analyze', `processing image ${idx + 1}/${images.length}`);
-      const { base64, mimeType } = await normalizeImage(file);
-      return { data: base64, mimeType: mimeType as AnalyzeRequest['images'][number]['mimeType'] };
-    }),
-  );
+  onProgress?.({
+    stage: 'uploading',
+    progress: 5,
+    message: language === 'zh' ? '正在压缩图片…' : 'Compressing images…',
+  });
 
-  const body: AnalyzeRequest = {
-    images: imagePayloads,
-    context: {
-      language,
-      timestamp: Date.now(),
-      ...(location ? { location } : {}),
-    },
-  };
+  const normalizedBlobs = await normalizeImagesWithConcurrency(images, 2);
 
-  const bodySize = JSON.stringify(body).length;
-  dlog('analyze', '📤 POST /api/analyze, images:', imagePayloads.length, 'bodySize=', bodySize);
-  dlog('analyze', 'WORKER_BASE=', WORKER_BASE);
+  const formData = new FormData();
+  normalizedBlobs.forEach((blob, idx) => {
+    const mimeType = toMimeType(blob);
+    const ext = mimeType === 'image/webp' ? 'webp' : mimeType === 'image/png' ? 'png' : 'jpg';
+    formData.append('images', blob, `menu_${idx + 1}.${ext}`);
+    formData.append('mimeTypes', mimeType);
+  });
+  formData.append('context_language', language);
+  formData.append('context_timestamp', String(Date.now()));
+  if (location) {
+    formData.append('context_location', JSON.stringify(location));
+  }
 
-  // Polyfill: AbortSignal.timeout / AbortSignal.any not available on older iOS Safari
-  let combinedSignal: AbortSignal;
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => timeoutController.abort(), TIMEOUTS.ANALYZE_CLIENT);
+  const merged = new AbortController();
+  const onAbort = () => merged.abort();
 
   if (signal) {
-    // If caller provided a signal, abort on either
-    const merged = new AbortController();
-    const onAbort = () => merged.abort();
     signal.addEventListener('abort', onAbort, { once: true });
-    timeoutController.signal.addEventListener('abort', onAbort, { once: true });
-    combinedSignal = merged.signal;
-  } else {
-    combinedSignal = timeoutController.signal;
   }
+  timeoutController.signal.addEventListener('abort', onAbort, { once: true });
 
-  let response: Response;
   try {
-    response = await fetch(`${WORKER_BASE}/api/analyze`, {
+    const response = await fetch(`${WORKER_BASE}/api/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: combinedSignal,
+      headers: {
+        Accept: 'text/event-stream',
+      },
+      body: formData,
+      signal: merged.signal,
     });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Menu analysis failed (${response.status}): ${text}`);
+    }
+
+    if (!response.body) {
+      throw new Error('Analyze stream unavailable');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalData: MenuData | null = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() ?? '';
+
+      for (const part of parts) {
+        const evt = parseSSEEventBlock(part);
+        if (!evt) continue;
+
+        if (evt.event === 'progress') {
+          try {
+            const progress = JSON.parse(evt.data) as AnalyzeProgressEvent;
+            onProgress?.(progress);
+          } catch {
+            // Ignore malformed progress event
+          }
+          continue;
+        }
+
+        if (evt.event === 'result') {
+          const parsed = JSON.parse(evt.data) as ApiSuccessResponse<MenuData>;
+          if (!parsed.ok) throw new Error('Analyze stream returned non-ok result');
+          finalData = parsed.data;
+          continue;
+        }
+
+        if (evt.event === 'error') {
+          const parsed = JSON.parse(evt.data) as ApiErrorResponse;
+          const message = parsed.error?.message ?? 'Analyze failed';
+          throw new Error(message);
+        }
+      }
+    }
+
+    if (!finalData) {
+      throw new Error('Analyze stream ended without result');
+    }
+
+    onProgress?.({
+      stage: 'completed',
+      progress: 100,
+      message: language === 'zh' ? '识别完成' : 'Done',
+    });
+
+    return finalData;
+  } finally {
     clearTimeout(timeoutId);
-    dlog('analyze', '📥 response status:', response.status);
-  } catch (err) {
-    clearTimeout(timeoutId);
-    dlog('analyze', '❌ fetch threw:', err);
-    throw err;
+    if (signal) {
+      signal.removeEventListener('abort', onAbort);
+    }
+    timeoutController.signal.removeEventListener('abort', onAbort);
   }
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    dlog('analyze', '❌ HTTP error:', response.status, text.slice(0, 200));
-    throw new Error(`Menu analysis failed (${response.status}): ${text}`);
-  }
-
-  const json = (await response.json()) as ApiSuccessResponse<MenuData>;
-  if (!json.ok) {
-    dlog('analyze', '❌ json.ok is false');
-    throw new Error('analyze failed');
-  }
-
-  dlog('analyze', '✅ success! items:', json.data.items?.length);
-  return json.data;
 }

@@ -561,3 +561,23 @@
   3. 传输差异仅约 150KB，4G 网络 <0.1s，用户无感
   4. quality ladder 最高档从 0.6 升至 0.75，减少文字边缘 JPEG artifact
 - **影响**: `app/src/api/analyze.ts`（`compressImage` 默认参数）、`docs/api-design.md`（客户端预处理规范）
+
+---
+
+### [DEC-041] 图片识别链路改为 Binary Upload + Analyze SSE
+
+- **日期**: 2026-03-01
+- **决策人**: Mr. Xia / SAGE Agent
+- **背景**: iPhone Safari + 弱网场景下，`/api/analyze` 采用 base64 JSON 上传 + Worker 聚合返回，导致请求体膨胀和长时间无反馈，超时失败率偏高。
+- **决策**:
+  1. 前端 `app/src/api/analyze.ts` 改为 `multipart/form-data` 二进制上传（图片不再在前端转 base64）
+  2. Worker `/api/analyze` 改为 SSE：持续发送 `progress` 事件，完成后发送 `result`
+  3. Worker 保留旧 JSON 请求兼容路径，支持灰度回滚
+  4. 超时链路收紧：flash 9s + plus 7s，前端 20s（含重试余量）
+  5. 前端图片压缩并发限制为 2，降低 iPhone Safari 内存峰值
+- **影响**:
+  - `app/src/api/analyze.ts`
+  - `app/src/views/AgentChatView.tsx`
+  - `worker/handlers/analyze.ts`
+  - `shared/types.ts`（Analyze 超时常量）
+  - `docs/api-design.md`

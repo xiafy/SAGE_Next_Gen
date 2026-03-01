@@ -48,6 +48,8 @@ export function AgentChatView() {
   const [isCancelZone, setIsCancelZone] = useState(false);
   const [recordDuration, setRecordDuration] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState(0);
+  const [analyzeStatusText, setAnalyzeStatusText] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const analyzeAbortRef = useRef<AbortController | null>(null);
@@ -367,10 +369,21 @@ export function AgentChatView() {
   async function performAnalyze(files: File[]) {
     const controller = new AbortController();
     analyzeAbortRef.current = controller;
+    setAnalyzeProgress(5);
+    setAnalyzeStatusText(isZh ? '正在压缩图片…' : 'Compressing images…');
 
     try {
       dlog('chat', '🚀 performAnalyze: calling analyzeMenu...');
-      const result = await analyzeMenu(files, state.preferences.language, state.location, controller.signal);
+      const result = await analyzeMenu(
+        files,
+        state.preferences.language,
+        state.location,
+        controller.signal,
+        (progressEvent) => {
+          setAnalyzeProgress(progressEvent.progress);
+          setAnalyzeStatusText(progressEvent.message);
+        },
+      );
       dlog('chat', '✅ performAnalyze: success, items=', result.items?.length, 'supplementing=', state.isSupplementing);
       dispatch({ type: 'SET_MENU_DATA', data: result });
 
@@ -404,7 +417,16 @@ export function AgentChatView() {
         try {
           const retryController = new AbortController();
           analyzeAbortRef.current = retryController;
-          const result = await analyzeMenu(files, state.preferences.language, state.location, retryController.signal);
+          const result = await analyzeMenu(
+            files,
+            state.preferences.language,
+            state.location,
+            retryController.signal,
+            (progressEvent) => {
+              setAnalyzeProgress(progressEvent.progress);
+              setAnalyzeStatusText(progressEvent.message);
+            },
+          );
           dlog('chat', '✅ performAnalyze retry success, items=', result.items?.length);
           dispatch({ type: 'SET_MENU_DATA', data: result });
           dispatch({ type: 'CLEAR_ANALYZING_FILES' });
@@ -417,6 +439,8 @@ export function AgentChatView() {
       dispatch({ type: 'SET_CHAT_PHASE', phase: 'failed' });
       showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'recognize' }));
     } finally {
+      setAnalyzeProgress(0);
+      setAnalyzeStatusText('');
       dispatch({ type: 'CLEAR_ANALYZING_FILES' });
     }
   }
@@ -721,10 +745,13 @@ export function AgentChatView() {
         // handing_off w/o menuData: still recognizing (40-60%)
         // handing_off w/ menuData: AI analyzing (60-90%)
         const isAnalyzing = state.chatPhase === 'handing_off' && state.menuData !== null;
-        const label = isAnalyzing
+        const defaultLabel = isAnalyzing
           ? (isZh ? '分析推荐中…' : 'Analyzing…')
           : (isZh ? '菜单识别中…' : 'Scanning menu…');
-        const progressClass = isAnalyzing ? 'animate-progress-analyze' : 'animate-progress-scan';
+        const label = analyzeStatusText || defaultLabel;
+        const progressValue = analyzeProgress > 0
+          ? analyzeProgress
+          : (isAnalyzing ? 82 : 35);
 
         return (
           <div className="px-4 py-3">
@@ -732,7 +759,10 @@ export function AgentChatView() {
               <MascotImage expression="thinking" size={28} className="rounded-full" />
               <div className="flex-1">
                 <div className="h-2.5 bg-[var(--color-sage-border)] rounded-full overflow-hidden">
-                  <div className={`h-full bg-gradient-to-r from-[var(--color-sage-primary)] to-[var(--color-sage-accent)] rounded-full transition-all ${progressClass}`} />
+                  <div
+                    className="h-full bg-gradient-to-r from-[var(--color-sage-primary)] to-[var(--color-sage-accent)] rounded-full transition-all duration-500"
+                    style={{ width: `${Math.max(8, Math.min(progressValue, 100))}%` }}
+                  />
                 </div>
               </div>
               <span className="text-sm text-[var(--color-sage-primary)] font-bold whitespace-nowrap">

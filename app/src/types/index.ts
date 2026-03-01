@@ -19,6 +19,8 @@ export type {
   AnalyzeRequestImage,
   AnalyzeRequestContext,
   AnalyzeRequest,
+  AnalyzeProgressStage,
+  AnalyzeProgressEvent,
   ChatMode,
   MessageRole,
   ChatMessage,
