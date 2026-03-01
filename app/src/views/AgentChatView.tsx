@@ -69,6 +69,7 @@ export function AgentChatView() {
   const micStreamRef = useRef<MediaStream | null>(null);
 
   const isZh = state.preferences.language === 'zh';
+  const totalOrderQuantity = state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
 
   // Map dietary prefs to AllergenType values for DishCard allergen matching
   const userAllergens = useMemo(() => {
@@ -660,7 +661,7 @@ export function AgentChatView() {
                 📋
               </button>
             )}
-            {state.orderItems.length > 0 && (
+            {totalOrderQuantity > 0 && (
               <button
                 onClick={() => dispatch({ type: 'NAV_TO', view: 'order' })}
                 className="relative text-[var(--color-sage-text-secondary)] hover:text-[var(--color-sage-text)] transition-colors text-sm"
@@ -668,7 +669,7 @@ export function AgentChatView() {
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15" /><path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5C15 6.10457 14.1046 7 13 7H11C9.89543 7 9 6.10457 9 5Z" /><path d="M9 12H15" /><path d="M9 16H13" /></svg>
                 <span className="absolute -top-1 -right-2 bg-[var(--color-sage-primary)] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {state.orderItems.length}
+                  {state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0)}
                 </span>
               </button>
             )}
@@ -847,7 +848,7 @@ export function AgentChatView() {
           aria-label={isZh ? '查看点单' : 'View order'}
         >
           <span className="text-sm text-[var(--color-sage-primary)] font-bold">
-            {isZh ? `已点 ${state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0)} 道菜` : `${state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0)} items`}
+            {isZh ? `已点 ${totalOrderQuantity} 道菜` : `${totalOrderQuantity} items`}
           </span>
           <span className="text-sm text-[var(--color-sage-primary)] font-extrabold">
             {priceFmt.format(state.orderItems.reduce((sum, oi) => sum + (oi.menuItem.price ?? 0) * oi.quantity, 0))}

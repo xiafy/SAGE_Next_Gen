@@ -65,8 +65,38 @@ export function ExploreView() {
   );
 
   // 找出孤儿 items（不被任何 category 引用，KI-004）
-  const referencedIds = new Set(categories.flatMap(c => c.itemIds));
+  const referencedIds = new Set(validCategories.flatMap(c => c.itemIds));
   const orphanItems = items.filter(it => !referencedIds.has(it.id));
+
+  const dedupeByNameOriginal = <T extends { nameOriginal: string }>(list: T[]) => {
+    const seen = new Set<string>();
+    return list.filter((item) => {
+      const key = item.nameOriginal.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const groupedItems = [
+    ...validCategories.map((cat) => {
+      const catItems = cat.itemIds
+        .map((id) => items.find((item) => item.id === id))
+        .filter((item): item is typeof items[number] => Boolean(item));
+      return {
+        id: cat.id,
+        title: isZh ? cat.nameTranslated : cat.nameOriginal,
+        items: dedupeByNameOriginal(catItems),
+      };
+    }).filter((group) => group.items.length > 0),
+    ...(orphanItems.length > 0
+      ? [{
+          id: '__other__',
+          title: isZh ? '其他' : 'Other',
+          items: dedupeByNameOriginal(orphanItems),
+        }]
+      : []),
+  ];
 
   // Filter items by active category
   const filteredItems =
@@ -80,13 +110,7 @@ export function ExploreView() {
         });
 
   // Deduplicate by nameOriginal (AI may generate duplicates with different IDs)
-  const seen = new Set<string>();
-  const dedupedItems = filteredItems.filter((item) => {
-    const key = item.nameOriginal.trim().toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const dedupedItems = dedupeByNameOriginal(filteredItems);
 
   return (
     <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
@@ -142,27 +166,61 @@ export function ExploreView() {
 
       {/* Item list */}
       <div className="flex-1 overflow-y-auto px-4 pb-24">
-        {dedupedItems.length === 0 ? (
-          <p className="text-[var(--color-sage-text-secondary)] text-sm text-center py-8">
-            {isZh ? '该分类暂无菜品' : 'No items in this category'}
-          </p>
+        {activeCategory === 'all' ? (
+          groupedItems.length === 0 ? (
+            <p className="text-[var(--color-sage-text-secondary)] text-sm text-center py-8">
+              {isZh ? '暂无菜品' : 'No items available'}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {groupedItems.map((group) => (
+                <section key={group.id} className="flex flex-col gap-2">
+                  <h3 className="text-sm font-bold text-[var(--color-sage-text-secondary)] px-1">
+                    {group.title}
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {group.items.map((item) => {
+                      const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
+                      return (
+                        <DishCard
+                          key={item.id}
+                          item={item}
+                          isZh={isZh}
+                          userAllergens={userAllergens}
+                          orderItem={orderItem}
+                          onAdd={() => dispatch({ type: 'ADD_TO_ORDER', item })}
+                          onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: qty })}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )
         ) : (
-          <div className="flex flex-col gap-3">
-            {dedupedItems.map((item) => {
-              const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
-              return (
-                <DishCard
-                  key={item.id}
-                  item={item}
-                  isZh={isZh}
-                  userAllergens={userAllergens}
-                  orderItem={orderItem}
-                  onAdd={() => dispatch({ type: 'ADD_TO_ORDER', item })}
-                  onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: qty })}
-                />
-              );
-            })}
-          </div>
+          dedupedItems.length === 0 ? (
+            <p className="text-[var(--color-sage-text-secondary)] text-sm text-center py-8">
+              {isZh ? '该分类暂无菜品' : 'No items in this category'}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {dedupedItems.map((item) => {
+                const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
+                return (
+                  <DishCard
+                    key={item.id}
+                    item={item}
+                    isZh={isZh}
+                    userAllergens={userAllergens}
+                    orderItem={orderItem}
+                    onAdd={() => dispatch({ type: 'ADD_TO_ORDER', item })}
+                    onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: qty })}
+                  />
+                );
+              })}
+            </div>
+          )
         )}
       </div>
     </div>

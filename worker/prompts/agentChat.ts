@@ -35,7 +35,12 @@ function buildMenuSummary(menu: MenuAnalyzeResult): string {
     for (const it of catItems) {
       const tags = it.tags.length ? ` [${it.tags.join(',')}]` : '';
       const price = it.priceText ? ` ${it.priceText}` : '';
-      lines.push(`  ${it.id}: ${it.nameOriginal}（${it.nameTranslated}）${price}${tags}`);
+      const brief = it.brief?.trim() ? ` — ${it.brief.trim()}` : '';
+      const allergens = it.allergens.length
+        ? ` [allergens:${it.allergens.map((a) => a.type).join(',')}]`
+        : '';
+      const spice = it.spiceLevel > 0 ? ` [spice:${it.spiceLevel}]` : '';
+      lines.push(`  ${it.id}: ${it.nameOriginal}（${it.nameTranslated}）${price}${brief}${tags}${allergens}${spice}`);
       includedIds.add(it.id);
     }
   }
@@ -47,7 +52,12 @@ function buildMenuSummary(menu: MenuAnalyzeResult): string {
     for (const it of orphans) {
       const tags = it.tags.length ? ` [${it.tags.join(',')}]` : '';
       const price = it.priceText ? ` ${it.priceText}` : '';
-      lines.push(`  ${it.id}: ${it.nameOriginal}（${it.nameTranslated}）${price}${tags}`);
+      const brief = it.brief?.trim() ? ` — ${it.brief.trim()}` : '';
+      const allergens = it.allergens.length
+        ? ` [allergens:${it.allergens.map((a) => a.type).join(',')}]`
+        : '';
+      const spice = it.spiceLevel > 0 ? ` [spice:${it.spiceLevel}]` : '';
+      lines.push(`  ${it.id}: ${it.nameOriginal}（${it.nameTranslated}）${price}${brief}${tags}${allergens}${spice}`);
     }
   }
 

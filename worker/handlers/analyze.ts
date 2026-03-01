@@ -100,7 +100,13 @@ function randId(index: number): string {
 
 function parsePrice(priceText?: string): number | undefined {
   if (!priceText) return undefined;
-  const m = priceText.match(/\d+(?:\.\d+)?/);
+  const cleaned = priceText.replace(/,/g, '');
+  const rangeMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*[-~～—–]\s*(\d+(?:\.\d+)?)/);
+  if (rangeMatch?.[1]) {
+    const low = Number(rangeMatch[1]);
+    return Number.isFinite(low) ? low : undefined;
+  }
+  const m = cleaned.match(/\d+(?:\.\d+)?/);
   if (!m) return undefined;
   const n = Number(m[0]);
   return Number.isFinite(n) ? n : undefined;
@@ -161,10 +167,23 @@ function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: 
     }))
     .filter((c) => c.itemIds.length > 0);
 
+  const rawMenuType = String(aiResult?.menuType ?? '').toLowerCase();
+  const menuType =
+    rawMenuType === 'restaurant' ||
+    rawMenuType === 'bar' ||
+    rawMenuType === 'dessert' ||
+    rawMenuType === 'fastfood' ||
+    rawMenuType === 'cafe' ||
+    rawMenuType === 'other'
+      ? rawMenuType
+      : 'restaurant';
+  const rawPriceLevel = Number(aiResult?.priceLevel);
+  const priceLevel = rawPriceLevel === 1 || rawPriceLevel === 2 || rawPriceLevel === 3 ? rawPriceLevel : 2;
+
   return {
-    menuType: 'restaurant' as const,
+    menuType,
     detectedLanguage: String(aiResult?.detectedLanguage ?? (language === 'zh' ? 'zh' : 'en')).slice(0, 5) || 'zh',
-    priceLevel: 2 as const,
+    priceLevel,
     currency: String(aiResult?.currency ?? '').trim() || undefined,
     categories,
     items: normalizedItems,
