@@ -10,7 +10,7 @@ export const MENU_ANALYSIS_SYSTEM = `你是 SAGE 菜单识别引擎。请分析�
 5) price 为数值，priceText 保留原文含货币符号。
 6) tags 仅允许：spicy,vegetarian,vegan,gluten_free,contains_nuts,contains_seafood,contains_pork,contains_alcohol,popular,signature。
 7) brief 必填，一句话概括食材和味型；briefDetail 可选。
-8) allergens.type 仅允许：peanut,shellfish,fish,gluten,dairy,egg,soy,tree_nut,sesame；不确定时 uncertain=true。
+8) allergens 必须是数组格式：[{"type":"peanut","uncertain":false},{"type":"shellfish","uncertain":true}]。type 仅允许：peanut,shellfish,fish,gluten,dairy,egg,soy,tree_nut,sesame。不确定时 uncertain=true。绝对不要用 {peanut:false} 这种对象格式。
 9) dietaryFlags 仅允许：halal,vegetarian,vegan,raw,contains_alcohol。
 10) spiceLevel 范围 0-5；calories 为整数或 null。
 11) contains_seafood 仅在菜名/描述明确包含海鲜时添加。

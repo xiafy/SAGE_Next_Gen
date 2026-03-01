@@ -26,12 +26,22 @@ const MenuItemSchema = z.object({
   brief:                z.string().default(''),
   briefDetail:          z.string().optional(),
   // F12: 饮食标签
-  allergens:            z.array(z.object({
-    type: z.string(),
-    uncertain: z.union([z.boolean(), z.string()]).default(false).transform(
-      (v) => v === true || v === 'true'
+  allergens:            z.union([
+    // Standard format: [{type, uncertain}]
+    z.array(z.object({
+      type: z.string(),
+      uncertain: z.union([z.boolean(), z.string()]).default(false).transform(
+        (v) => v === true || v === 'true'
+      ),
+    }).passthrough()),
+    // AI sometimes returns object format: {peanut: false, shellfish: true, ...}
+    // Convert to standard array format
+    z.record(z.union([z.boolean(), z.string()])).transform(
+      (obj) => Object.entries(obj)
+        .filter(([, v]) => v === true || v === 'true')
+        .map(([type]) => ({ type, uncertain: false }))
     ),
-  }).passthrough()).default([]).transform(
+  ]).default([]).transform(
     (arr) => arr.filter((a) => (VALID_ALLERGENS as readonly string[]).includes(a.type))
   ),
   dietaryFlags:         z.array(z.string()).default([]).transform(
