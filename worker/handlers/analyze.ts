@@ -33,12 +33,12 @@ interface AnalyzeErrorPayload {
 }
 
 const STREAM_ERROR_MESSAGES: Record<AnalyzeErrorCode, { en: string; zh: string; retryable: boolean }> = {
-  INVALID_REQUEST: { en: 'Invalid request', zh: '请求格式错误', retryable: false },
-  PAYLOAD_TOO_LARGE: { en: 'Payload too large', zh: '请求体过大', retryable: false },
-  AI_TIMEOUT: { en: 'AI response timed out', zh: 'AI 响应超时，请重试', retryable: true },
-  AI_UNAVAILABLE: { en: 'AI service unavailable', zh: 'AI 服务暂时不可用', retryable: true },
-  AI_INVALID_RESPONSE: { en: 'AI returned invalid data', zh: 'AI 返回数据格式异常', retryable: true },
-  INTERNAL_ERROR: { en: 'Internal server error', zh: '服务器内部错误', retryable: true },
+  INVALID_REQUEST: { en: 'Invalid request payload', zh: '请求格式不正确', retryable: false },
+  PAYLOAD_TOO_LARGE: { en: 'Images are too large', zh: '图片体积过大', retryable: false },
+  AI_TIMEOUT: { en: 'Menu recognition timed out. Please retake a clearer photo and try again.', zh: '菜单识别超时，请重拍更清晰的照片后重试。', retryable: true },
+  AI_UNAVAILABLE: { en: 'Menu recognition is temporarily unavailable. Please try again in a moment.', zh: '菜单识别服务暂时不可用，请稍后重试。', retryable: true },
+  AI_INVALID_RESPONSE: { en: 'Could not read menu content from this image. Please retake and try again.', zh: '未能从图片中读出有效菜单内容，请重拍后再试。', retryable: true },
+  INTERNAL_ERROR: { en: 'Unexpected error while analyzing menu', zh: '菜单识别过程中出现异常', retryable: true },
 };
 
 /** 从 base64 字符串估算字节数 */
@@ -91,6 +91,86 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   }
 
   return btoa(binary);
+}
+
+function randId(index: number): string {
+  const seed = `${Date.now().toString(36)}${index.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  return seed.slice(0, 8).padEnd(8, '0');
+}
+
+function parsePrice(priceText?: string): number | undefined {
+  if (!priceText) return undefined;
+  const m = priceText.match(/\d+(?:\.\d+)?/);
+  if (!m) return undefined;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: number) {
+  const rawItems = Array.isArray(aiResult?.items) ? aiResult.items : [];
+  const normalizedItems = rawItems
+    .map((item: any, idx: number) => {
+      const nameOriginal = String(item?.nameOriginal ?? item?.name ?? '').trim();
+      const nameTranslated = String(item?.nameTranslated ?? item?.nameZh ?? nameOriginal).trim();
+      if (!nameOriginal) return null;
+      const priceText = String(item?.priceText ?? item?.price ?? '').trim();
+      const id = String(item?.id ?? randId(idx)).slice(0, 8).padEnd(8, '0');
+      return {
+        id,
+        nameOriginal,
+        nameTranslated: nameTranslated || nameOriginal,
+        price: parsePrice(priceText),
+        priceText: priceText || undefined,
+        tags: [],
+        brief: language === 'zh' ? '菜单识别结果（待补充详情）' : 'Menu item recognized (details pending)',
+        allergens: [],
+        dietaryFlags: [],
+        spiceLevel: 0,
+        calories: null,
+        __category: String(item?.category ?? item?.categoryName ?? '其他').trim() || '其他',
+      };
+    })
+    .filter(Boolean) as Array<any>;
+
+  const itemIdsByCategory = new Map<string, string[]>();
+  for (const item of normalizedItems) {
+    const key = item.__category;
+    if (!itemIdsByCategory.has(key)) itemIdsByCategory.set(key, []);
+    itemIdsByCategory.get(key)!.push(item.id);
+    delete item.__category;
+  }
+
+  const rawCategories = Array.isArray(aiResult?.categories) ? aiResult.categories : [];
+  const categoryNames = new Set<string>();
+  for (const c of rawCategories) {
+    if (typeof c === 'string') categoryNames.add(c.trim());
+    else if (c && typeof c === 'object') {
+      const name = String(c.nameOriginal ?? c.name ?? '').trim();
+      if (name) categoryNames.add(name);
+    }
+  }
+  for (const key of itemIdsByCategory.keys()) categoryNames.add(key);
+
+  const categories = Array.from(categoryNames)
+    .filter(Boolean)
+    .map((name, idx) => ({
+      id: `cat${String(idx + 1).padStart(2, '0')}`,
+      nameOriginal: name,
+      nameTranslated: name,
+      itemIds: itemIdsByCategory.get(name) ?? [],
+    }))
+    .filter((c) => c.itemIds.length > 0);
+
+  return {
+    menuType: 'restaurant' as const,
+    detectedLanguage: String(aiResult?.detectedLanguage ?? (language === 'zh' ? 'zh' : 'en')).slice(0, 5) || 'zh',
+    priceLevel: 2 as const,
+    currency: String(aiResult?.currency ?? '').trim() || undefined,
+    categories,
+    items: normalizedItems,
+    processingMs: 0,
+    imageCount: Math.max(1, Number(aiResult?.imageCount ?? imageCount ?? 1)),
+  };
 }
 
 async function parseAnalyzeRequest(request: Request): Promise<unknown> {
@@ -148,6 +228,7 @@ async function runAnalyzePipeline(
   onProgress?: (event: { stage: string; progress: number; message: string }) => void,
 ) {
   const { images, context } = normalizedRequest;
+  const t0 = Date.now();
 
   let totalBytes = 0;
   for (const img of images) {
@@ -181,13 +262,15 @@ async function runAnalyzePipeline(
   };
 
   const startMs = Date.now();
+  const tVisionStart = Date.now();
+  let tVisionEnd = tVisionStart;
   let rawText: string;
-  let modelUsed: 'qwen3-vl-flash' | 'qwen3-vl-plus' = 'qwen3-vl-flash';
+  const modelUsed = 'qwen3-vl-flash';
 
   onProgress?.({
-    stage: 'vision_flash',
-    progress: 45,
-    message: context.language === 'zh' ? '正在识别菜单（快速模型）…' : 'Scanning menu with fast model…',
+    stage: 'analyzing',
+    progress: 55,
+    message: context.language === 'zh' ? '正在识别菜单内容…' : 'Analyzing menu content…',
   });
 
   try {
@@ -195,34 +278,17 @@ async function runAnalyzePipeline(
       model: 'qwen3-vl-flash',
       messages: [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
       apiKey: env.BAILIAN_API_KEY,
-      timeoutMs: 30_000,
+      timeoutMs: 20_000,
       requestId,
     });
+    tVisionEnd = Date.now();
   } catch (err) {
-    logger.warn('analyze: flash failed, trying plus', { requestId, err: String(err).slice(0, 120) });
-
-    onProgress?.({
-      stage: 'vision_plus_fallback',
-      progress: 65,
-      message: context.language === 'zh' ? '快速模型失败，切换增强模型…' : 'Fast model failed, switching to fallback model…',
-    });
-
-    try {
-      rawText = await streamAggregate({
-        model: 'qwen3-vl-plus',
-        messages: [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
-        apiKey: env.BAILIAN_API_KEY,
-        timeoutMs: 25_000,
-        requestId,
-      });
-      modelUsed = 'qwen3-vl-plus';
-    } catch (fallbackErr) {
-      const errText = String(fallbackErr);
-      const timeout = errText.includes('timeout') || errText.includes('AbortError');
-      throw Object.assign(new Error('upstream failed'), {
-        code: timeout ? ('AI_TIMEOUT' as const) : ('AI_UNAVAILABLE' as const),
-      });
-    }
+    const errText = String(err);
+    const timeout = errText.includes('timeout') || errText.includes('AbortError') || errText.includes('TimeoutError');
+    throw Object.assign(
+      new Error(timeout ? STREAM_ERROR_MESSAGES.AI_TIMEOUT.en : STREAM_ERROR_MESSAGES.AI_UNAVAILABLE.en),
+      { code: timeout ? ('AI_TIMEOUT' as const) : ('AI_UNAVAILABLE' as const) },
+    );
   }
 
   onProgress?.({
@@ -234,11 +300,19 @@ async function runAnalyzePipeline(
   async function parseAndValidate(text: string) {
     const jsonStr = extractJson(text);
     const aiResult = JSON.parse(jsonStr);
-    const validated = MenuAnalyzeResultSchema.safeParse(aiResult);
-    if (!validated.success) {
+
+    const strict = MenuAnalyzeResultSchema.safeParse(aiResult);
+    if (strict.success && strict.data.items.length > 0) {
+      return { ...strict.data, processingMs: Date.now() - startMs };
+    }
+
+    const looseNormalized = normalizeLooseResult(aiResult, context.language, images.length);
+    const repaired = MenuAnalyzeResultSchema.safeParse(looseNormalized);
+    if (!repaired.success) {
       throw new Error('zod_invalid');
     }
-    const result = { ...validated.data, processingMs: Date.now() - startMs };
+
+    const result = { ...repaired.data, processingMs: Date.now() - startMs };
     if (result.items.length === 0) {
       throw new Error('zero_items');
     }
@@ -248,9 +322,18 @@ async function runAnalyzePipeline(
   try {
     const result = await parseAndValidate(rawText);
 
+    const rawTextBytes = new TextEncoder().encode(rawText).length;
+    const resultBytes = new TextEncoder().encode(JSON.stringify(result)).length;
     logger.info('analyze: success', {
       requestId,
       modelUsed,
+      imageCount: images.length,
+      uploadBytes: totalBytes,
+      visionMs: tVisionEnd - tVisionStart,
+      validateMs: Date.now() - tVisionEnd,
+      totalMs: Date.now() - t0,
+      rawTextBytes,
+      resultBytes,
       processingMs: result.processingMs,
       itemCount: result.items.length,
       lang: result.detectedLanguage,
@@ -258,7 +341,7 @@ async function runAnalyzePipeline(
 
     return result;
   } catch (parseError) {
-    logger.error('analyze: parse failed', { requestId, modelUsed, err: String(parseError) });
+    logger.error('analyze: parse failed', { requestId, modelUsed, err: String(parseError), rawTextHead: rawText.slice(0, 1000) });
     throw Object.assign(new Error('invalid response'), { code: 'AI_INVALID_RESPONSE' as const });
   }
 }
@@ -290,6 +373,15 @@ export async function handleAnalyze(
     return errorResponse('INVALID_REQUEST', request, env, requestId, parsed.error.issues[0]?.message);
   }
 
+  const uploadBytes = parsed.data.images.reduce((sum, img) => sum + estimateBase64Bytes(img.data), 0);
+  logger.info('analyze: request', {
+    requestId,
+    wantsStream,
+    imageCount: parsed.data.images.length,
+    uploadBytes,
+    language: parsed.data.context.language,
+  });
+
   if (!wantsStream) {
     try {
       const result = await runAnalyzePipeline(parsed.data, env, requestId);
@@ -299,7 +391,13 @@ export async function handleAnalyze(
       );
     } catch (err) {
       const code = (err as { code?: AnalyzeErrorCode }).code ?? 'INTERNAL_ERROR';
-      return errorResponse(code, request, env, requestId, err instanceof Error ? err.message : undefined);
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : parsed.data.context.language === 'zh'
+            ? STREAM_ERROR_MESSAGES[code].zh
+            : STREAM_ERROR_MESSAGES[code].en;
+      return errorResponse(code, request, env, requestId, message);
     }
   }
 

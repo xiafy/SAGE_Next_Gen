@@ -52,6 +52,7 @@ export function AgentChatView() {
   const [analyzeStatusText, setAnalyzeStatusText] = useState('');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [debugError, setDebugError] = useState<string>('');
   const analyzeAbortRef = useRef<AbortController | null>(null);
   const chatAbortRef = useRef<AbortController | null>(null);
   const handoffTriggeredRef = useRef(false);
@@ -437,6 +438,8 @@ export function AgentChatView() {
       }
 
       dispatch({ type: 'SET_CHAT_PHASE', phase: 'failed' });
+      const rawErr = err instanceof Error ? err.message : String(err);
+      setDebugError(`[${new Date().toLocaleTimeString()}] ${rawErr}`);
       showToast(toUserFacingError(err, { language: state.preferences.language, fallbackKind: 'recognize' }));
     } finally {
       setAnalyzeProgress(0);
@@ -682,6 +685,11 @@ export function AgentChatView() {
               ? (isZh ? 'AI 对话出现问题，要重试吗？' : 'AI chat failed. Try again?')
               : (isZh ? '菜单识别未能完成，可能是网络波动，可以重试或重新拍摄' : 'Recognition failed. You can retry or take a new photo.')}
           </p>
+          {debugError && (
+            <p className="text-[10px] text-red-400 text-center break-all px-2 max-h-20 overflow-auto font-mono">
+              {debugError}
+            </p>
+          )}
           <div className="flex gap-3">
             {state.menuData ? (
               <>

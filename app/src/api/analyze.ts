@@ -7,7 +7,7 @@ import type {
   Language,
   MenuData,
 } from '../types';
-import { TIMEOUTS } from '../types';
+
 import { dlog } from '../utils/debugLog';
 
 interface AnalyzeMenuOptions {
@@ -44,61 +44,116 @@ async function compressImage(
   file: File,
   maxDimension = 1280,
   maxSizeBytes = 500 * 1024,
+  forceJpeg = false,
 ): Promise<Blob> {
   dlog('compress', 'start, input size=', file.size, 'type=', file.type);
 
-  const img = await loadImage(file);
+  let source: CanvasImageSource;
+  let sourceWidth: number;
+  let sourceHeight: number;
+  let bitmap: ImageBitmap | null = null;
 
-  let { naturalWidth: w, naturalHeight: h } = img;
-  if (w > maxDimension || h > maxDimension) {
-    const scale = maxDimension / Math.max(w, h);
-    w = Math.round(w * scale);
-    h = Math.round(h * scale);
+  try {
+    if (typeof createImageBitmap === 'function') {
+      bitmap = await createImageBitmap(file);
+      source = bitmap;
+      sourceWidth = bitmap.width;
+      sourceHeight = bitmap.height;
+      dlog('compress', 'createImageBitmap OK', sourceWidth, 'x', sourceHeight);
+    } else {
+      throw new Error('createImageBitmap unavailable');
+    }
+  } catch (bitmapErr) {
+    dlog('compress', 'createImageBitmap fallback', String(bitmapErr));
+    const img = await loadImage(file);
+    source = img;
+    sourceWidth = img.naturalWidth;
+    sourceHeight = img.naturalHeight;
   }
 
-  // iOS Safari canvas size limit check (~16MP)
-  if (w * h > 16_000_000) {
-    const scale = Math.sqrt(16_000_000 / (w * h));
-    w = Math.round(w * scale);
-    h = Math.round(h * scale);
-  }
+  try {
+    let w = sourceWidth;
+    let h = sourceHeight;
+    if (w > maxDimension || h > maxDimension) {
+      const scale = maxDimension / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
 
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas not supported');
-  ctx.drawImage(img, 0, 0, w, h);
+    // iOS Safari canvas size limit check (~16MP)
+    if (w * h > 16_000_000) {
+      const scale = Math.sqrt(16_000_000 / (w * h));
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
 
-  const webpSupported = await new Promise<boolean>((resolve) => {
-    canvas.toBlob((b) => resolve(!!b && b.size > 0), 'image/webp', 0.5);
-  });
-  const outputType = webpSupported ? 'image/webp' : 'image/jpeg';
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas not supported');
+    ctx.drawImage(source, 0, 0, w, h);
 
-  for (const quality of [0.75, 0.6, 0.45, 0.3]) {
-    const blob = await new Promise<Blob>((resolve, reject) => {
+    const webpSupported = await new Promise<boolean>((resolve) => {
+      canvas.toBlob((b) => resolve(!!b && b.size > 0), 'image/webp', 0.5);
+    });
+    const outputType = forceJpeg ? 'image/jpeg' : (webpSupported ? 'image/webp' : 'image/jpeg');
+
+    for (const quality of [0.75, 0.6, 0.45, 0.3]) {
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
+          outputType,
+          quality,
+        );
+      });
+
+      if (blob.size <= maxSizeBytes) return blob;
+    }
+
+    return new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
         outputType,
-        quality,
+        0.15,
       );
     });
-
-    if (blob.size <= maxSizeBytes) return blob;
+  } finally {
+    bitmap?.close();
   }
+}
 
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
-      outputType,
-      0.15,
-    );
-  });
+function isIOSSafari(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent.toLowerCase();
+  return /iphone|ipad|ipod/.test(ua) && ua.includes('safari') && !ua.includes('crios');
 }
 
 async function normalizeImage(file: File): Promise<Blob> {
   try {
-    return await compressImage(file);
+    const iosSafari = isIOSSafari();
+
+    if (iosSafari) {
+      const maxSize = 350 * 1024;
+      const dims = [1024, 920, 800, 700];
+      let best: Blob | null = null;
+
+      for (const dim of dims) {
+        const blob = await compressImage(file, dim, maxSize, true);
+        best = blob;
+        if (blob.size <= maxSize) {
+          dlog('compress', 'done(iOS hard-cap hit)', 'dim=', dim, 'size=', blob.size, 'type=', blob.type);
+          return blob;
+        }
+      }
+
+      dlog('compress', 'done(iOS fallback smallest)', 'size=', best?.size, 'type=', best?.type);
+      return best!;
+    }
+
+    const blob = await compressImage(file, 1280, 500 * 1024, false);
+    dlog('compress', 'done', 'size=', blob.size, 'type=', blob.type, 'iosSafari=', iosSafari);
+    return blob;
   } catch {
     throw new Error('Image compression failed. Please try a clearer photo.');
   }
@@ -154,7 +209,9 @@ export async function analyzeMenu(
   signal?: AbortSignal,
   onProgress?: AnalyzeMenuOptions['onProgress'],
 ): Promise<MenuData> {
-  dlog('analyze', 'start analyzeMenu, images=', images.length);
+  const t0 = performance.now();
+  const originalBytes = images.reduce((sum, f) => sum + f.size, 0);
+  dlog('analyze', 'start analyzeMenu, images=', images.length, 'originalBytes=', originalBytes);
 
   onProgress?.({
     stage: 'uploading',
@@ -162,7 +219,18 @@ export async function analyzeMenu(
     message: language === 'zh' ? '正在压缩图片…' : 'Compressing images…',
   });
 
+  const tCompressStart = performance.now();
   const normalizedBlobs = await normalizeImagesWithConcurrency(images, 2);
+  const tCompressEnd = performance.now();
+  const compressedBytes = normalizedBlobs.reduce((sum, b) => sum + b.size, 0);
+  dlog('analyze.metrics', {
+    stage: 'compress',
+    imageCount: images.length,
+    originalBytes,
+    compressedBytes,
+    compressionRatio: Number((compressedBytes / Math.max(1, originalBytes)).toFixed(3)),
+    compressMs: Math.round(tCompressEnd - tCompressStart),
+  });
 
   const formData = new FormData();
   normalizedBlobs.forEach((blob, idx) => {
@@ -177,17 +245,20 @@ export async function analyzeMenu(
     formData.append('context_location', JSON.stringify(location));
   }
 
-  const timeoutController = new AbortController();
-  const timeoutId = setTimeout(() => timeoutController.abort(), TIMEOUTS.ANALYZE_CLIENT);
+  // iPhone Safari 弱网下，前端硬超时会导致“Fetch is aborted”假失败。
+  // 这里不再用客户端定时器主动中断，请求由：用户手动取消 / 服务端错误 来结束。
   const merged = new AbortController();
   const onAbort = () => merged.abort();
 
   if (signal) {
     signal.addEventListener('abort', onAbort, { once: true });
   }
-  timeoutController.signal.addEventListener('abort', onAbort, { once: true });
+
+  let firstChunkAt: number | null = null;
+  let resultEventAt: number | null = null;
 
   try {
+    const tFetchStart = performance.now();
     const response = await fetch(`${WORKER_BASE}/api/analyze`, {
       method: 'POST',
       headers: {
@@ -195,6 +266,12 @@ export async function analyzeMenu(
       },
       body: formData,
       signal: merged.signal,
+    });
+    const tHeadersAt = performance.now();
+    dlog('analyze.metrics', {
+      stage: 'network',
+      ttfbMs: Math.round(tHeadersAt - tFetchStart),
+      status: response.status,
     });
 
     if (!response.ok) {
@@ -211,46 +288,58 @@ export async function analyzeMenu(
     let buffer = '';
     let finalData: MenuData | null = null;
 
+    const handleEventBlock = (part: string) => {
+      const evt = parseSSEEventBlock(part);
+      if (!evt) return;
+
+      if (evt.event === 'progress') {
+        try {
+          const progress = JSON.parse(evt.data) as AnalyzeProgressEvent;
+          onProgress?.(progress);
+        } catch {
+          // Ignore malformed progress event
+        }
+        return;
+      }
+
+      if (evt.event === 'result') {
+        const parsed = JSON.parse(evt.data) as ApiSuccessResponse<MenuData>;
+        if (!parsed.ok) throw new Error('Analyze stream returned non-ok result');
+        finalData = parsed.data;
+        resultEventAt = performance.now();
+        return;
+      }
+
+      if (evt.event === 'error') {
+        const parsed = JSON.parse(evt.data) as ApiErrorResponse;
+        const message = parsed.error?.message ?? 'Analyze failed';
+        throw new Error(message);
+      }
+    };
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (firstChunkAt === null) firstChunkAt = performance.now();
 
       buffer += decoder.decode(value, { stream: true });
       const parts = buffer.split('\n\n');
       buffer = parts.pop() ?? '';
 
       for (const part of parts) {
-        const evt = parseSSEEventBlock(part);
-        if (!evt) continue;
-
-        if (evt.event === 'progress') {
-          try {
-            const progress = JSON.parse(evt.data) as AnalyzeProgressEvent;
-            onProgress?.(progress);
-          } catch {
-            // Ignore malformed progress event
-          }
-          continue;
-        }
-
-        if (evt.event === 'result') {
-          const parsed = JSON.parse(evt.data) as ApiSuccessResponse<MenuData>;
-          if (!parsed.ok) throw new Error('Analyze stream returned non-ok result');
-          finalData = parsed.data;
-          continue;
-        }
-
-        if (evt.event === 'error') {
-          const parsed = JSON.parse(evt.data) as ApiErrorResponse;
-          const message = parsed.error?.message ?? 'Analyze failed';
-          throw new Error(message);
-        }
+        handleEventBlock(part);
       }
+    }
+
+    // 处理流结束时残留在 buffer 里的最后一个事件块（某些网络路径下可能没有以 \n\n 结尾）
+    if (buffer.trim().length > 0) {
+      handleEventBlock(buffer);
     }
 
     if (!finalData) {
       throw new Error('Analyze stream ended without result');
     }
+    const resultData: MenuData = finalData;
 
     onProgress?.({
       stage: 'completed',
@@ -258,12 +347,24 @@ export async function analyzeMenu(
       message: language === 'zh' ? '识别完成' : 'Done',
     });
 
-    return finalData;
+    const tDone = performance.now();
+    const resultBytes = new TextEncoder().encode(JSON.stringify(resultData)).length;
+    dlog('analyze.metrics', {
+      stage: 'summary',
+      imageCount: images.length,
+      originalBytes,
+      compressedBytes,
+      resultBytes,
+      firstChunkMs: firstChunkAt ? Math.round(firstChunkAt - t0) : null,
+      resultEventMs: resultEventAt ? Math.round(resultEventAt - t0) : null,
+      totalMs: Math.round(tDone - t0),
+      itemCount: resultData.items?.length ?? 0,
+    });
+
+    return resultData;
   } finally {
-    clearTimeout(timeoutId);
     if (signal) {
       signal.removeEventListener('abort', onAbort);
     }
-    timeoutController.signal.removeEventListener('abort', onAbort);
   }
 }
