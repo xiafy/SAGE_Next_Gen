@@ -19,6 +19,23 @@ interface Recommendation {
   reason: string;
 }
 
+// ── Web Speech API type shim ─────────────────────────────────────────────────
+type SpeechRecognitionLike = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  start: () => void;
+  stop: () => void;
+  onresult: ((e: { results: { [k: number]: { [k: number]: { transcript: string } } } }) => void) | null;
+  onerror: ((e: { error: string }) => void) | null;
+  onend: (() => void) | null;
+};
+const SpeechRecognitionCtor: (new () => SpeechRecognitionLike) | null =
+  (typeof window !== 'undefined' &&
+    ((window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ??
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition)) || null;
+
 export function AgentChatView() {
   const { state, dispatch } = useAppState();
   const [inputValue, setInputValue] = useState('');
@@ -27,6 +44,7 @@ export function AgentChatView() {
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const analyzeAbortRef = useRef<AbortController | null>(null);
@@ -35,6 +53,9 @@ export function AgentChatView() {
   const icebreakerSentRef = useRef(false);
   const analyzeTriggeredRef = useRef(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  const voiceSupported = !!SpeechRecognitionCtor;
 
   const isZh = state.preferences.language === 'zh';
 
@@ -154,6 +175,60 @@ export function AgentChatView() {
     setToastMsg(msg);
     clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToastMsg(null), 3000);
+  }
+
+  // ---------- Voice input (F13) ----------
+  function handleVoiceStart() {
+    if (!SpeechRecognitionCtor || isStreaming) return;
+
+    const rec = new SpeechRecognitionCtor();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.lang = isZh ? 'zh-CN' : 'en-US';
+    rec.maxAlternatives = 1;
+
+    rec.onresult = (e) => {
+      const transcript = e.results[0]?.[0]?.transcript?.trim();
+      if (transcript) {
+        const userMsg: Message = {
+          id: `user_voice_${Date.now()}`,
+          role: 'user',
+          content: transcript,
+          timestamp: Date.now(),
+        };
+        dispatch({ type: 'ADD_MESSAGE', message: userMsg });
+        const mode = (state.chatPhase === 'chatting' || state.chatPhase === 'handing_off') ? 'chat' : 'pre_chat';
+        sendToAI(mode, [userMsg]);
+      }
+    };
+
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed') {
+        showToast(isZh ? '麦克风权限被拒绝，请在浏览器设置中允许' : 'Microphone permission denied');
+      } else if (e.error !== 'no-speech') {
+        showToast(isZh ? '语音识别失败，请重试' : 'Voice recognition failed, please try again');
+      }
+      setIsRecording(false);
+    };
+
+    rec.onend = () => {
+      setIsRecording(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = rec;
+    try {
+      rec.start();
+      setIsRecording(true);
+    } catch {
+      showToast(isZh ? '无法启动语音识别' : 'Could not start voice recognition');
+      setIsRecording(false);
+    }
+  }
+
+  function handleVoiceStop() {
+    recognitionRef.current?.stop();
+    // isRecording will be reset by onend
   }
 
   // ---------- Perform menu analysis ----------
@@ -598,6 +673,23 @@ export function AgentChatView() {
             disabled={isStreaming}
             className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
           />
+          {/* F13: Voice input button */}
+          {voiceSupported && (
+            <button
+              onPointerDown={handleVoiceStart}
+              onPointerUp={handleVoiceStop}
+              onPointerCancel={handleVoiceStop}
+              disabled={isStreaming}
+              className={`w-10 h-10 rounded-full !p-0 flex items-center justify-center shrink-0 transition-all select-none
+                ${isRecording
+                  ? 'bg-[var(--color-sage-primary)] text-white animate-pulse shadow-lg'
+                  : 'btn-3d btn-3d-ghost'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+              aria-label={isZh ? (isRecording ? '录音中，松手发送' : '按住说话') : (isRecording ? 'Recording… release to send' : 'Hold to speak')}
+            >
+              {isRecording ? '🔴' : '🎤'}
+            </button>
+          )}
           <button
             onClick={handleSend}
             disabled={!inputValue.trim() || isStreaming}
