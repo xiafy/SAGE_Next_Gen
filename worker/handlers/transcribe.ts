@@ -15,7 +15,7 @@ import { logger } from '../utils/logger.js';
 const DASHSCOPE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 const MAX_AUDIO_BYTES = 500 * 1024; // 500KB
 const ASR_TIMEOUT_MS = 20_000;
-const ASR_MODEL = 'qwen2.5-omni-7b';
+const ASR_MODEL = 'qwen-omni-turbo';
 
 interface TranscribeRequest {
   audio: string;       // base64 encoded audio
