@@ -581,3 +581,35 @@
   - `worker/handlers/analyze.ts`
   - `shared/types.ts`（Analyze 超时常量）
   - `docs/api-design.md`
+
+---
+
+### [DEC-042] 两阶段菜单识别架构
+
+- **日期**: 2026-03-01
+- **决策人**: SAGE Agent
+- **背景**: qwen3-vl-flash 擅长 OCR 但忽略 brief/allergens/spiceLevel 等语义字段。
+- **决策**: Step 1 VL-Flash 纯 OCR 提取菜品 → Step 2 qwen3.5-flash 文本模型补全语义字段（brief/allergens/dietaryFlags/spiceLevel）
+- **影响**: `worker/handlers/analyze.ts`、`worker/prompts/menuAnalysis.ts`
+
+---
+
+### [DEC-043] 用户场景重定义：Chat 双意图 + Explore 双出口
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 夏总基于真实使用体验，重新定义了 Chat 和 Explore 的核心用户场景。
+- **决策**:
+  1. **Chat 双意图**（自然涌现，不做 UI 显式区分）：
+     - 探索型：深入了解单道菜的味道、文化、历史
+     - 方案型：AI 根据约束条件（人数/忌口/过敏/预算）输出完整结构化用餐方案（前菜→主菜→甜品→酒水）。用户可微调，确认后整套加入订单
+  2. **Explore 双出口**：用户在菜单总览中选完菜品后：
+     - 直接展示给服务员（→Waiter Mode）
+     - 带已选菜品咨询 AI（→AgentChat，AI 给出搭配建议）
+  3. **新增 MealPlanCard 组件**：方案型回复使用结构化方案卡片，支持逐道替换和一键加入订单
+- **影响**:
+  - `docs/prd.md` v1.8（F06/F07/旅程D/§3.1 更新）
+  - `worker/prompts/agentChat.ts`（方案生成 Prompt）
+  - `app/src/views/AgentChatView.tsx`（MealPlanCard 组件）
+  - `app/src/views/ExploreView.tsx`（底部操作栏 + 双出口）
+  - `docs/user-stories.md`（新增场景）
