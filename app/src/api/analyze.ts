@@ -56,8 +56,8 @@ function loadImage(file: File): Promise<HTMLImageElement> {
  */
 async function compressImage(
   file: File,
-  maxDimension = 960,
-  maxSizeBytes = 350 * 1024,
+  maxDimension = 1280,
+  maxSizeBytes = 500 * 1024,
 ): Promise<Blob> {
   dlog('compress', 'start, input size=', file.size, 'type=', file.type);
 
@@ -92,7 +92,7 @@ async function compressImage(
   ctx.drawImage(img, 0, 0, w, h);
   dlog('compress', 'drawImage done');
 
-  for (const quality of [0.6, 0.45, 0.3, 0.2]) {
+  for (const quality of [0.75, 0.6, 0.45, 0.3]) {
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (b) => {
@@ -117,10 +117,10 @@ async function compressImage(
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('toBlob failed'))),
       'image/jpeg',
-      0.1,
+      0.15,
     );
   });
-  dlog('compress', 'final q=0.1 size=', finalBlob.size);
+  dlog('compress', 'final q=0.15 size=', finalBlob.size);
   return finalBlob;
 }
 

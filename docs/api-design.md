@@ -151,11 +151,25 @@ interface AnalyzeRequest {
 }
 ```
 
-**Payload 限制**:
+**Payload 限制**（Server 侧校验）:
 - 单张图片最大: 4MB（编码后 Base64 约 5.3MB）
 - 全部图片总大小（原始）: ≤ 10MB
 - 图片数量: 1–5 张
 - 支持格式: `jpeg`, `png`, `webp`, `heic`
+
+**客户端图片预处理规范**（`app/src/api/analyze.ts → compressImage()`）:
+
+前端在发送前通过 Canvas API 对图片做标准化压缩，确保质量与传输效率的平衡。
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| `maxDimension` | **1280 px** | 长边不超过此值（等比缩放），手机 12MP 图输出约 1.23MP |
+| `maxSizeBytes` | **500 KB** | 压缩目标上限（远低于 Server 4MB 限制） |
+| Quality Ladder | `0.75 → 0.60 → 0.45 → 0.30 → 0.15` | 逐档尝试，首个满足 maxSizeBytes 的 quality 即用 |
+| 输出格式 | `image/jpeg` | 统一转 JPEG，iOS HEIC 等自动转换 |
+| iOS Canvas 上限 | 16 MP 兜底检查 | 超出时二次缩放，避免 Safari getContext 返回 null |
+
+> **决策依据（DEC-040）**：菜单识别为 OCR 类任务，有效像素量直接影响小字（价格、配料）的识别准确率。原参数 960px/350KB 对手机大图信息损失超 75%；升级至 1280px/500KB 后有效像素提升 78%，传输成本仅增 ~150KB，Server 侧仍有 8x 余量。
 
 #### 2.2 成功响应 Data
 
