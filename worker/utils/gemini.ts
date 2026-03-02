@@ -71,7 +71,10 @@ export async function fetchGeminiComplete(opts: GeminiCallOptions): Promise<stri
   if (!res.ok) {
     const errBody = await res.text().catch(() => '');
     logger.error('Gemini API error', { requestId, status: res.status, body: errBody.slice(0, 300) });
-    throw Object.assign(new Error(`Gemini ${res.status}`), { status: res.status });
+    // FAILED_PRECONDITION: "User location is not supported for the API use."
+    // 从中国大陆 CF 边缘节点调用时触发，需切换到国内可用模型
+    const geoBlocked = res.status === 400 && errBody.includes('FAILED_PRECONDITION');
+    throw Object.assign(new Error(`Gemini ${res.status}`), { status: res.status, geoBlocked });
   }
 
   const data = await res.json() as {

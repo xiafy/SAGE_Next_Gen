@@ -2,6 +2,7 @@ import { type Env } from '../middleware/cors.js';
 import { getCorsHeaders } from '../middleware/cors.js';
 import { checkRateLimit } from '../utils/rateLimit.js';
 import { fetchGeminiComplete } from '../utils/gemini.js';
+import { fetchComplete as fetchBailianComplete } from '../utils/bailian.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { AnalyzeRequestSchema } from '../schemas/chatSchema.js';
@@ -287,7 +288,8 @@ async function runAnalyzePipeline(
   const tVisionStart = Date.now();
   let tVisionEnd = tVisionStart;
   let rawText: string;
-  const modelUsed = 'gemini-2.0-flash';  // DEC-045: Gemini 2.0 Flash (~8s vs ~23s)
+  let useBailian = false; // 地理封锁兜底标志：Gemini 不可用时切换到百炼
+  let modelUsed = 'gemini-2.0-flash';
 
   onProgress?.({
     stage: 'analyzing',
@@ -308,12 +310,45 @@ async function runAnalyzePipeline(
     });
     tVisionEnd = Date.now();
   } catch (err) {
-    const errText = String(err);
-    const timeout = errText.includes('timeout') || errText.includes('AbortError') || errText.includes('TimeoutError');
-    throw Object.assign(
-      new Error(timeout ? STREAM_ERROR_MESSAGES.AI_TIMEOUT.en : STREAM_ERROR_MESSAGES.AI_UNAVAILABLE.en),
-      { code: timeout ? ('AI_TIMEOUT' as const) : ('AI_UNAVAILABLE' as const) },
-    );
+    // 地理封锁（从中国大陆 CF 节点无法访问 Google API）→ 自动切换百炼 qwen3-vl-flash
+    if ((err as { geoBlocked?: boolean }).geoBlocked) {
+      logger.warn('analyze: Gemini geo-blocked, falling back to Bailian VL', { requestId });
+      useBailian = true;
+      modelUsed = 'qwen3-vl-flash(fallback)';
+      try {
+        rawText = await fetchBailianComplete({
+          model: 'qwen3-vl-flash',
+          messages: [
+            { role: 'system', content: MENU_ANALYSIS_SYSTEM },
+            { role: 'user', content: [
+              ...images.map(img => ({
+                type: 'image_url' as const,
+                image_url: { url: `data:${img.mimeType};base64,${img.data}` },
+              })),
+              { type: 'text' as const, text: buildMenuAnalysisUserMessage(context.language, images.length) },
+            ]},
+          ],
+          apiKey: env.BAILIAN_API_KEY,
+          timeoutMs: 40_000,
+          requestId,
+        });
+        tVisionEnd = Date.now();
+      } catch (bailianErr) {
+        const e = String(bailianErr);
+        const timeout = e.includes('timeout') || e.includes('AbortError') || e.includes('TimeoutError');
+        throw Object.assign(
+          new Error(timeout ? STREAM_ERROR_MESSAGES.AI_TIMEOUT.en : STREAM_ERROR_MESSAGES.AI_UNAVAILABLE.en),
+          { code: timeout ? ('AI_TIMEOUT' as const) : ('AI_UNAVAILABLE' as const) },
+        );
+      }
+    } else {
+      const errText = String(err);
+      const timeout = errText.includes('timeout') || errText.includes('AbortError') || errText.includes('TimeoutError');
+      throw Object.assign(
+        new Error(timeout ? STREAM_ERROR_MESSAGES.AI_TIMEOUT.en : STREAM_ERROR_MESSAGES.AI_UNAVAILABLE.en),
+        { code: timeout ? ('AI_TIMEOUT' as const) : ('AI_UNAVAILABLE' as const) },
+      );
+    }
   }
 
   onProgress?.({
@@ -363,15 +398,27 @@ async function runAnalyzePipeline(
         allergenCodes: (i as Record<string, unknown>).__allergenCodes as number[] | undefined,
       }));
 
-      const enrichRaw = await fetchGeminiComplete({
-        model: 'gemini-2.0-flash',
-        systemPrompt: MENU_ENRICH_SYSTEM,
-        userText: buildEnrichUserMessage(enrichInput, context.language),
-        apiKey: env.GEMINI_API_KEY,
-        timeoutMs: 25_000,
-        requestId: `${requestId}-enrich`,
-        maxOutputTokens: 8192,
-      });
+      const enrichRaw = useBailian
+        // 地理封锁兜底：使用百炼文本模型（Enrich 不需要视觉）
+        ? await fetchBailianComplete({
+            model: 'qwen-plus-latest',
+            messages: [
+              { role: 'system', content: MENU_ENRICH_SYSTEM },
+              { role: 'user', content: buildEnrichUserMessage(enrichInput, context.language) },
+            ],
+            apiKey: env.BAILIAN_API_KEY,
+            timeoutMs: 30_000,
+            requestId: `${requestId}-enrich`,
+          })
+        : await fetchGeminiComplete({
+            model: 'gemini-2.0-flash',
+            systemPrompt: MENU_ENRICH_SYSTEM,
+            userText: buildEnrichUserMessage(enrichInput, context.language),
+            apiKey: env.GEMINI_API_KEY,
+            timeoutMs: 25_000,
+            requestId: `${requestId}-enrich`,
+            maxOutputTokens: 8192,
+          });
 
       const enrichJson = extractJson(enrichRaw);
       const enrichData: unknown[] = JSON.parse(enrichJson);
