@@ -955,3 +955,44 @@
   3. 前端检测到 `orderAction` 代码块 → 执行 Order 修改 → AI 文字部分正常展示（"好的，已帮你把牛排换成龙虾 🦞"）
   4. Order 修改后 Chat 的 system message 自动更新（AI 始终感知最新 Order）
 - **影响**: `docs/prd.md` F06、`shared/types.ts`（OrderAction 类型）、`app/src/views/AgentChatView.tsx`、`app/src/stores/orderStore.ts`、`worker/prompts/agentChat.ts`
+
+---
+
+### [DEC-059] 方案型课程结构：AI 动态生成，不硬编码西餐逻辑
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: PRD 方案型描述为"前菜→主菜→甜品→饮品"，这是西餐逻辑。不同餐饮文化有不同课程结构（中餐：凉菜→热菜→汤→主食；日料：前菜→刺身→烤物→煮物→食事→甜品；泰餐：共享式同时上桌）。
+- **决策**: MealPlanCard 的课程分组由 AI 根据菜单所属餐饮文化动态决定，前端只负责渲染 AI 返回的 courses 数组，不假设固定顺序。
+- **实现规格**:
+  1. MealPlan JSON 的 `courses` 为有序数组，每个 course 有 `name`（如"凉菜"/"刺身"/"Starter"）和 `items`
+  2. Prompt 指示 AI 根据 `detectedCuisineType` 和菜单内容决定课程结构
+  3. 菜品 <5 道时不输出 MealPlanCard，改为自然语言推荐
+- **影响**: `shared/types.ts`（MealPlan.courses 结构）、`worker/prompts/agentChat.ts`、`docs/prd.md` F06
+
+---
+
+### [DEC-060] Waiter Mode 指点式沟通面板：解决服务员-用户语言障碍
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 用户展示 Waiter Mode 后，服务员下单回来告知某菜售罄需换菜，但双方语言不通。这恰恰是 SAGE 核心要解决的问题。讨论了三种方案：A 服务员操作模式（不现实）、B 指点式沟通（用户点菜品弹双语面板）、C 实时翻译（偏离场景聚焦）。
+- **决策**: **方案 B（指点式沟通面板）**
+- **理由**:
+  1. 零学习成本——服务员只需指，用户点击
+  2. 场景聚焦——只有餐饮相关选项（没有了/换菜/加份/其他）
+  3. 双语大字展示——双方都能看懂
+  4. 自然衔接——标记售罄后可进入 Chat 让 AI 推荐替代品
+- **实现规格**:
+  1. Waiter Mode 下点击任意菜品 → 弹出沟通面板
+  2. 面板选项（双语展示，用户语言 + 菜单所在地语言）：
+     - 🚫 没有了 / ไม่มี (sold out)
+     - 🔄 换一道 / เปลี่ยน (change)
+     - ➕ 加一份 / เพิ่ม (add more)
+     - ❓ 其他问题 (other)
+  3. 选「🚫 没有了」→ 大字确认（服务员语言）→ 确认后从 Order 移除 → 提示用户是否需要 AI 推荐替代品
+  4. 选「🔄 换一道」→ 大字询问服务员推荐（服务员语言）→ 用户可进 Explore 找菜或进 Chat 让 AI 推荐
+  5. 选「➕ 加一份」→ Order 数量 +1
+  6. 选「❓ 其他」→ 进入 Chat（携带菜品上下文）
+  7. 沟通面板的本地语言由 AI 识别菜单时的 `detectedLanguage` 决定
+- **影响**: `docs/prd.md` F08（Waiter Mode 新增交互）、`app/src/views/WaiterView.tsx`、`app/src/components/DishCommunicationPanel.tsx`（新组件）
