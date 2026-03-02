@@ -231,6 +231,40 @@ function appReducer(state: AppState, action: AppAction): AppState {
         navigationPayload: action.payload,
       };
 
+    case 'APPLY_ORDER_ACTION': {
+      const oa = action.payload;
+      switch (oa.orderAction) {
+        case 'add': {
+          if (!oa.add) return state;
+          const existing = state.orderItems.find(oi => oi.menuItem.id === oa.add!.dishId);
+          if (existing) {
+            return { ...state, orderItems: state.orderItems.map(oi => oi.menuItem.id === oa.add!.dishId ? { ...oi, quantity: oa.add!.qty } : oi) };
+          }
+          const menuItem = state.menuData?.items.find(i => i.id === oa.add!.dishId);
+          if (!menuItem) return state;
+          return { ...state, orderItems: [...state.orderItems, { menuItem, quantity: oa.add!.qty }] };
+        }
+        case 'remove': {
+          if (!oa.remove) return state;
+          return { ...state, orderItems: state.orderItems.filter(oi => oi.menuItem.id !== oa.remove!.dishId) };
+        }
+        case 'replace': {
+          if (oa.add?.dishId === oa.remove?.dishId) return state;
+          let items = state.orderItems;
+          if (oa.remove) items = items.filter(oi => oi.menuItem.id !== oa.remove!.dishId);
+          if (oa.add) {
+            const menuItem = state.menuData?.items.find(i => i.id === oa.add!.dishId);
+            if (menuItem) {
+              items = [...items, { menuItem, quantity: oa.add!.qty }];
+            }
+          }
+          return { ...state, orderItems: items };
+        }
+        default:
+          return state;
+      }
+    }
+
     case 'BATCH_ADD_TO_ORDER': {
       const newOrderItems = [...state.orderItems];
       for (const incoming of action.items) {

@@ -1,15 +1,17 @@
 import type { SelectedDishesPayload } from '../../../shared/types';
+import { formatPrice } from '../utils/formatPrice';
 
 // ─── Props ─────────────────────────────────────
 
 export interface SelectedDishesCardProps {
   payload: SelectedDishesPayload;
   isZh: boolean;
+  currency?: string;
 }
 
 // ─── Component ─────────────────────────────────
 
-export function SelectedDishesCard({ payload, isZh }: SelectedDishesCardProps) {
+export function SelectedDishesCard({ payload, isZh, currency }: SelectedDishesCardProps) {
   const { newlySelected, existingOrder } = payload;
 
   return (
@@ -28,7 +30,7 @@ export function SelectedDishesCard({ payload, isZh }: SelectedDishesCardProps) {
             <span className="text-gray-400">•</span>
             <span className="flex-1 truncate">{d.name}</span>
             {d.price != null && (
-              <span className="shrink-0 font-medium">¥{d.price}</span>
+              <span className="shrink-0 font-medium">{formatPrice(d.price, currency)}</span>
             )}
           </li>
         ))}
@@ -48,7 +50,7 @@ export function SelectedDishesCard({ payload, isZh }: SelectedDishesCardProps) {
                 <span>•</span>
                 <span className="flex-1 truncate">{d.name}</span>
                 {d.price != null && (
-                  <span className="shrink-0">¥{d.price}</span>
+                  <span className="shrink-0">{formatPrice(d.price, currency)}</span>
                 )}
               </li>
             ))}

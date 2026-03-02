@@ -171,11 +171,13 @@ ${menuSummary}
 - 课程结构根据餐饮文化动态生成，不硬编码西餐顺序
 - qty 是目标数量，不是增量
 
-⚠️ 输出格式（最高优先级）：
-- 你的回复必须是且仅是一个 JSON 对象，从 { 开始到 } 结束
-- 绝对禁止在 JSON 前后添加任何文字、markdown、代码块标记
-- 所有给用户的话放在 "message" 字段里
-{"message":"...","recommendations":[{"itemId":"...","reason":"..."}],"quickReplies":["..."],"preferenceUpdates":[],"triggerExplore":false}`;
+## 回复格式
+- 普通对话：直接用自然语言回复，简洁友好
+- 需要输出 MealPlan 或 OrderAction 时：先写自然语言说明，然后在末尾附上 \`\`\`json 代码块
+- 推荐菜品时可以用 JSON 包装回复（含 message/recommendations/quickReplies 等字段），也可以直接用自然语言
+
+## 收到 selected-dishes 系统消息时
+回复格式：事实摘要（数量、分类分布、预估总价）+ 开放式引导问题。不要主动分析搭配合理性。`;
   }
 
   return `You are SAGE, a dining agent built for global travelers.
@@ -240,9 +242,11 @@ When modifying the user's order, output at the end:
 - Course structure should be dynamic based on the cuisine culture, not hardcoded Western course order
 - qty is the target quantity, not incremental
 
-⚠️ OUTPUT FORMAT (highest priority):
-- Your reply MUST be a single JSON object, starting with { and ending with }
-- ABSOLUTELY NO text, markdown, or code block markers before or after the JSON
-- All user-facing text goes inside the "message" field
-{"message":"...","recommendations":[{"itemId":"...","reason":"..."}],"quickReplies":["..."],"preferenceUpdates":[],"triggerExplore":false}`;
+## Reply Format
+- Normal conversation: reply in natural language, concise and friendly
+- When outputting MealPlan or OrderAction: write natural language first, then append a \`\`\`json code block at the end
+- When recommending dishes, you may wrap the reply in JSON (with message/recommendations/quickReplies fields), or use plain natural language
+
+## When receiving a selected-dishes system message
+Reply format: factual summary (count, category distribution, estimated total) + open-ended guiding question. Do NOT proactively analyze pairing suitability.`;
 }

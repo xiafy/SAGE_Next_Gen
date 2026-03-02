@@ -18,7 +18,6 @@ import type { MenuItem } from '../../../shared/types';
 import { toUserFacingError } from '../utils/errorMessage';
 import { dlog } from '../utils/debugLog';
 import { mapDietaryToAllergens } from '../utils/allergenMapping';
-import { useOrder } from '../stores/orderStore';
 
 interface Recommendation {
   itemId: string;
@@ -72,7 +71,6 @@ function buildSelectedDishesSystemMessage(payload: SelectedDishesPayload): strin
 
 export function AgentChatView() {
   const { state, dispatch } = useAppState();
-  const { dispatch: orderDispatch } = useOrder();
   const [inputValue, setInputValue] = useState('');
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -88,6 +86,7 @@ export function AgentChatView() {
   const [analyzeStatusText, setAnalyzeStatusText] = useState('');
   const [mealPlans, setMealPlans] = useState<MealPlanEntry[]>([]);
   const [generatingMealPlan, setGeneratingMealPlan] = useState(false);
+  const [replacingState, setReplacingState] = useState<{ dishId: string; sentAtVersion: number; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [debugError, setDebugError] = useState<string>('');
@@ -96,7 +95,7 @@ export function AgentChatView() {
   const handoffTriggeredRef = useRef(false);
   const icebreakerSentRef = useRef(false);
   const analyzeTriggeredRef = useRef(false);
-  const selectedDishesInjectedRef = useRef(false);
+  const selectedDishesInjectedRef = useRef<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -128,8 +127,9 @@ export function AgentChatView() {
   // ---------- T7.3: SelectedDishes injection from Explore ----------
   useEffect(() => {
     const payload = state.navigationPayload;
-    if (payload && !selectedDishesInjectedRef.current) {
-      selectedDishesInjectedRef.current = true;
+    const payloadKey = payload ? JSON.stringify(payload.newlySelected.map(d => d.dishId).sort()) : null;
+    if (payload && payloadKey && selectedDishesInjectedRef.current !== payloadKey) {
+      selectedDishesInjectedRef.current = payloadKey;
 
       if (payload.newlySelected.length > 0 || payload.existingOrder.length > 0) {
         dispatch({
@@ -260,6 +260,7 @@ export function AgentChatView() {
     return () => {
       chatAbortRef.current?.abort();
       clearTimeout(toastTimerRef.current);
+      if (replacingState) clearTimeout(replacingState.timeoutId);
       clearInterval(recordTimerRef.current);
       clearTimeout(recordMaxTimerRef.current);
       if (recorderRef.current?.state === 'recording') {
@@ -483,8 +484,6 @@ export function AgentChatView() {
       dlog('chat', '✅ performAnalyze: success, items=', result.items?.length, 'supplementing=', state.isSupplementing);
       dispatch({ type: 'SET_MENU_DATA', data: result });
 
-      // Sync menu data to OrderStore
-      orderDispatch({ type: 'SET_MENU_DATA', menuData: result.items });
 
       if (state.isSupplementing) {
         dlog('chat', '📸 supplement done, notifying user');
@@ -527,7 +526,6 @@ export function AgentChatView() {
           );
           dlog('chat', '✅ performAnalyze retry success, items=', result.items?.length);
           dispatch({ type: 'SET_MENU_DATA', data: result });
-          orderDispatch({ type: 'SET_MENU_DATA', menuData: result.items });
           dispatch({ type: 'CLEAR_ANALYZING_FILES' });
           return;
         } catch (retryErr) {
@@ -669,6 +667,20 @@ export function AgentChatView() {
             },
           });
 
+          // 🔴-4: Version check for concurrent replacement
+          if (replacingState) {
+            if (mp.version > replacingState.sentAtVersion) {
+              clearTimeout(replacingState.timeoutId);
+              setReplacingState(null);
+            } else {
+              // Stale version, discard
+              setStreamingText('');
+              setQuickReplies([]);
+              setRecommendations([]);
+              return;
+            }
+          }
+
           setMealPlans(prev => [
             ...prev.map(e => ({ ...e, isActive: false })),
             { mealPlan: mp, isActive: true, messageIndex: msgIndex },
@@ -686,7 +698,7 @@ export function AgentChatView() {
 
         if (parsed.type === 'orderAction') {
           const oa = parsed.data;
-          orderDispatch({ type: 'APPLY_ORDER_ACTION', action: oa });
+          dispatch({ type: 'APPLY_ORDER_ACTION', payload: oa });
 
           const addName = oa.add?.dishId
             ? state.menuData?.items.find(i => i.id === oa.add!.dishId)?.nameTranslated
@@ -791,11 +803,20 @@ export function AgentChatView() {
   }, [state.menuData, isZh]);
 
   const handleReplaceDish = useCallback((dishId: string, courseName: string) => {
+    if (replacingState) return; // already replacing
     const dishItem = state.menuData?.items.find(i => i.id === dishId);
     const dishName = dishItem?.nameTranslated || dishId;
     const msg = isZh
       ? `帮我把 ${courseName} 中的 ${dishName} 换成别的，保持整体搭配`
       : `Please replace ${dishName} in ${courseName} with something else, keep the overall pairing`;
+
+    const activePlan = mealPlans.find(e => e.isActive);
+    const sentAtVersion = activePlan?.mealPlan.version ?? 0;
+    const timeoutId = setTimeout(() => {
+      setReplacingState(null);
+      showToast(isZh ? '请求超时，请重试' : 'Request timed out, please retry');
+    }, 15000);
+    setReplacingState({ dishId, sentAtVersion, timeoutId });
 
     const userMsg: Message = {
       id: `user_replace_${Date.now()}`,
@@ -806,7 +827,7 @@ export function AgentChatView() {
     dispatch({ type: 'ADD_MESSAGE', message: userMsg });
     sendToAI('chat', [userMsg]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.menuData, isZh]);
+  }, [state.menuData, isZh, replacingState, mealPlans]);
 
   // ---------- User send ----------
   function handleSend() {
@@ -1044,6 +1065,8 @@ export function AgentChatView() {
                   mealPlan={mp}
                   isActive={entry?.isActive ?? true}
                   isZh={isZh}
+                  isReplacing={replacingState !== null}
+                  replacingDishId={replacingState?.dishId ?? null}
                   onAddAllToOrder={handleAddAllToOrder}
                   onReplaceDish={handleReplaceDish}
                 />

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { MealPlan, MealPlanItem } from '../../../shared/types';
+import { formatPrice } from '../utils/formatPrice';
 
 // ─── Props ─────────────────────────────────────
 
@@ -7,6 +8,8 @@ export interface MealPlanCardProps {
   mealPlan: MealPlan;
   isActive: boolean;
   isZh: boolean;
+  isReplacing?: boolean;
+  replacingDishId?: string | null;
   onAddAllToOrder: (mealPlan: MealPlan) => void;
   onReplaceDish: (dishId: string, courseName: string) => void;
 }
@@ -18,12 +21,18 @@ function DishRow({
   courseName,
   isActive,
   isZh,
+  isReplacing,
+  replacingDishId,
+  currency,
   onReplaceDish,
 }: {
   item: MealPlanItem;
   courseName: string;
   isActive: boolean;
   isZh: boolean;
+  isReplacing?: boolean;
+  replacingDishId?: string | null;
+  currency?: string;
   onReplaceDish: (dishId: string, courseName: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -41,22 +50,26 @@ function DishRow({
         </span>
         {item.price != null && (
           <span className="text-sm font-medium text-[var(--color-sage-text)] shrink-0">
-            ¥{item.price}
+            {formatPrice(item.price, currency)}
           </span>
         )}
-        <button
-          disabled={!isActive}
-          onClick={(e) => {
-            e.stopPropagation();
-            onReplaceDish(item.dishId, courseName);
-          }}
-          className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-sm
-            hover:bg-indigo-50 active:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed
-            transition-colors"
-          aria-label={isZh ? '替换菜品' : 'Replace dish'}
-        >
-          🔄
-        </button>
+        {replacingDishId === item.dishId ? (
+          <span className="shrink-0 w-7 h-7 flex items-center justify-center text-sm animate-spin">⏳</span>
+        ) : (
+          <button
+            disabled={!isActive || isReplacing}
+            onClick={(e) => {
+              e.stopPropagation();
+              onReplaceDish(item.dishId, courseName);
+            }}
+            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-sm
+              hover:bg-indigo-50 active:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed
+              transition-colors"
+            aria-label={isZh ? '替换菜品' : 'Replace dish'}
+          >
+            🔄
+          </button>
+        )}
       </div>
 
       {/* Expandable detail */}
@@ -83,6 +96,8 @@ export function MealPlanCard({
   mealPlan,
   isActive,
   isZh,
+  isReplacing = false,
+  replacingDishId = null,
   onAddAllToOrder,
   onReplaceDish,
 }: MealPlanCardProps) {
@@ -137,6 +152,9 @@ export function MealPlanCard({
                 courseName={course.name}
                 isActive={isActive}
                 isZh={isZh}
+                isReplacing={isReplacing}
+                replacingDishId={replacingDishId}
+                currency={mealPlan.currency}
                 onReplaceDish={onReplaceDish}
               />
             ))}
@@ -147,7 +165,7 @@ export function MealPlanCard({
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-[var(--color-sage-border)] bg-gray-50/60">
         <span className="text-xs font-semibold text-[var(--color-sage-text)]">
-          {isZh ? '预估合计' : 'Est. Total'}: ¥{mealPlan.totalEstimate}
+          {isZh ? '预估合计' : 'Est. Total'}: {formatPrice(mealPlan.totalEstimate, mealPlan.currency)}
         </span>
         <span className="text-xs text-[var(--color-sage-text-secondary)]">
           {mealPlan.diners}{isZh ? '人' : ' diners'}

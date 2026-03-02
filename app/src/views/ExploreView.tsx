@@ -78,7 +78,7 @@ export function ExploreView() {
     dispatch({ type: 'NAV_TO', view: 'waiter' });
   }, [dispatch]);
 
-  const hasSelectedDishes = newlySelected.length > 0 || state.orderItems.length > 0;
+  const hasSelectedDishes = newlySelected.length > 0;
 
   // Empty state: no menuData
   if (!state.menuData) {

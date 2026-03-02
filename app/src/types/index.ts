@@ -113,4 +113,5 @@ export type AppAction =
   | { type: 'CLEAR_ANALYZING_FILES' }
   | { type: 'SET_LOCATION'; location: import('../../../shared/types').GeoLocation | null }
   | { type: 'SET_NAV_PAYLOAD'; payload: import('../../../shared/types').SelectedDishesPayload | null }
-  | { type: 'BATCH_ADD_TO_ORDER'; items: { menuItem: import('../../../shared/types').MenuItem; quantity: number }[] };
+  | { type: 'BATCH_ADD_TO_ORDER'; items: { menuItem: import('../../../shared/types').MenuItem; quantity: number }[] }
+  | { type: 'APPLY_ORDER_ACTION'; payload: import('../../../shared/types').OrderAction };

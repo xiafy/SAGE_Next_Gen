@@ -77,4 +77,42 @@ describe('parseJsonBlock', () => {
   it('L3: returns null for garbage text', () => {
     expect(parseJsonBlock('not json at all!!!')).toBeNull();
   });
+
+  it('🟡-6: MealPlan + OrderAction both present → returns MealPlan (priority)', () => {
+    // classifyJsonBlock checks courses first, so an object with both should be mealPlan
+    const json = JSON.stringify({
+      courses: [{ name: 'Main', items: [{ dishId: 'd1', name: 'Test', nameOriginal: 'T', price: 10, reason: '', quantity: 1 }] }],
+      version: 2,
+      totalEstimate: 100,
+      currency: 'THB',
+      rationale: 'test',
+      diners: 2,
+      orderAction: 'add',
+    });
+    const result = parseJsonBlock(json);
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('mealPlan');
+  });
+
+  it('🟡-6: courses is empty array → schema validation fails, returns null', () => {
+    const json = JSON.stringify({
+      version: 1,
+      totalEstimate: 100,
+      currency: 'THB',
+      rationale: 'test',
+      courses: [],
+      diners: 2,
+    });
+    const result = parseJsonBlock(json);
+    expect(result).toBeNull();
+  });
+
+  it('🟡-6: orderAction value is illegal (delete) → returns null', () => {
+    const json = JSON.stringify({
+      orderAction: 'delete',
+      remove: { dishId: 'dish-1' },
+    });
+    const result = parseJsonBlock(json);
+    expect(result).toBeNull();
+  });
 });

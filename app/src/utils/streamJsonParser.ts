@@ -37,7 +37,7 @@ export function classifyJsonBlock(obj: unknown): 'mealPlan' | 'orderAction' | nu
   if (typeof obj !== 'object' || obj === null) return null;
   const o = obj as Record<string, unknown>;
   if ('courses' in o && Array.isArray(o.courses)) return 'mealPlan';
-  if ('orderAction' in o) return 'orderAction';
+  if ('orderAction' in o && typeof o.orderAction === 'string' && ['add', 'remove', 'replace'].includes(o.orderAction)) return 'orderAction';
   return null;
 }
 
@@ -106,7 +106,15 @@ export function parseJsonBlock(
   }
 
   const classification = classifyJsonBlock(obj);
-  if (classification === 'mealPlan') return { type: 'mealPlan', data: obj as MealPlan };
-  if (classification === 'orderAction') return { type: 'orderAction', data: obj as OrderAction };
+  if (classification === 'mealPlan') {
+    const o = obj as Record<string, unknown>;
+    if (!Array.isArray(o.courses) || o.courses.length === 0 || typeof o.version !== 'number' || typeof o.totalEstimate !== 'number') {
+      return null; // L3: schema validation failed
+    }
+    return { type: 'mealPlan', data: obj as MealPlan };
+  }
+  if (classification === 'orderAction') {
+    return { type: 'orderAction', data: obj as OrderAction };
+  }
   return null;
 }
