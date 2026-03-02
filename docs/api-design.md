@@ -31,21 +31,27 @@ POST /api/chat:
 
 > 无需前端传 Authorization，Key 仅在 Worker 环境变量中存储。
 
-### 1.3 ⚠️ Bailian API 必填参数（DEC-028，违反将导致 TTFT 7-26s）
+### 1.3 ⚠️ Bailian API 调用策略（DEC-028 + DEC-044）
 
-所有对 Bailian DashScope 的 API 调用，**必须**同时包含以下两个参数：
+`enable_thinking: false` 对所有调用均为**必填**：
 
 ```json
-{
-  "stream": true,
-  "enable_thinking": false
-}
+{ "enable_thinking": false }
 ```
 
-**背景**：Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致 TTFT 高达 7-26 秒。
-关闭后 TTFT 降至 2-450ms（提升 22x）。`stream: true` 配合前端 SSE 接收，确保用户感知延迟 < 500ms。
+**背景（DEC-028）**：Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致文本模型 TTFT 高达 7-26s。关闭后 TTFT 降至 2-450ms（提升 22x）。
 
-已在 `worker/utils/bailian.ts` 中强制设置，但需确保任何新增调用也遵守此约束。
+**stream 参数按场景分策略（DEC-044）**：
+
+| 场景 | stream | 函数 | 原因 |
+|------|--------|------|------|
+| VL 菜单识别（/api/analyze） | `false` | `fetchComplete()` | 输出 JSON 必须等完整结果；实测 stream=false 比 stream=true 快约 **2 倍**（~13s vs ~31s） |
+| Enrich 语义补全（/api/analyze） | `false` | `fetchComplete()` | 同上，输出 JSON 数组 |
+| AI 对话（/api/chat） | `true` | `streamPassthrough()` | 用户可实时看到打字效果，TTFT 体验至关重要 |
+
+> **核心发现（2026-03-02 实测）**：stream=true 产生大量小 SSE 帧，HTTP 分块传输 + 每帧解析的累计开销在 VL 场景下使总延迟翻倍。JSON 输出场景一律用 stream=false。
+
+已在 `worker/utils/bailian.ts` 中通过 `fetchComplete` / `streamPassthrough` 封装强制执行，新增调用直接选用对应函数。
 
 ### 1.4 通用响应格式
 
@@ -75,11 +81,11 @@ POST /api/chat:
 
 ### 1.5 超时策略
 
-| 端点 | 前端超时 | Worker 超时 | 说明 |
-|------|---------|-----------|------|
-| `POST /api/analyze` | 20s | 16s | 二进制上传 + flash/plus 短超时降级链 |
-| `POST /api/chat` | 15s | 12s | 对话要求低延迟 |
-| `GET /api/health` | 5s | — | 健康检查 |
+| 端点 | 前端超时 | Worker 超时（VL） | Worker 超时（Enrich） | 说明 |
+|------|---------|-----------|------|------|
+| `POST /api/analyze` | 40s | 30s | 20s | stream=false，等完整响应；VL ~13s，Enrich ~2s（DEC-044） |
+| `POST /api/chat` | 15s | 12s | — | 对话要求低延迟，stream=true |
+| `GET /api/health` | 5s | — | — | 健康检查 |
 
 > Worker 超时比前端超时短 5s，确保 Worker 有时间返回友好错误而非超时断连。
 

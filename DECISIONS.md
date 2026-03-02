@@ -475,6 +475,29 @@
 
 ---
 
+### [DEC-044] VL API 调用改为 stream=false（非流式）
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia / SAGE Agent（实测数据驱动）
+- **背景**: 延迟诊断测试（2026-03-02 10:09）发现，Worker 内部对百炼 VL API 使用 `stream=true` + SSE 聚合（`streamAggregate`）的方案，实际性能远低于 `stream=false` 直接等待完整响应。
+- **实测数据**:
+  - `stream=true`（streamAggregate，原方案）：均值 **31.4s**，TTFT 698-2974ms
+  - `stream=false`（fetchComplete，新方案）：均值 **13.3s**
+  - **stream=false 约快 2 倍**
+- **根因**:
+  - VL 输出为 JSON，前端必须等完整结果才能 parse，`stream=true` 对此场景无 UX 价值
+  - `stream=true` 产生大量小 SSE 帧，HTTP 分块传输 + 每帧解析的累计开销显著
+  - `stream=false` 模式下 API 服务端可采用批量优化路径，减少 round-trip
+- **决策**:
+  1. `worker/utils/bailian.ts` 新增 `fetchComplete()` 函数（stream=false，直接 await 完整 JSON 响应）
+  2. `worker/handlers/analyze.ts` 中 VL（qwen3-vl-flash）和 Enrich（qwen3.5-flash）调用均改用 `fetchComplete`
+  3. `streamAggregate` 保留但标记为"仅供 Chat 流式场景使用"
+  4. **注意**：此决策覆盖 DEC-028 中"同时启用 stream:true"的说明——DEC-028 的 stream:true 建议基于文本对话场景，不适用于 JSON 输出场景
+- **预期效果**: VL 阶段 ~25s → ~13s，总链路 ~25s → ~15s（含 enrich ~2s）
+- **影响**: `worker/utils/bailian.ts`、`worker/handlers/analyze.ts`、`docs/api-design.md`
+
+---
+
 ### [DEC-035] 研发方法论：Spec-Driven + Test-Driven
 
 - **日期**: 2026-02-27

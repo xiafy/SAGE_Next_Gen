@@ -1,7 +1,7 @@
 import { type Env } from '../middleware/cors.js';
 import { getCorsHeaders } from '../middleware/cors.js';
 import { checkRateLimit } from '../utils/rateLimit.js';
-import { streamAggregate } from '../utils/bailian.js';
+import { fetchComplete } from '../utils/bailian.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { AnalyzeRequestSchema } from '../schemas/chatSchema.js';
@@ -304,11 +304,11 @@ async function runAnalyzePipeline(
   });
 
   try {
-    rawText = await streamAggregate({
+    rawText = await fetchComplete({
       model: 'qwen3-vl-flash',
       messages: [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
       apiKey: env.BAILIAN_API_KEY,
-      timeoutMs: 20_000,
+      timeoutMs: 30_000,  // stream=false 等完整响应，超时适当放宽（DEC-044）
       requestId,
     });
     tVisionEnd = Date.now();
@@ -366,14 +366,14 @@ async function runAnalyzePipeline(
         category: result.categories.find(c => c.itemIds.includes(i.id))?.nameOriginal,
       }));
 
-      const enrichRaw = await streamAggregate({
+      const enrichRaw = await fetchComplete({
         model: 'qwen3.5-flash',
         messages: [
           { role: 'system', content: MENU_ENRICH_SYSTEM },
           { role: 'user', content: buildEnrichUserMessage(enrichInput, context.language) },
         ],
         apiKey: env.BAILIAN_API_KEY,
-        timeoutMs: 15_000,
+        timeoutMs: 20_000,  // stream=false，超时适当放宽（DEC-044）
         requestId: `${requestId}-enrich`,
       });
 

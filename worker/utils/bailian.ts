@@ -1,9 +1,16 @@
 /**
  * 阿里云百炼 (DashScope) OpenAI 兼容模式客户端
  *
- * 关键约束（DEC-028）：
- *   - 所有调用必须包含 stream: true, enable_thinking: false
- *   - 不设 enable_thinking:false → TTFT 从 <500ms 变为 7-26s
+ * 关键约束（DEC-028 / DEC-044）：
+ *   - 所有调用必须包含 enable_thinking: false
+ *     （不设 enable_thinking:false → 文本模型 TTFT 从 <500ms 变为 7-26s）
+ *
+ *   - JSON 输出场景（VL 识别、Enrich）：使用 fetchComplete()，stream: false
+ *     实测 stream=false 比 stream=true 快约 2 倍（~13s vs ~31s）
+ *     原因：JSON 必须等完整结果，stream=true 的 SSE 分帧开销反而拖慢整体
+ *
+ *   - 流式对话场景（/api/chat）：使用 streamPassthrough()，stream: true
+ *     用户可实时看到打字效果，TTFT 体验更好
  */
 
 import { logger } from './logger.js';
@@ -53,8 +60,45 @@ function parseSSELine(line: string): StreamDelta | null {
 }
 
 /**
+ * 非流式调用 → 直接返回完整 content 字符串（DEC-044）
+ * 用于 /api/analyze 的 VL 识别和 Enrich 阶段：
+ *   - 输出为 JSON，必须等完整结果，stream=true 无 UX 价值
+ *   - 实测 stream=false 比 stream=true 快约 2 倍（~13s vs ~31s）
+ */
+export async function fetchComplete(opts: BailianCallOptions): Promise<string> {
+  const { model, messages, apiKey, timeoutMs = DEFAULT_TIMEOUT_MS, requestId } = opts;
+
+  const res = await fetch(`${BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      stream: false,
+      enable_thinking: false,  // DEC-028 必填
+    }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    logger.error('Bailian API error', { requestId, status: res.status, body: body.slice(0, 200) });
+    throw Object.assign(new Error(`Bailian ${res.status}`), { status: res.status });
+  }
+
+  const data = await res.json() as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  return data.choices?.[0]?.message?.content ?? '';
+}
+
+/**
  * 流式调用 → 聚合全部 content 为字符串
- * 用于 /api/analyze：需要完整 JSON 后做 Zod 校验
+ * @deprecated 对 JSON 输出场景（VL/Enrich）请改用 fetchComplete()，速度快约 2 倍。
+ * 此函数仅保留用于需要流式聚合的特殊场景。
  */
 export async function streamAggregate(opts: BailianCallOptions): Promise<string> {
   const { model, messages, apiKey, timeoutMs = DEFAULT_TIMEOUT_MS, requestId } = opts;
