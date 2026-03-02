@@ -51,20 +51,36 @@
 - [x] **vision.md v1.3 + prd.md v2.0** — 顶层文档与评审结论全面对齐
 
 ### 进行中
-- [ ] **新功能代码实现** — 基于 PRD v2.0 开始开发（MealPlanCard/SelectedDishesCard/Waiter面板/Chat操作Order）
-- [ ] **流式 JSON 代码块解析器 POC** — 验证 fallback 率（DEC-052v2/058 核心技术风险）
+- [ ] **Phase 0: 文档对齐 + Spec + Test Cases**（3/3 ~ 3/4 午）
+  - [ ] T0-1: docs/ 过时文档更新或归档（navigation-spec/icebreaker/临时文档）
+  - [ ] T0-2: architecture.md / api-design.md 补齐 DEC-052v2~060
+  - [ ] T0-3: 3 份新功能 Spec（mealplan-and-order / explore-chat-injection / waiter-upgrade）
+  - [ ] T0-4: 测试用例 checklist（given-when-then，覆盖正常流+边界+错误恢复）
+  - 门禁：夏总审关键 Spec
 
 ### 待开始
 
-#### 新功能实现（基于 PRD v2.0 / DEC-052v2~060）
-- [ ] **流式 JSON 代码块解析器** — SSE 末尾 JSON 代码块提取 + fallback（DEC-052v2/058 核心）
-- [ ] **shared/types.ts 新增类型** — `MealPlan` / `OrderAction` / `WaiterMessage` 类型定义
-- [ ] **MealPlanCard 组件** — 提案模式生命周期 + 逐道替换 + 并发防抖（DEC-052v2/054/055）
-- [ ] **SelectedDishesCard 组件** — Explore→Chat 注入事实摘要 + 开放引导（DEC-053v2）
-- [ ] **Waiter 过敏栏** — 三语展示过敏原/禁忌（DEC-056）
-- [ ] **Waiter 指点式沟通面板** — 售罄/换菜/加份跨语言沟通（DEC-060）
-- [ ] **Chat 操作 Order 能力** — AI 末尾 JSON 代码块指令解析 + 执行（DEC-058）
-- [ ] **导航状态机实现** — Order 为唯一执行数据源，6 条规则落代码（DEC-057）
+#### Phase 1: 数据层 + POC（3/4 午 ~ 3/5）
+- [ ] T1: shared/types.ts 新增 MealPlan/OrderAction/WaiterMessage 类型
+- [ ] T2: OrderStore 重构（DEC-057 状态机 6 条规则）
+- [ ] T3: **流式 JSON 代码块解析器 POC**（100 次真实调用，L1 ≥85%）
+- [ ] T4: Prompt 更新（方案型格式 + Order 操作指令）
+- 门禁：T3 POC 通过
+
+#### Phase 2: 核心组件 + 视图改造（3/5 ~ 3/8）
+- [ ] T5: MealPlanCard 组件（课程分组+替换+整套加入+并发防抖）
+- [ ] T6: SelectedDishesCard 组件（系统消息样式+事实摘要）
+- [ ] T7: AgentChatView 改造（流式JSON解析+MealPlanCard+OrderAction）
+- [ ] T8: ExploreView 改造（双出口+写入Order+空状态）
+- [ ] T9: Pre-Chat handoff 改造（结构化偏好+竞态处理）
+
+#### Phase 3: Waiter 升级 + 验收（3/9 ~ 3/10）
+- [ ] T10: WaiterAllergyBanner（三语过敏栏）
+- [ ] T11: AllergenWarningSheet（Waiter入口确认）
+- [ ] T12: DishCommunicationPanel（指点式沟通面板）
+- [ ] T13: WaiterModeView 集成
+- [ ] T14: 导航状态机端到端验证
+- [ ] T15: 真机验收 + 部署
 
 #### 质量与运营
 - [ ] **Paywall 实现**（免费 5 次，DEC-030）— 降低优先级，核心体验优先
