@@ -41,6 +41,12 @@ export type {
   ApiError,
   ApiErrorResponse,
   ApiResponse,
+  MealPlan,
+  MealPlanItem,
+  MealPlanCourse,
+  OrderAction,
+  SelectedDishSummary,
+  SelectedDishesPayload,
 } from '../../../shared/types';
 
 export { TIMEOUTS, LIMITS, VALID_TAGS } from '../../../shared/types';
@@ -56,9 +62,11 @@ export type ViewName = 'home' | 'scanner' | 'chat' | 'order' | 'waiter' | 'explo
 /** UI 层的消息（含 id 和 timestamp，比 ChatMessage 多字段）*/
 export interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: number;
+  cardType?: 'mealPlan' | 'selectedDishes';  // card rendering type
+  cardData?: import('../../../shared/types').MealPlan | import('../../../shared/types').SelectedDishesPayload;
 }
 
 /** App 本地偏好存储格式（简化版，和 ChatPreferences 不同）*/
@@ -84,6 +92,7 @@ export interface AppState {
   currentView: ViewName;
   analyzingFiles: File[] | null;
   isSupplementing: boolean;
+  navigationPayload?: import('../../../shared/types').SelectedDishesPayload | null;
 }
 
 export type AppAction =
@@ -102,4 +111,6 @@ export type AppAction =
   | { type: 'START_ANALYZE'; files: File[] }
   | { type: 'SET_SUPPLEMENTING'; value: boolean }
   | { type: 'CLEAR_ANALYZING_FILES' }
-  | { type: 'SET_LOCATION'; location: import('../../../shared/types').GeoLocation | null };
+  | { type: 'SET_LOCATION'; location: import('../../../shared/types').GeoLocation | null }
+  | { type: 'SET_NAV_PAYLOAD'; payload: import('../../../shared/types').SelectedDishesPayload | null }
+  | { type: 'BATCH_ADD_TO_ORDER'; items: { menuItem: import('../../../shared/types').MenuItem; quantity: number }[] };

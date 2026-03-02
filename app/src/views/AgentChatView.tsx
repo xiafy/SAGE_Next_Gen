@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { TopBar } from '../components/TopBar';
 import { ChatBubble } from '../components/ChatBubble';
@@ -7,17 +7,28 @@ import { LoadingDots } from '../components/LoadingDots';
 import { MascotImage } from '../components/MascotImage';
 import { Button3D } from '../components/Button3D';
 import { DishCard } from '../components/DishCard';
+import { MealPlanCard } from '../components/MealPlanCard';
+import { SelectedDishesCard } from '../components/SelectedDishesCard';
 import { streamChat, buildChatParams } from '../api/chat';
 import { analyzeMenu } from '../api/analyze';
 import { transcribeAudio } from '../api/transcribe';
-import type { Message, PreferenceUpdate } from '../types';
+import { extractJsonBlock, parseJsonBlock } from '../utils/streamJsonParser';
+import type { Message, PreferenceUpdate, MealPlan, SelectedDishesPayload } from '../types';
+import type { MenuItem } from '../../../shared/types';
 import { toUserFacingError } from '../utils/errorMessage';
 import { dlog } from '../utils/debugLog';
 import { mapDietaryToAllergens } from '../utils/allergenMapping';
+import { useOrder } from '../stores/orderStore';
 
 interface Recommendation {
   itemId: string;
   reason: string;
+}
+
+interface MealPlanEntry {
+  mealPlan: MealPlan;
+  isActive: boolean;
+  messageIndex: number;
 }
 
 // ── MediaRecorder voice support detection ────────────────────────────────────
@@ -31,12 +42,37 @@ function pickMimeType(): string {
   return '';
 }
 
-const VOICE_CANCEL_THRESHOLD = 80;  // px: slide up distance to cancel
-const VOICE_MIN_DURATION_MS = 500;  // ignore recordings shorter than 0.5s
-const VOICE_MAX_DURATION_MS = 60_000; // auto-stop at 60s
+const VOICE_CANCEL_THRESHOLD = 80;
+const VOICE_MIN_DURATION_MS = 500;
+const VOICE_MAX_DURATION_MS = 60_000;
+
+/** Remove ```json ... ``` code blocks from text */
+function stripJsonCodeBlocks(text: string): string {
+  return text.replace(/```json\s*[\s\S]*?```/g, '').trim();
+}
+
+/** Build system message for selected dishes injection */
+function buildSelectedDishesSystemMessage(payload: SelectedDishesPayload): string {
+  const parts: string[] = [];
+  if (payload.newlySelected.length > 0) {
+    parts.push('用户刚从菜单中新选了以下菜品：');
+    for (const d of payload.newlySelected) {
+      parts.push(`- ${d.name}（${d.nameOriginal}）${d.price ? ` ¥${d.price}` : ''} [${d.category}]`);
+    }
+  }
+  if (payload.existingOrder.length > 0) {
+    parts.push('用户点菜单中已有以下菜品：');
+    for (const d of payload.existingOrder) {
+      parts.push(`- ${d.name}（${d.nameOriginal}）${d.price ? ` ¥${d.price}` : ''} [${d.category}]`);
+    }
+  }
+  parts.push('请用事实摘要回复（数量、分类分布、预估总价），然后用开放式问题引导用户。不要主动分析搭配。');
+  return parts.join('\n');
+}
 
 export function AgentChatView() {
   const { state, dispatch } = useAppState();
+  const { dispatch: orderDispatch } = useOrder();
   const [inputValue, setInputValue] = useState('');
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -50,6 +86,8 @@ export function AgentChatView() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [analyzeProgress, setAnalyzeProgress] = useState(0);
   const [analyzeStatusText, setAnalyzeStatusText] = useState('');
+  const [mealPlans, setMealPlans] = useState<MealPlanEntry[]>([]);
+  const [generatingMealPlan, setGeneratingMealPlan] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [debugError, setDebugError] = useState<string>('');
@@ -58,6 +96,7 @@ export function AgentChatView() {
   const handoffTriggeredRef = useRef(false);
   const icebreakerSentRef = useRef(false);
   const analyzeTriggeredRef = useRef(false);
+  const selectedDishesInjectedRef = useRef(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -71,7 +110,6 @@ export function AgentChatView() {
   const isZh = state.preferences.language === 'zh';
   const totalOrderQuantity = state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
 
-  // Map dietary prefs to AllergenType values for DishCard allergen matching
   const userAllergens = useMemo(() => {
     return mapDietaryToAllergens(state.preferences.dietary);
   }, [state.preferences.dietary]);
@@ -87,15 +125,43 @@ export function AgentChatView() {
     }
   }, [state.menuData?.currency, isZh]);
 
+  // ---------- T7.3: SelectedDishes injection from Explore ----------
+  useEffect(() => {
+    const payload = state.navigationPayload;
+    if (payload && !selectedDishesInjectedRef.current) {
+      selectedDishesInjectedRef.current = true;
+
+      if (payload.newlySelected.length > 0 || payload.existingOrder.length > 0) {
+        dispatch({
+          type: 'ADD_MESSAGE',
+          message: {
+            id: `sys_selected_${Date.now()}`,
+            role: 'system',
+            content: buildSelectedDishesSystemMessage(payload),
+            cardType: 'selectedDishes',
+            cardData: payload,
+            timestamp: Date.now(),
+          },
+        });
+
+        setQuickReplies(isZh ? ['看看搭配建议', '聊聊某道菜'] : ['Pairing suggestions', 'Tell me about a dish']);
+
+        setTimeout(() => {
+          sendToAI('chat');
+        }, 100);
+      }
+
+      dispatch({ type: 'SET_NAV_PAYLOAD', payload: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.navigationPayload]);
+
   // ---------- Trigger analyze when files are ready ----------
   useEffect(() => {
     if (state.analyzingFiles && state.analyzingFiles.length > 0 && !analyzeTriggeredRef.current) {
       analyzeTriggeredRef.current = true;
       dlog('chat', '🔄 useEffect: triggering analyzeMenu with', state.analyzingFiles.length, 'files');
-      dlog('chat', 'analyzingFiles[0]:', state.analyzingFiles[0]?.name, state.analyzingFiles[0]?.type, state.analyzingFiles[0]?.size);
       performAnalyze(state.analyzingFiles);
-    } else {
-      dlog('chat', 'useEffect: analyzingFiles=', state.analyzingFiles?.length ?? 'null', 'triggered=', analyzeTriggeredRef.current);
     }
     if (state.chatPhase === 'failed' && state.isSupplementing) {
       dispatch({ type: 'SET_SUPPLEMENTING', value: false });
@@ -154,6 +220,9 @@ export function AgentChatView() {
       handoffTriggeredRef.current = true;
       dlog('chat', '🔄 HANDOFF triggered! sending to main chat AI');
 
+      // T9.1: Extract structured preferences from pre-chat
+      const prefSummary = extractPreChatPreferences();
+
       dispatch({
         type: 'ADD_MESSAGE',
         message: {
@@ -163,6 +232,18 @@ export function AgentChatView() {
           timestamp: Date.now(),
         },
       });
+
+      if (prefSummary) {
+        dispatch({
+          type: 'ADD_MESSAGE',
+          message: {
+            id: `sys_pref_${Date.now()}`,
+            role: 'system',
+            content: prefSummary,
+            timestamp: Date.now(),
+          },
+        });
+      }
 
       sendToAI('chat');
     }
@@ -195,7 +276,31 @@ export function AgentChatView() {
     toastTimerRef.current = setTimeout(() => setToastMsg(null), 3000);
   }
 
-  // ---------- Voice input (F13 v2 — WeChat style + MediaRecorder + Server ASR) ----------
+  // ---------- T9.1: Extract structured preferences from pre-chat ----------
+  function extractPreChatPreferences(): string | null {
+    const prefs = state.preferences;
+    const parts: string[] = [];
+
+    const userMsgs = state.messages.filter(m => m.role === 'user').map(m => m.content.toLowerCase());
+
+    let diners = '';
+    for (const msg of userMsgs) {
+      if (/两位|2位|两个人|二位/.test(msg) || /\btwo\b/i.test(msg)) { diners = '2'; break; }
+      if (/三位|3位|三个人/.test(msg) || /\bthree\b/i.test(msg)) { diners = '3'; break; }
+      if (/四位|4位|四个人/.test(msg) || /\bfour\b/i.test(msg)) { diners = '4'; break; }
+      if (/一个人|独自|就我|solo|just me/i.test(msg)) { diners = '1'; break; }
+    }
+
+    if (diners) parts.push(`用餐人数: ${diners}人`);
+    if (prefs.dietary.length > 0) parts.push(`饮食限制: ${prefs.dietary.join(', ')}`);
+    if (prefs.flavors && prefs.flavors.length > 0) parts.push(`口味偏好: ${prefs.flavors.join(', ')}`);
+    if (prefs.other && prefs.other.length > 0) parts.push(`其他偏好: ${prefs.other.join(', ')}`);
+
+    if (parts.length === 0) return null;
+    return `[用户偏好摘要]\n${parts.join('\n')}`;
+  }
+
+  // ---------- Voice input ----------
 
   function cleanupRecording() {
     clearInterval(recordTimerRef.current);
@@ -206,7 +311,6 @@ export function AgentChatView() {
     cancelledRef.current = false;
   }
 
-  // Pre-warm microphone when entering voice mode (avoids async delay on pointerdown)
   async function prewarmMic(): Promise<boolean> {
     if (micStreamRef.current && micStreamRef.current.active) return true;
     try {
@@ -225,11 +329,9 @@ export function AgentChatView() {
 
   async function toggleVoiceMode() {
     if (voiceMode) {
-      // Switching to text mode — release mic
       releaseMic();
       setVoiceMode(false);
     } else {
-      // Switching to voice mode — pre-warm mic
       const ok = await prewarmMic();
       if (ok) setVoiceMode(true);
     }
@@ -240,7 +342,6 @@ export function AgentChatView() {
 
     const stream = micStreamRef.current;
     if (!stream || !stream.active) {
-      // Mic not ready — try to re-acquire (shouldn't happen normally)
       prewarmMic().then(ok => {
         if (!ok) setVoiceMode(false);
       });
@@ -267,22 +368,18 @@ export function AgentChatView() {
     recorder.ondataavailable = (ev) => {
       if (ev.data.size > 0) audioChunksRef.current.push(ev.data);
     };
-
-    // Don't stop the stream on recorder stop — keep mic warm for next recording
-    recorder.onstop = () => { /* mic stays open */ };
+    recorder.onstop = () => {};
 
     recorderRef.current = recorder;
     recordStartRef.current = Date.now();
-    recorder.start(200); // collect chunks every 200ms
+    recorder.start(200);
     setIsRecording(true);
     setRecordDuration(0);
 
-    // Duration timer
     recordTimerRef.current = setInterval(() => {
       setRecordDuration(Math.floor((Date.now() - recordStartRef.current) / 1000));
     }, 500);
 
-    // Max duration auto-stop
     recordMaxTimerRef.current = setTimeout(() => {
       if (recorderRef.current?.state === 'recording') {
         finishRecording();
@@ -292,7 +389,7 @@ export function AgentChatView() {
 
   function handleVoicePointerMove(e: React.PointerEvent) {
     if (!isRecording) return;
-    const dy = pointerStartYRef.current - e.clientY; // positive = up
+    const dy = pointerStartYRef.current - e.clientY;
     const inCancel = dy > VOICE_CANCEL_THRESHOLD;
     setIsCancelZone(inCancel);
     cancelledRef.current = inCancel;
@@ -313,7 +410,6 @@ export function AgentChatView() {
     const wasCancelled = cancelledRef.current;
     const duration = Date.now() - recordStartRef.current;
 
-    // Stop recorder → triggers onstop (releases mic)
     recorder.stop();
     cleanupRecording();
 
@@ -327,7 +423,6 @@ export function AgentChatView() {
       return;
     }
 
-    // Wait a tick for final ondataavailable
     await new Promise(r => setTimeout(r, 100));
 
     const chunks = audioChunksRef.current;
@@ -339,7 +434,6 @@ export function AgentChatView() {
     const audioBlob = new Blob(chunks, { type: chunks[0]?.type || 'audio/mp4' });
     dlog('chat', '🎤 audio recorded:', audioBlob.size, 'bytes,', duration, 'ms');
 
-    // Transcribe
     setIsTranscribing(true);
     try {
       const text = await transcribeAudio(audioBlob, state.preferences.language);
@@ -389,6 +483,9 @@ export function AgentChatView() {
       dlog('chat', '✅ performAnalyze: success, items=', result.items?.length, 'supplementing=', state.isSupplementing);
       dispatch({ type: 'SET_MENU_DATA', data: result });
 
+      // Sync menu data to OrderStore
+      orderDispatch({ type: 'SET_MENU_DATA', menuData: result.items });
+
       if (state.isSupplementing) {
         dlog('chat', '📸 supplement done, notifying user');
         const existingNames = new Set(state.menuData?.items.map(i => i.nameOriginal) ?? []);
@@ -410,7 +507,6 @@ export function AgentChatView() {
     } catch (err) {
       dlog('chat', '❌ performAnalyze FAILED (attempt 1):', err);
 
-      // Auto-retry once on network/timeout errors
       const errMsg = err instanceof Error ? err.message : String(err);
       const isRetryable = errMsg.includes('timeout') || errMsg.includes('AbortError') || errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('Failed to fetch');
       if (isRetryable) {
@@ -431,6 +527,7 @@ export function AgentChatView() {
           );
           dlog('chat', '✅ performAnalyze retry success, items=', result.items?.length);
           dispatch({ type: 'SET_MENU_DATA', data: result });
+          orderDispatch({ type: 'SET_MENU_DATA', menuData: result.items });
           dispatch({ type: 'CLEAR_ANALYZING_FILES' });
           return;
         } catch (retryErr) {
@@ -455,6 +552,7 @@ export function AgentChatView() {
     setIsStreaming(true);
     setStreamingText('');
     setRecommendations([]);
+    setGeneratingMealPlan(false);
 
     const allMessages = [...state.messages, ...extraMessages];
     dlog('chat', 'messages count=', allMessages.length, 'menuData items=', state.menuData?.items?.length ?? 'null');
@@ -468,11 +566,17 @@ export function AgentChatView() {
     dlog('chat', 'chatParams built, mode=', params.mode);
 
     let fullText = '';
+    let detectingMealPlan = false;
 
     chatAbortRef.current = streamChat(
       params,
       (chunk) => {
         fullText += chunk;
+        // T7.1: Detect ```json block during streaming
+        if (fullText.includes('```json') && !detectingMealPlan) {
+          detectingMealPlan = true;
+          setGeneratingMealPlan(true);
+        }
         if (fullText.length <= 50 || fullText.length % 200 === 0) {
           dlog('chat', '📥 streaming chunk, total len=', fullText.length);
         }
@@ -481,13 +585,14 @@ export function AgentChatView() {
       () => {
         dlog('chat', '✅ stream done, total len=', fullText.length);
         setIsStreaming(false);
+        setGeneratingMealPlan(false);
         processAIResponse(fullText, mode);
       },
       (err) => {
         dlog('chat', '❌ stream ERROR:', err, 'fullText.len=', fullText.length);
         setIsStreaming(false);
+        setGeneratingMealPlan(false);
 
-        // Preserve partial content if any was streamed
         if (fullText.length > 0) {
           dispatch({
             type: 'ADD_MESSAGE',
@@ -522,53 +627,127 @@ export function AgentChatView() {
     );
   }
 
-  // ---------- Process AI response ----------
+  // ---------- Process AI response (T7.1: with JSON block extraction) ----------
   function processAIResponse(fullText: string, mode: 'pre_chat' | 'chat') {
     let displayText = fullText;
     let newQuickReplies: string[] = [];
     let newRecommendations: Recommendation[] = [];
 
-    try {
-      // Try direct parse first; if fails, extract JSON from markdown code block or embedded JSON
-      let jsonStr = fullText;
-      try {
-        JSON.parse(jsonStr);
-      } catch {
-        // Try extracting from ```json ... ``` code block
-        const codeBlockMatch = fullText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-        if (codeBlockMatch?.[1]) {
-          jsonStr = codeBlockMatch[1];
-        } else {
-          // Try finding first { ... } that contains "message"
-          const braceMatch = fullText.match(/(\{[\s\S]*"message"[\s\S]*\})\s*$/);
-          if (braceMatch?.[1]) {
-            jsonStr = braceMatch[1];
-          } else {
-            throw new Error('no json found');
+    // T7.1: Try extracting structured JSON block (MealPlan / OrderAction)
+    const jsonStr = extractJsonBlock(fullText);
+    if (jsonStr) {
+      const parsed = parseJsonBlock(jsonStr);
+      if (parsed) {
+        displayText = stripJsonCodeBlocks(fullText);
+
+        if (parsed.type === 'mealPlan') {
+          // T7.2: MealPlan handling
+          const mp = parsed.data as MealPlan;
+          const msgIndex = state.messages.length;
+
+          if (displayText) {
+            dispatch({
+              type: 'ADD_MESSAGE',
+              message: {
+                id: `ai_${Date.now()}`,
+                role: 'assistant',
+                content: displayText,
+                timestamp: Date.now(),
+              },
+            });
+          }
+
+          dispatch({
+            type: 'ADD_MESSAGE',
+            message: {
+              id: `mp_${Date.now()}`,
+              role: 'assistant',
+              content: '',
+              cardType: 'mealPlan',
+              cardData: mp,
+              timestamp: Date.now(),
+            },
+          });
+
+          setMealPlans(prev => [
+            ...prev.map(e => ({ ...e, isActive: false })),
+            { mealPlan: mp, isActive: true, messageIndex: msgIndex },
+          ]);
+
+          setStreamingText('');
+          setQuickReplies([]);
+          setRecommendations([]);
+
+          if (mode === 'chat' && state.chatPhase === 'handing_off') {
+            dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' });
+          }
+          return;
+        }
+
+        if (parsed.type === 'orderAction') {
+          const oa = parsed.data;
+          orderDispatch({ type: 'APPLY_ORDER_ACTION', action: oa });
+
+          const addName = oa.add?.dishId
+            ? state.menuData?.items.find(i => i.id === oa.add!.dishId)?.nameTranslated
+            : null;
+          const removeName = oa.remove?.dishId
+            ? state.menuData?.items.find(i => i.id === oa.remove!.dishId)?.nameTranslated
+            : null;
+
+          if (oa.orderAction === 'add' && addName) {
+            showToast(isZh ? `已添加 ${addName}` : `Added ${addName}`);
+          } else if (oa.orderAction === 'remove' && removeName) {
+            showToast(isZh ? `已移除 ${removeName}` : `Removed ${removeName}`);
+          } else if (oa.orderAction === 'replace') {
+            showToast(isZh ? `已替换菜品` : `Dish replaced`);
           }
         }
+      } else {
+        // L3 fallback
+        displayText = stripJsonCodeBlocks(fullText) || fullText;
+        newQuickReplies = [isZh ? '🔄 重新生成方案' : '🔄 Regenerate'];
       }
-      const parsed: unknown = JSON.parse(jsonStr);
-      const obj = parsed as Record<string, unknown>;
+    } else {
+      // No JSON block — try existing JSON parse logic
+      try {
+        let jsonContent = fullText;
+        try {
+          JSON.parse(jsonContent);
+        } catch {
+          const codeBlockMatch = fullText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+          if (codeBlockMatch?.[1]) {
+            jsonContent = codeBlockMatch[1];
+          } else {
+            const braceMatch = fullText.match(/(\{[\s\S]*"message"[\s\S]*\})\s*$/);
+            if (braceMatch?.[1]) {
+              jsonContent = braceMatch[1];
+            } else {
+              throw new Error('no json found');
+            }
+          }
+        }
+        const parsedObj: unknown = JSON.parse(jsonContent);
+        const obj = parsedObj as Record<string, unknown>;
 
-      if (typeof obj['message'] === 'string') {
-        displayText = obj['message'];
+        if (typeof obj['message'] === 'string') {
+          displayText = obj['message'];
+        }
+        if (Array.isArray(obj['quickReplies'])) {
+          newQuickReplies = obj['quickReplies'] as string[];
+        }
+        if (Array.isArray(obj['recommendations'])) {
+          const validIds = new Set(state.menuData?.items.map(i => i.id) ?? []);
+          newRecommendations = (obj['recommendations'] as Recommendation[]).filter(
+            rec => typeof rec.itemId === 'string' && validIds.has(rec.itemId)
+          );
+        }
+        if (Array.isArray(obj['preferenceUpdates']) && (obj['preferenceUpdates'] as PreferenceUpdate[]).length > 0) {
+          dispatch({ type: 'UPDATE_PREFERENCES', updates: obj['preferenceUpdates'] as PreferenceUpdate[] });
+        }
+      } catch {
+        // Not JSON — use raw text
       }
-      if (Array.isArray(obj['quickReplies'])) {
-        newQuickReplies = obj['quickReplies'] as string[];
-      }
-      if (Array.isArray(obj['recommendations'])) {
-        // KI-006: 过滤 AI 幻觉 itemId，只保留 menuData 中实际存在的菜品
-        const validIds = new Set(state.menuData?.items.map(i => i.id) ?? []);
-        newRecommendations = (obj['recommendations'] as Recommendation[]).filter(
-          rec => typeof rec.itemId === 'string' && validIds.has(rec.itemId)
-        );
-      }
-      if (Array.isArray(obj['preferenceUpdates']) && (obj['preferenceUpdates'] as PreferenceUpdate[]).length > 0) {
-        dispatch({ type: 'UPDATE_PREFERENCES', updates: obj['preferenceUpdates'] as PreferenceUpdate[] });
-      }
-    } catch {
-      // Not JSON — use raw text (graceful degradation)
     }
 
     setStreamingText('');
@@ -590,6 +769,45 @@ export function AgentChatView() {
     }
   }
 
+  // ---------- T7.2: MealPlan actions ----------
+  const handleAddAllToOrder = useCallback((mealPlan: MealPlan) => {
+    const items: { menuItem: MenuItem; quantity: number }[] = [];
+    for (const course of mealPlan.courses) {
+      for (const item of course.items) {
+        const menuItem = state.menuData?.items.find(i => i.id === item.dishId);
+        if (menuItem) {
+          items.push({ menuItem, quantity: item.quantity });
+        }
+      }
+    }
+    if (items.length > 0) {
+      dispatch({ type: 'BATCH_ADD_TO_ORDER', items });
+      showToast(isZh ? `已加入 ${items.length} 道菜到点菜单` : `Added ${items.length} items to order`);
+      setQuickReplies(isZh
+        ? ['去看点菜单', '继续聊', '展示给服务员']
+        : ['View order', 'Continue chat', 'Show to waiter']);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.menuData, isZh]);
+
+  const handleReplaceDish = useCallback((dishId: string, courseName: string) => {
+    const dishItem = state.menuData?.items.find(i => i.id === dishId);
+    const dishName = dishItem?.nameTranslated || dishId;
+    const msg = isZh
+      ? `帮我把 ${courseName} 中的 ${dishName} 换成别的，保持整体搭配`
+      : `Please replace ${dishName} in ${courseName} with something else, keep the overall pairing`;
+
+    const userMsg: Message = {
+      id: `user_replace_${Date.now()}`,
+      role: 'user',
+      content: msg,
+      timestamp: Date.now(),
+    };
+    dispatch({ type: 'ADD_MESSAGE', message: userMsg });
+    sendToAI('chat', [userMsg]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.menuData, isZh]);
+
   // ---------- User send ----------
   function handleSend() {
     if (!inputValue.trim() || isStreaming) return;
@@ -609,6 +827,16 @@ export function AgentChatView() {
 
   function handleQuickReply(reply: string) {
     if (isStreaming) return;
+
+    // Handle navigation quick replies
+    if (reply === '去看点菜单' || reply === 'View order') {
+      dispatch({ type: 'NAV_TO', view: 'order' });
+      return;
+    }
+    if (reply === '展示给服务员' || reply === 'Show to waiter') {
+      dispatch({ type: 'NAV_TO', view: 'waiter' });
+      return;
+    }
 
     const userMsg: Message = {
       id: `user_${Date.now()}`,
@@ -638,6 +866,18 @@ export function AgentChatView() {
 
   const showProgressBar = state.chatPhase === 'pre_chat' || state.chatPhase === 'handing_off';
   const showInputArea = state.chatPhase !== 'failed';
+
+  const mealPlanByMsgId = useMemo(() => {
+    const map = new Map<string, MealPlanEntry>();
+    for (const msg of state.messages) {
+      if (msg.cardType === 'mealPlan' && msg.cardData) {
+        const mp = msg.cardData as MealPlan;
+        const entry = mealPlans.find(e => e.mealPlan.version === mp.version);
+        if (entry) map.set(msg.id, entry);
+      }
+    }
+    return map;
+  }, [state.messages, mealPlans]);
 
   return (
     <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
@@ -748,11 +988,8 @@ export function AgentChatView() {
         </div>
       )}
 
-      {/* Progress bar - phase-aware */}
+      {/* Progress bar */}
       {showProgressBar && (() => {
-        // pre_chat: uploading & recognizing menu (0-60%)
-        // handing_off w/o menuData: still recognizing (40-60%)
-        // handing_off w/ menuData: AI analyzing (60-90%)
         const isAnalyzing = state.chatPhase === 'handing_off' && state.menuData !== null;
         const defaultLabel = isAnalyzing
           ? (isZh ? '分析推荐中…' : 'Analyzing…')
@@ -784,9 +1021,41 @@ export function AgentChatView() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
-        {state.messages.map((msg) => (
-          <ChatBubble key={msg.id} message={msg} />
-        ))}
+        {state.messages.map((msg) => {
+          // T7.3: Render SelectedDishesCard
+          if (msg.cardType === 'selectedDishes' && msg.cardData) {
+            return (
+              <div key={msg.id} className="mb-3 animate-slide-up">
+                <SelectedDishesCard
+                  payload={msg.cardData as SelectedDishesPayload}
+                  isZh={isZh}
+                />
+              </div>
+            );
+          }
+
+          // T7.2: Render MealPlanCard
+          if (msg.cardType === 'mealPlan' && msg.cardData) {
+            const entry = mealPlanByMsgId.get(msg.id);
+            const mp = msg.cardData as MealPlan;
+            return (
+              <div key={msg.id} className="mb-3 ml-10 animate-slide-up">
+                <MealPlanCard
+                  mealPlan={mp}
+                  isActive={entry?.isActive ?? true}
+                  isZh={isZh}
+                  onAddAllToOrder={handleAddAllToOrder}
+                  onReplaceDish={handleReplaceDish}
+                />
+              </div>
+            );
+          }
+
+          // Skip system messages without card rendering
+          if (msg.role === 'system') return null;
+
+          return <ChatBubble key={msg.id} message={msg} />;
+        })}
 
         {/* Streaming bubble */}
         {isStreaming && streamingText && (
@@ -795,7 +1064,10 @@ export function AgentChatView() {
               <MascotImage expression="default" size={32} className="rounded-full" />
             </div>
             <div className="max-w-[75%] px-4 py-2.5 text-[15px] leading-relaxed font-semibold bg-white text-[var(--color-sage-text)] rounded-[var(--radius-md)_var(--radius-md)_var(--radius-md)_4px] border-2 border-[var(--color-sage-border)] shadow-[0_4px_0_var(--color-sage-border)]">
-              {streamingText}
+              {generatingMealPlan
+                ? <>{stripJsonCodeBlocks(streamingText) || streamingText}<br/><span className="text-xs text-[var(--color-sage-primary)]">🍽 {isZh ? '正在生成方案…' : 'Generating meal plan…'}</span></>
+                : streamingText
+              }
               <span className="inline-block w-0.5 h-4 bg-[var(--color-sage-primary)] ml-0.5 animate-pulse align-text-bottom" />
             </div>
           </div>
@@ -856,7 +1128,7 @@ export function AgentChatView() {
         </button>
       )}
 
-      {/* Recording overlay — cancel zone indicator */}
+      {/* Recording overlay */}
       {isRecording && (
         <div className="fixed inset-0 z-40 pointer-events-none flex flex-col items-center justify-center">
           <div className={`mb-20 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
@@ -888,10 +1160,9 @@ export function AgentChatView() {
         </div>
       )}
 
-      {/* Input area — WeChat style */}
+      {/* Input area */}
       {showInputArea && (
         <div className="flex items-center gap-2 px-4 py-3 border-t-2 border-[var(--color-sage-border)] bg-white">
-          {/* Camera button (chatting phase only) */}
           {state.chatPhase === 'chatting' && !voiceMode && (
             <button
               onClick={() => {
@@ -905,7 +1176,6 @@ export function AgentChatView() {
             </button>
           )}
 
-          {/* Voice/Keyboard toggle */}
           {voiceSupported && (
             <button
               onClick={toggleVoiceMode}
@@ -916,7 +1186,6 @@ export function AgentChatView() {
             </button>
           )}
 
-          {/* Voice mode: Hold-to-talk button */}
           {voiceMode ? (
             <button
               onPointerDown={handleVoicePointerDown}
@@ -942,7 +1211,6 @@ export function AgentChatView() {
                   : (isZh ? '按住 说话' : 'Hold to talk')}
             </button>
           ) : (
-            /* Text mode: input + send button */
             <>
               <input
                 type="text"

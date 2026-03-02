@@ -51,6 +51,7 @@ const initialState: AppState = {
   currentView: 'home',
   analyzingFiles: null,
   isSupplementing: false,
+  navigationPayload: null,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -223,6 +224,25 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         location: action.location,
       };
+
+    case 'SET_NAV_PAYLOAD':
+      return {
+        ...state,
+        navigationPayload: action.payload,
+      };
+
+    case 'BATCH_ADD_TO_ORDER': {
+      const newOrderItems = [...state.orderItems];
+      for (const incoming of action.items) {
+        const idx = newOrderItems.findIndex(oi => oi.menuItem.id === incoming.menuItem.id);
+        if (idx >= 0) {
+          const existing = newOrderItems[idx]!; newOrderItems[idx] = { menuItem: existing.menuItem, quantity: existing.quantity + incoming.quantity };
+        } else {
+          newOrderItems.push(incoming);
+        }
+      }
+      return { ...state, orderItems: newOrderItems };
+    }
   }
 }
 

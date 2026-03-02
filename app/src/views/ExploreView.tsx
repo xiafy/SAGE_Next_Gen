@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { TopBar } from '../components/TopBar';
 import { Chip } from '../components/Chip';
@@ -6,6 +6,8 @@ import { Button3D } from '../components/Button3D';
 import { MascotImage } from '../components/MascotImage';
 import { DishCard } from '../components/DishCard';
 import { mapDietaryToAllergens } from '../utils/allergenMapping';
+import type { SelectedDishSummary, SelectedDishesPayload, MenuItem } from '../types';
+import type { OrderItem } from '../types';
 
 export function ExploreView() {
   const { state, dispatch } = useAppState();
@@ -13,7 +15,10 @@ export function ExploreView() {
   const [activeCategory, setActiveCategory] = useState('all');
   const tabsRef = useRef<HTMLDivElement>(null);
 
-  // Map dietary prefs to AllergenType values for DishCard allergen matching
+  // T8.2: Track newly selected dishes and order snapshot
+  const [newlySelected, setNewlySelected] = useState<SelectedDishSummary[]>([]);
+  const [orderSnapshotOnEnter] = useState<OrderItem[]>(() => [...state.orderItems]);
+
   const userAllergens = useMemo(() => {
     return mapDietaryToAllergens(state.preferences.dietary);
   }, [state.preferences.dietary]);
@@ -28,7 +33,54 @@ export function ExploreView() {
     }
   }, [activeCategory]);
 
-  // Empty state
+  // T8.2: Helper to build SelectedDishSummary from MenuItem
+  const toSummary = useCallback((item: MenuItem): SelectedDishSummary => {
+    const cat = state.menuData?.categories.find(c => c.itemIds.includes(item.id));
+    return {
+      dishId: item.id,
+      name: item.nameTranslated,
+      nameOriginal: item.nameOriginal,
+      price: item.price ?? null,
+      category: cat ? (isZh ? cat.nameTranslated : cat.nameOriginal) : '',
+    };
+  }, [state.menuData, isZh]);
+
+  // T8.2: Add dish handler
+  const handleAddDish = useCallback((item: MenuItem) => {
+    dispatch({ type: 'ADD_TO_ORDER', item });
+    // Add to newlySelected if not already there
+    setNewlySelected(prev => {
+      if (prev.some(d => d.dishId === item.id)) return prev;
+      return [...prev, toSummary(item)];
+    });
+  }, [dispatch, toSummary]);
+
+  // T8.2: Update qty handler
+  const handleUpdateQty = useCallback((itemId: string, qty: number) => {
+    dispatch({ type: 'UPDATE_ORDER_QTY', itemId, quantity: qty });
+    if (qty <= 0) {
+      setNewlySelected(prev => prev.filter(d => d.dishId !== itemId));
+    }
+  }, [dispatch]);
+
+  // T8.3: Navigate to AI chat with payload
+  const handleConsultAI = useCallback(() => {
+    const payload: SelectedDishesPayload = {
+      newlySelected,
+      existingOrder: orderSnapshotOnEnter.map(oi => toSummary(oi.menuItem)),
+    };
+    dispatch({ type: 'SET_NAV_PAYLOAD', payload });
+    dispatch({ type: 'NAV_TO', view: 'chat' });
+  }, [newlySelected, orderSnapshotOnEnter, toSummary, dispatch]);
+
+  // T8.1: Navigate to waiter mode
+  const handleShowToWaiter = useCallback(() => {
+    dispatch({ type: 'NAV_TO', view: 'waiter' });
+  }, [dispatch]);
+
+  const hasSelectedDishes = newlySelected.length > 0 || state.orderItems.length > 0;
+
+  // Empty state: no menuData
   if (!state.menuData) {
     return (
       <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
@@ -56,15 +108,38 @@ export function ExploreView() {
 
   const { categories, items } = state.menuData;
 
-  // 建立有效 itemId 集合（items[] 中实际存在的 id）
+  // T8.4: Empty state for items
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
+        <TopBar
+          title={isZh ? '菜单' : 'Explore'}
+          onBack={() => dispatch({ type: 'NAV_TO', view: 'chat' })}
+        />
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+          <MascotImage expression="confused" size={120} />
+          <p className="text-[var(--color-sage-text-secondary)] text-center font-semibold">
+            {isZh ? '还没有扫描菜单哦，先去拍一张？' : 'No dishes found. Try taking another photo?'}
+          </p>
+          <Button3D
+            onClick={() => dispatch({ type: 'NAV_TO', view: 'scanner' })}
+          >
+            {isZh ? '📷 重新拍摄' : '📷 Retake Photo'}
+          </Button3D>
+        </div>
+      </div>
+    );
+  }
+
+  // 建立有效 itemId 集合
   const validItemIdSet = new Set(items.map(it => it.id));
 
-  // 过滤掉没有任何有效 item 的 category（KI-005）
+  // 过滤掉没有任何有效 item 的 category
   const validCategories = categories.filter(cat =>
     cat.itemIds.some(id => validItemIdSet.has(id))
   );
 
-  // 找出孤儿 items（不被任何 category 引用，KI-004）
+  // 找出孤儿 items
   const referencedIds = new Set(validCategories.flatMap(c => c.itemIds));
   const orphanItems = items.filter(it => !referencedIds.has(it.id));
 
@@ -98,7 +173,6 @@ export function ExploreView() {
       : []),
   ];
 
-  // Filter items by active category
   const filteredItems =
     activeCategory === 'all'
       ? items
@@ -109,7 +183,6 @@ export function ExploreView() {
           return cat?.itemIds.includes(item.id);
         });
 
-  // Deduplicate by nameOriginal (AI may generate duplicates with different IDs)
   const dedupedItems = dedupeByNameOriginal(filteredItems);
 
   return (
@@ -133,7 +206,7 @@ export function ExploreView() {
         }
       />
 
-      {/* Category tabs — horizontal scrolling Chip */}
+      {/* Category tabs */}
       <div ref={tabsRef} className="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
         <Chip
           selected={activeCategory === 'all'}
@@ -165,7 +238,7 @@ export function ExploreView() {
       </div>
 
       {/* Item list */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 pb-32">
         {activeCategory === 'all' ? (
           groupedItems.length === 0 ? (
             <p className="text-[var(--color-sage-text-secondary)] text-sm text-center py-8">
@@ -188,8 +261,8 @@ export function ExploreView() {
                           isZh={isZh}
                           userAllergens={userAllergens}
                           orderItem={orderItem}
-                          onAdd={() => dispatch({ type: 'ADD_TO_ORDER', item })}
-                          onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: qty })}
+                          onAdd={() => handleAddDish(item)}
+                          onUpdateQty={(qty) => handleUpdateQty(item.id, qty)}
                         />
                       );
                     })}
@@ -214,14 +287,36 @@ export function ExploreView() {
                     isZh={isZh}
                     userAllergens={userAllergens}
                     orderItem={orderItem}
-                    onAdd={() => dispatch({ type: 'ADD_TO_ORDER', item })}
-                    onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: item.id, quantity: qty })}
+                    onAdd={() => handleAddDish(item)}
+                    onUpdateQty={(qty) => handleUpdateQty(item.id, qty)}
                   />
                 );
               })}
             </div>
           )
         )}
+      </div>
+
+      {/* T8.1: Bottom action bar with dual exit */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[var(--color-sage-border)] px-4 py-3 flex gap-3 safe-area-bottom">
+        <Button3D
+          variant="secondary"
+          size="sm"
+          onClick={handleShowToWaiter}
+          disabled={!hasSelectedDishes}
+          className="flex-1"
+        >
+          {isZh ? '展示给服务员' : 'Show to Waiter'}
+        </Button3D>
+        <Button3D
+          variant="primary"
+          size="sm"
+          onClick={handleConsultAI}
+          disabled={!hasSelectedDishes}
+          className="flex-1"
+        >
+          {isZh ? '🤖 咨询 AI' : '🤖 Ask AI'}
+        </Button3D>
       </div>
     </div>
   );
