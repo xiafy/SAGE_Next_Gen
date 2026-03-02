@@ -786,3 +786,73 @@
   - `worker/middleware/cors.ts`（`BAILIAN_INTL_API_KEY`）
   - `docs/architecture.md`（降级路径更新）
   - `docs/deployment.md`（新增 Secret 说明）
+
+---
+
+### [DEC-052] 方案型输出格式：流式自然语言 + 嵌入标记
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: MealPlanCard 需要从 AI 回复中提取结构化数据。讨论了两种输出格式（纯 JSON vs 自然语言+标记）和两种传输方式（流式 vs 非流式）。
+- **选项**:
+  - 格式 A: AI 输出纯 JSON → 前端直接渲染（简单，但丢失搭配理由叙事）
+  - 格式 B: AI 自然语言 + `<meal-plan>JSON</meal-plan>` 标记嵌入（保留叙事+结构化两全）
+  - 传输甲: 非流式（等完整结果，~5-8s 纯空白等待）
+  - 传输乙: 流式（前导文字逐字打出，卡片缓冲后一次性渲染）
+- **决策**: **格式 B + 传输乙（流式自然语言+嵌入标记）**
+- **理由**:
+  1. 方案型核心差异化是 AI 的搭配逻辑解释，纯 JSON 砍掉了这个价值
+  2. 5-8s 纯空白等待是产品级问题，流式消除等待焦虑
+  3. 流式解析器是一次性基础设施投入，可复用于所有结构化卡片嵌入场景
+- **实现规格**:
+  1. AI 回复格式：前导文字（流式）→ `<meal-plan>{JSON}</meal-plan>`（缓冲）→ 后续文字（流式）
+  2. 缓冲期 UI：显示"🍽 正在配餐…"占位
+  3. 容错：缓冲超 10s 未闭合标记 → fallback 为纯文字
+  4. MealPlanCard JSON schema 定义于 `shared/types.ts`
+- **影响**: `docs/prd.md` F06、`worker/prompts/agentChat.ts`、`app/src/views/AgentChatView.tsx`（流式解析器）、`shared/types.ts`（MealPlan 类型）
+
+---
+
+### [DEC-053] Explore → Chat 上下文注入：已选卡片 + AI 轻量引导
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 用户从 Explore 选完菜品点「咨询 AI」回到 Chat 时，需要让 AI 感知已选菜品，同时让用户确认 AI 收到了。讨论了四种方案：A/B/C（AI 主动分析）和 D（确认收到+开放式提问）。
+- **选项**:
+  - A: 系统消息注入（用户不可见，不知 AI 收到没）
+  - B: 模拟用户消息（替用户说话，违反 Scenario-Free）
+  - C: 前端卡片 + AI 主动分析搭配（可能猜错意图）
+  - D: 前端卡片 + AI 轻量引导（确认收到，开放式提问，不替用户判断）
+- **决策**: **方案 D**
+- **理由**:
+  1. 用户点「咨询 AI」意图不一定是要搭配建议，可能是问某道菜的细节
+  2. 前端 SelectedDishesCard 提供视觉确认（信任链不断）
+  3. AI 一句"选了 N 道菜，想看搭配还是聊别的？"——问而不答，符合 Scenario-Free
+- **实现规格**:
+  1. 前端在对话流插入 `SelectedDishesCard` 组件（展示已选菜品列表，仅 UI）
+  2. 同时向 AI 发送 system message：`[用户从菜单总览选择了: {菜品列表}]`
+  3. AI 回复一条轻量引导消息，不主动分析
+- **影响**: `docs/prd.md` F07 AC7、`app/src/views/AgentChatView.tsx`、`app/src/components/SelectedDishesCard.tsx`（新组件）
+
+---
+
+### [DEC-054] 方案型逐道替换：AI 驱动
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: MealPlanCard 的"替换某道菜"交互需要决定是 UI 驱动（弹出候选列表）还是 AI 驱动（发消息给 AI 推荐替代品）。
+- **选项**:
+  - A: UI 驱动（即时，但丢失 AI 搭配判断能力）
+  - B: AI 驱动（等 AI 响应，推荐质量高，符合 Goal > Process）
+  - C: 混合（UI 快速候选 + AI 推荐入口，UI 复杂度高）
+- **决策**: **方案 B（AI 驱动）**
+- **理由**:
+  1. 方案型核心价值是 AI 搭配能力，UI 选菜等于退化成 Explore
+  2. 方案型用户已在 3min 决策流程中，额外 2-3s 不是痛点
+  3. 符合 Goal > Process：让 AI 动态判断替代品，不用 if-else 过滤
+- **实现规格**:
+  1. MealPlanCard 每道菜显示「🔄 换一道」按钮
+  2. 点击后自动发送消息给 AI："帮我把 {菜名} 换成别的，保持整体搭配"
+  3. AI 回复包含新 MealPlanCard 的完整方案（替换后的版本）
+  4. 旧 MealPlanCard 标记为"已更新"（灰化，不可操作）
+- **影响**: `docs/prd.md` F06 AC9、`app/src/components/MealPlanCard.tsx`、`worker/prompts/agentChat.ts`
