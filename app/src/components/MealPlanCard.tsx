@@ -11,14 +11,13 @@ export interface MealPlanCardProps {
   isReplacing?: boolean;
   replacingDishId?: string | null;
   onAddAllToOrder: (mealPlan: MealPlan) => void;
-  onReplaceDish: (dishId: string, courseName: string) => void;
+  onReplaceDish: (dishId: string, dishName: string) => void;
 }
 
 // ─── Dish Row ──────────────────────────────────
 
 function DishRow({
   item,
-  courseName,
   isActive,
   isZh,
   isReplacing,
@@ -27,13 +26,12 @@ function DishRow({
   onReplaceDish,
 }: {
   item: MealPlanItem;
-  courseName: string;
   isActive: boolean;
   isZh: boolean;
   isReplacing?: boolean;
   replacingDishId?: string | null;
   currency?: string;
-  onReplaceDish: (dishId: string, courseName: string) => void;
+  onReplaceDish: (dishId: string, dishName: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -60,7 +58,7 @@ function DishRow({
             disabled={!isActive || isReplacing}
             onClick={(e) => {
               e.stopPropagation();
-              onReplaceDish(item.dishId, courseName);
+              onReplaceDish(item.dishId, item.name);
             }}
             className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-sm
               hover:bg-indigo-50 active:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed
@@ -149,7 +147,6 @@ export function MealPlanCard({
               <DishRow
                 key={item.dishId}
                 item={item}
-                courseName={course.name}
                 isActive={isActive}
                 isZh={isZh}
                 isReplacing={isReplacing}

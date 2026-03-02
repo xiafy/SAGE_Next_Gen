@@ -802,13 +802,11 @@ export function AgentChatView() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.menuData, isZh]);
 
-  const handleReplaceDish = useCallback((dishId: string, courseName: string) => {
+  const handleReplaceDish = useCallback((dishId: string, dishName: string) => {
     if (replacingState) return; // already replacing
-    const dishItem = state.menuData?.items.find(i => i.id === dishId);
-    const dishName = dishItem?.nameTranslated || dishId;
     const msg = isZh
-      ? `帮我把 ${courseName} 中的 ${dishName} 换成别的，保持整体搭配`
-      : `Please replace ${dishName} in ${courseName} with something else, keep the overall pairing`;
+      ? `请帮我把 ${dishName} 换成别的`
+      : `Please replace ${dishName} with something else`;
 
     const activePlan = mealPlans.find(e => e.isActive);
     const sentAtVersion = activePlan?.mealPlan.version ?? 0;

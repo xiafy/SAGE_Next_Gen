@@ -116,3 +116,66 @@ describe('parseJsonBlock', () => {
     expect(result).toBeNull();
   });
 });
+describe('parseJsonBlock — supplemental', () => {
+  it('version is not a number → schema validation fails', () => {
+    const json = JSON.stringify({
+      version: 'one',
+      totalEstimate: 100,
+      currency: 'THB',
+      rationale: 'test',
+      courses: [{ name: 'Main', items: [{ dishId: 'd1', name: 'T', nameOriginal: 'T', price: 10, reason: '', quantity: 1 }] }],
+      diners: 2,
+    });
+    const result = parseJsonBlock(json);
+    expect(result).toBeNull();
+  });
+});
+
+describe('extractJsonBlock — supplemental', () => {
+  it('nested ```json blocks (AI code example) → takes last one', () => {
+    const text = 'Here is an example:\n````markdown\n```json\n{"fake":true}\n```\n````\nNow the real output:\n```json\n{"courses":[{"name":"Main","items":[]}],"version":1,"totalEstimate":100,"currency":"THB","rationale":"ok","diners":2}\n```';
+    const result = extractJsonBlock(text);
+    expect(result).toContain('"version":1');
+  });
+});
+
+describe('extractJsonBlock — error recovery', () => {
+  it('completely invalid structure (XML) → null', () => {
+    expect(extractJsonBlock('<root><item>hello</item></root>')).toBeNull();
+  });
+
+  it('JSON with embedded newlines and special chars → correct parse', () => {
+    const text = '```json\n{"version":1,"rationale":"line1\\nline2","courses":[{"name":"Main","items":[{"dishId":"d1","name":"Tëst \\"Dish\\"","nameOriginal":"T","price":10,"reason":"","quantity":1}]}],"totalEstimate":10,"currency":"THB","diners":1}\n```';
+    const json = extractJsonBlock(text);
+    expect(json).not.toBeNull();
+    const result = parseJsonBlock(json!);
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('mealPlan');
+  });
+
+  it('very long JSON (>10KB) → correct parse', () => {
+    const items = Array.from({ length: 100 }, (_, i) => ({
+      dishId: `d${i}`, name: `Dish ${i} ${'x'.repeat(80)}`, nameOriginal: 'T', price: 10, reason: 'ok', quantity: 1,
+    }));
+    const obj = { version: 1, totalEstimate: 1000, currency: 'THB', rationale: 'test', courses: [{ name: 'Main', items }], diners: 2 };
+    const jsonStr = JSON.stringify(obj);
+    expect(jsonStr.length).toBeGreaterThan(10000);
+    const text = `Here:\n\`\`\`json\n${jsonStr}\n\`\`\``;
+    const extracted = extractJsonBlock(text);
+    expect(extracted).not.toBeNull();
+    const result = parseJsonBlock(extracted!);
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('mealPlan');
+  });
+
+  it('code block marker case-insensitive: ```JSON → extraction succeeds', () => {
+    // Current implementation is case-sensitive on ```json
+    // This test documents that ```JSON won't work with current code
+    // If this is a requirement, extractJsonBlock needs updating
+    const text = 'Result:\n```JSON\n{"version":1,"totalEstimate":100,"currency":"USD","rationale":"ok","courses":[{"name":"A","items":[{"dishId":"d1","name":"X","nameOriginal":"X","price":10,"reason":"","quantity":1}]}],"diners":1}\n```';
+    const extracted = extractJsonBlock(text);
+    // Current impl is case-sensitive, so this returns null
+    // We'll make extractJsonBlock case-insensitive
+    expect(extracted).not.toBeNull();
+  });
+});

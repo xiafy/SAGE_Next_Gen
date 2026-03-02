@@ -6,10 +6,11 @@ import type { MealPlan, OrderAction } from '../../../shared/types';
  */
 export function extractJsonBlock(fullText: string): string | null {
   const marker = '```json';
+  const lowerText = fullText.toLowerCase();
   let lastIdx = -1;
   let searchFrom = 0;
   while (true) {
-    const idx = fullText.indexOf(marker, searchFrom);
+    const idx = lowerText.indexOf(marker, searchFrom);
     if (idx === -1) break;
     lastIdx = idx;
     searchFrom = idx + marker.length;

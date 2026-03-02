@@ -55,7 +55,7 @@ const initialState: AppState = {
   waiterAllergyConfirmed: false,
 };
 
-function appReducer(state: AppState, action: AppAction): AppState {
+export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'NAV_TO':
       return { ...state, currentView: action.view };
