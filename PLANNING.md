@@ -127,3 +127,48 @@
 | AI 供应商 | 阿里云百炼 DashScope（DEC-026）→ Gemini 2.0 Flash 主模型 + 百炼新加坡兜底（DEC-045/051）✅ |
 | 过敏原识别准确率 | EU 编号表 pipeline（DEC-050），recall 100% ✅ |
 | Geo-block 风险 | 百炼新加坡国际站 fallback（DEC-051）✅ |
+
+---
+
+## Sprint 4 — Beta 内测（计划中）
+
+**前置条件**: Sprint 3 ✅ 已部署上线  
+**目标**: 3-5 个内部用户通过邀请码进入，验证功能可用 + 识别最高频场景  
+**策略**: Beta 先测，收集真实反馈后再决定 Paywall 付费点  
+**预计时长**: 6-7h
+
+### 任务清单
+
+- [ ] **T1: 邀请码门禁**
+  - App 首次打开显示邀请码输入页
+  - 输入正确 → 存 localStorage → 后续跳过
+  - 邀请码：SAGE-ALPHA / SAGE-BETA / SAGE-GAMMA / SAGE-DELTA / SAGE-ECHO（5个，每人一个）
+  - Worker 验证接口：`POST /api/invite/verify`
+  - 邀请码列表通过 wrangler secret 管理
+
+- [ ] **T2: 行为埋点**（Cloudflare Analytics Engine）
+  - `menu_scan` — 菜单识别完成
+  - `meal_plan_generated` — AI 输出方案型推荐
+  - `explore_opened` — 进入 Explore
+  - `waiter_mode_opened` — 进入 Waiter 模式
+  - `comm_panel_used` — 使用沟通面板（含 action 类型）
+  - `session_completed` — 结束用餐
+
+- [ ] **T3: Beta 欢迎屏**
+  - 邀请码验证通过后一次性引导（3 张卡片）
+  - 卡片：扫菜单 / AI 帮你点菜 / 跟服务员沟通
+  - localStorage 记录已看过，不重复显示
+
+- [ ] **T4: 反馈入口**
+  - Settings 页加"反馈问题"按钮
+  - 支持 Telegram 跳转 + 邮件两个选项
+
+### 质量要求（DEC-064）
+- tsc 零错误 + 106+ 测试通过
+- T1 邀请码逻辑必须有 Worker 单元测试
+- T2 埋点事件必须有集成测试（验证事件被正确触发）
+
+### 不做
+- Paywall / 付费墙
+- 新 AI 功能
+- UI 大改
