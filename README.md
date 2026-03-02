@@ -1,57 +1,50 @@
-# SAGE Next Gen
+# SAGE — 餐饮智能体
 
-> 餐饮智能体 · Dining Agent  
-> 让 AI 陪你在陌生的餐桌前做出最好的决定。
-
----
-
-## 项目简介
-
-SAGE 是一个基于多维感知的餐饮智能体。用户拍下菜单，SAGE 通过 **4+1 维感知**（视觉 + 空间 + 时间 + 环境 + 历史记忆）理解当前场景，以对话方式提供个性化推荐，帮助用户在 30 秒内完成点餐决策。
+> **让 AI 陪你在陌生的餐桌前做出最好的决定。**  
+> Dining Agent for global travelers · 解决语言障碍 · 替你做点餐决策
 
 ---
 
-## 核心特性
+## 产品愿景
 
-- 📷 **拍菜单即开聊** — 扫描菜单后立即进入 AI 对话，无缝衔接
-- 🧠 **场景感知** — 融合 GPS、时间、天气、历史记忆，推荐符合当下的选择
-- 💬 **Conversation-First** — 不是列表浏览，是对话决策
-- 🌍 **多语言支持** — 覆盖中日韩泰等主要菜单语言
-- 📚 **记忆进化** — 每次用餐后更懂你的偏好
+全球旅行者在陌生餐厅——语言不通、菜单看不懂、不知道点什么。SAGE 是那个帮你翻译菜单、搭配方案、最后帮你跟服务员沟通的 AI 智能体。
+
+**目标用户**：出境旅行的中文 / 英文母语用户（MVP）
 
 ---
 
-## 快速上手
+## 核心特性（Sprint 3 完成）
 
-### 环境要求
+| 功能 | 说明 |
+|------|------|
+| 📷 **拍菜单即开聊** | 扫描菜单 → AI 识别翻译 → 直接进入对话 |
+| 🤖 **方案型推荐** | AI 输出完整用餐方案（前菜→主菜→甜品），一键加入订单 |
+| 🔄 **对话改菜** | "把这道换成别的" → AI 替换并更新方案 |
+| 🌿 **探索单道菜** | 深入了解味道/食材/文化背景 |
+| 🗣️ **Waiter 沟通面板** | 9 语言大字显示，指点式跟服务员沟通（售罄/换菜/加份） |
+| ⚠️ **过敏原防护** | 三层安全屏障：AI 过滤 + 进入确认 + 服务员展示 |
+| 🧠 **4+1 维感知** | 视觉 + GPS + 时间 + 天气 + 历史记忆，推荐符合当下 |
 
-```
-Node.js >= 18
-pnpm >= 9
-Cloudflare account (部署)
-```
+---
 
-### 本地开发
+## 线上地址
 
-```bash
-# 前端
-cd app
-pnpm install
-pnpm dev       # http://localhost:5173
+| 组件 | URL |
+|------|-----|
+| **App** | https://sage-next-gen.pages.dev |
+| **Worker API** | https://sage-worker.xiafy920.workers.dev |
 
-# Worker API
-cd worker
-pnpm install
-npx wrangler dev  # http://localhost:8787
-```
+---
 
-### 构建部署
+## 技术栈
 
-```bash
-cd app
-pnpm build
-# 部署到 Cloudflare Pages（见 docs/deployment.md）
-```
+| 层 | 技术 |
+|----|------|
+| 前端 | Vite + React + TypeScript + Tailwind CSS v4 |
+| 后端 | Cloudflare Workers |
+| AI 识别 | Gemini 2.0 Flash（VL ~8s） |
+| AI 对话 | 阿里云百炼 Qwen3.5-Plus/Flash |
+| 部署 | Cloudflare Pages + Workers |
 
 ---
 
@@ -59,57 +52,72 @@ pnpm build
 
 ```
 SAGE_Next_Gen/
-├── AGENTS.md       # AI Agent 工作手册（Codex/Claude Code 自动读取）
-├── README.md       # 本文件
-├── PLANNING.md     # 工作计划 & Sprint
-├── PROGRESS.md     # 实时进展
-├── DECISIONS.md    # 重要决策记录
-├── specs/          # 功能规格文档
-├── docs/           # 产品 + 技术文档
-├── shared/         # 前后端共享类型（唯一权威）
-├── app/            # 前端应用（Vite + React + Tailwind v4）
-├── worker/         # Cloudflare Worker API
-├── tests/          # 测试
-└── archive/        # 历史文件归档
+├── app/                    # Vite + React 前端
+│   ├── src/
+│   │   ├── views/          # 页面：Home / Scanner / Chat / Explore / Order / Waiter
+│   │   ├── components/     # MealPlanCard / SelectedDishesCard / WaiterAllergyBanner 等
+│   │   ├── context/        # AppContext（全局状态机）
+│   │   └── utils/          # streamJsonParser / localLanguage / formatPrice
+├── worker/                 # Cloudflare Workers API
+│   ├── handlers/           # analyze / chat / invite
+│   └── prompts/            # AI Prompt 设计
+├── shared/
+│   └── types.ts            # ⭐ 前后端共享类型（唯一权威）
+├── docs/                   # 产品 + 技术文档
+│   ├── vision.md           # 产品愿景
+│   ├── prd.md              # PRD v2.0
+│   └── api-design.md       # API 契约
+├── specs/                  # 功能 Spec（执行细则）
+└── tests/                  # 测试 Checklist
 ```
 
 ---
 
-## 文档索引
+## 研发进度
 
-| 文件 | 内容 |
-|------|------|
-| `docs/vision.md` | 产品愿景、战略定位 |
-| `docs/prd.md` | 功能规格 + 验收标准 |
-| `docs/api-design.md` | API 接口契约 |
-| `docs/architecture.md` | 系统架构 |
-| `docs/tech-stack.md` | 技术栈选型 |
-| `docs/deployment.md` | 部署方案 |
-| `docs/ux-principles.md` | UX 原则 |
-| `docs/visual-design.md` | 视觉规范 |
-| `PROGRESS.md` | **当前进展（实时）** |
-| `DECISIONS.md` | **重要决策记录** |
+| Sprint | 目标 | 状态 |
+|--------|------|------|
+| Sprint 0 | 文档完备 | ✅ 完成 |
+| Sprint 1 | MVP Alpha 上线 | ✅ 完成 |
+| Sprint 2 | 4+1 维感知接入 | ✅ 完成 |
+| Sprint 3 | 体验升级（方案推荐 + Waiter 沟通）| 🔄 待验收 |
+| Sprint 4 | Beta 内测 | ⬜ 计划中 |
 
 ---
 
-## 技术栈
+## 核心决策记录
 
-- **前端**: Vite + React + TypeScript + Tailwind CSS v4
-- **API**: Cloudflare Workers
-- **AI**: 阿里云百炼 DashScope（Qwen3 系列）
-- **部署**: Cloudflare Pages
-- **品牌色**: Indigo `#6366F1`
+重要设计决策见 [`DECISIONS.md`](./DECISIONS.md)（DEC-001 ~ DEC-065）。
 
----
-
-## 线上地址
-
-- **App**: https://sage-next-gen.pages.dev
-- **Worker**: https://sage-worker.xiafy920.workers.dev
+关键决策包括：
+- **DEC-045**: AI 识别全面切换 Gemini 2.0 Flash（VL ~8s）
+- **DEC-052v2**: MealPlan 末尾 JSON 代码块输出，三级 fallback
+- **DEC-057**: 导航状态机六规则，Order 为唯一数据源
+- **DEC-060**: Waiter 指点式沟通面板，9 语言覆盖
+- **DEC-063**: 自顶向下一致性闸门（愿景→PRD→Spec→Code）
 
 ---
 
-## 项目负责人
+## 本地开发
 
-- **产品决策**: Mr. Xia（创始人）
-- **AI Agent**: SAGE（Product Owner & 执行）
+```bash
+# 前端
+cd app && npm install && npm run dev
+# 访问 http://localhost:5173
+
+# Worker（需要 .dev.vars 配置 API Key）
+cd worker && npx wrangler dev
+# 访问 http://localhost:8787
+
+# 测试
+cd app && npm test
+```
+
+---
+
+## 研发规范
+
+- **文档先行**（DEC-039）：先改文档，再改代码
+- **自顶向下**（DEC-063）：愿景 → PRD → Spec → Code，不清晰不动手
+- **测试分层**（DEC-064）：单元 50% / 组件 20% / 集成 20% / E2E 10%
+- **Conventional Commits**：`feat:` / `fix:` / `docs:` / `test:`
