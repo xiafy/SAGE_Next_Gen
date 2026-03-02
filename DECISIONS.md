@@ -789,27 +789,28 @@
 
 ---
 
-### [DEC-052] 方案型输出格式：流式自然语言 + 嵌入标记
+### [DEC-052] 方案型输出格式：流式自然语言 + 末尾 JSON 代码块（v2 修订）
 
-- **日期**: 2026-03-02
+- **日期**: 2026-03-02（v2 修订）
 - **决策人**: Mr. Xia
-- **背景**: MealPlanCard 需要从 AI 回复中提取结构化数据。讨论了两种输出格式（纯 JSON vs 自然语言+标记）和两种传输方式（流式 vs 非流式）。
-- **选项**:
-  - 格式 A: AI 输出纯 JSON → 前端直接渲染（简单，但丢失搭配理由叙事）
-  - 格式 B: AI 自然语言 + `<meal-plan>JSON</meal-plan>` 标记嵌入（保留叙事+结构化两全）
-  - 传输甲: 非流式（等完整结果，~5-8s 纯空白等待）
-  - 传输乙: 流式（前导文字逐字打出，卡片缓冲后一次性渲染）
-- **决策**: **格式 B + 传输乙（流式自然语言+嵌入标记）**
+- **背景**: 初版选择 `<meal-plan>` 嵌入标记。经四方独立评审（Opus/Codex/Qwen/Kimi 一致标 🔴），标记方案的 AI 输出不确定性风险过高，遂重新评估。
+- **最终选项**:
+  - A: 坚持 `<meal-plan>` 标记 + 加固防御层
+  - B: 改用 Function Calling（JSON 强约束，但文字与卡片位置关系丢失）
+  - C: 流式文字 + 末尾 ```json``` 代码块
+- **决策**: **路线 C（流式文字 + 末尾 JSON 代码块）**
 - **理由**:
-  1. 方案型核心差异化是 AI 的搭配逻辑解释，纯 JSON 砍掉了这个价值
-  2. 5-8s 纯空白等待是产品级问题，流式消除等待焦虑
-  3. 流式解析器是一次性基础设施投入，可复用于所有结构化卡片嵌入场景
+  1. 代码块是 LLM 最熟悉的结构化输出格式，源头降低风险
+  2. "三段式排列"是伪需求，用户在意文字在动 + 卡片可操作
+  3. 工程复杂度最低：不需要流式解析器/状态机/fuzzy matching
+  4. Function Calling 依赖百炼 streaming + function call 组合稳定性（DEC-044 已踩坑）
 - **实现规格**:
-  1. AI 回复格式：前导文字（流式）→ `<meal-plan>{JSON}</meal-plan>`（缓冲）→ 后续文字（流式）
-  2. 缓冲期 UI：显示"🍽 正在配餐…"占位
-  3. 容错：缓冲超 10s 未闭合标记 → fallback 为纯文字
-  4. MealPlanCard JSON schema 定义于 `shared/types.ts`
-- **影响**: `docs/prd.md` F06、`worker/prompts/agentChat.ts`、`app/src/views/AgentChatView.tsx`（流式解析器）、`shared/types.ts`（MealPlan 类型）
+  1. AI 回复格式：流式叙事文字 → 末尾 ```json {MealPlan} ```
+  2. 流式中检测到 ```json → 显示"🍽 正在生成方案…"占位
+  3. 流式结束后提取最后一个 json 代码块 → parse → 渲染 MealPlanCard
+  4. 分级 fallback：L1 完整→卡片 / L2 jsonrepair→简化卡片 / L3 无法解析→纯文字+「重新生成方案」按钮
+  5. MealPlanCard JSON schema 定义于 `shared/types.ts`
+- **影响**: `docs/prd.md` F06、`worker/prompts/agentChat.ts`、`app/src/views/AgentChatView.tsx`、`shared/types.ts`
 
 ---
 
