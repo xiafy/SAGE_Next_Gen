@@ -6,7 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import type { AppState } from '../../types';
-import type { MenuItem, MenuData } from '../../../../shared/types';
+import type { MenuItem } from '../../../../shared/types';
 
 if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.getItem !== 'function') {
   const store: Record<string, string> = {};

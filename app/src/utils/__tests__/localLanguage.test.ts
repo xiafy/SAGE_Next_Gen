@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  getPhrase, getAllergyLabel, getConfirmPhrase,
-  COMM_PHRASES, ALLERGY_TRANSLATIONS,
+  getPhrase, getAllergyLabel, getConfirmPhrase, ALLERGY_TRANSLATIONS,
 } from '../localLanguage';
 import type { CommunicationAction } from '../../../../shared/types';
 

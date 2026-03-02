@@ -111,7 +111,7 @@ describe('MealPlanCard', () => {
 describe('MealPlanCard — concurrent/replacing states', () => {
   it('two cards: inactive buttons disabled, active buttons enabled', () => {
     const mp = makeMealPlan();
-    const { container } = render(
+    render(
       <div>
         <MealPlanCard mealPlan={mp} isActive={false} isZh={false} onAddAllToOrder={vi.fn()} onReplaceDish={vi.fn()} />
         <MealPlanCard mealPlan={makeMealPlan({ version: 2 })} isActive={true} isZh={false} onAddAllToOrder={vi.fn()} onReplaceDish={vi.fn()} />
