@@ -814,26 +814,28 @@
 
 ---
 
-### [DEC-053] Explore → Chat 上下文注入：已选卡片 + AI 轻量引导
+### [DEC-053] Explore → Chat 上下文注入：已选卡片 + 事实摘要引导（v2 修订）
 
-- **日期**: 2026-03-02
+- **日期**: 2026-03-02（v2 修订）
 - **决策人**: Mr. Xia
-- **背景**: 用户从 Explore 选完菜品点「咨询 AI」回到 Chat 时，需要让 AI 感知已选菜品，同时让用户确认 AI 收到了。讨论了四种方案：A/B/C（AI 主动分析）和 D（确认收到+开放式提问）。
+- **背景**: 用户从 Explore 选完菜品点「咨询 AI」回到 Chat 时，需要让 AI 感知已选菜品。初版选择纯轻量引导（"选了 N 道，想看搭配还是聊别的？"）。经四方评审，Opus 认为太轻（用户期望获得分析），Codex 建议事实摘要折中。
 - **选项**:
-  - A: 系统消息注入（用户不可见，不知 AI 收到没）
-  - B: 模拟用户消息（替用户说话，违反 Scenario-Free）
-  - C: 前端卡片 + AI 主动分析搭配（可能猜错意图）
-  - D: 前端卡片 + AI 轻量引导（确认收到，开放式提问，不替用户判断）
-- **决策**: **方案 D**
+  - D（初版）: 纯轻量引导，不含信息量
+  - E（Opus）: 直接分析搭配（可能猜错意图）
+  - F（Codex 折中，最终选择）: 事实摘要 + 开放式引导
+- **决策**: **方案 F（事实摘要 + 开放式引导）**
 - **理由**:
-  1. 用户点「咨询 AI」意图不一定是要搭配建议，可能是问某道菜的细节
-  2. 前端 SelectedDishesCard 提供视觉确认（信任链不断）
-  3. AI 一句"选了 N 道菜，想看搭配还是聊别的？"——问而不答，符合 Scenario-Free
+  1. 事实摘要（数量、分类、预估总价）本身有价值，用户可能不记得选了多少
+  2. 不做主观判断（不说"太多了"或"缺蔬菜"），符合 Scenario-Free
+  3. 区分"新选"和"已有"，覆盖增量/全量两种意图
 - **实现规格**:
-  1. 前端在对话流插入 `SelectedDishesCard` 组件（展示已选菜品列表，仅 UI）
-  2. 同时向 AI 发送 system message：`[用户从菜单总览选择了: {菜品列表}]`
-  3. AI 回复一条轻量引导消息，不主动分析
-- **影响**: `docs/prd.md` F07 AC7、`app/src/views/AgentChatView.tsx`、`app/src/components/SelectedDishesCard.tsx`（新组件）
+  1. 前端在对话流插入 `SelectedDishesCard` 组件（系统消息样式，非用户/AI 气泡）
+  2. 向 AI 发送 system message，包含结构化字段：`{newlySelected: [{dishId, name, price, category}], existingOrder: [{...}]}`
+  3. AI 首条回复格式（示例）：
+     - 纯新选："收到你选的 3 道菜——2 道主菜、1 道饮品，预估 ¥180。有什么想调整的吗？"
+     - 新选+已有："收到你新选的 3 道菜（2 道主菜、1 道饮品），加上点菜单里已有的 5 道，一共 8 道，预估 ¥420。想聊这几道新的，还是看看整桌搭配？"
+  4. AI 不主动分析搭配，等用户明确方向后再深入
+- **影响**: `docs/prd.md` F07 AC7、`app/src/views/AgentChatView.tsx`、`app/src/components/SelectedDishesCard.tsx`、`worker/prompts/agentChat.ts`
 
 ---
 
@@ -857,3 +859,35 @@
   3. AI 回复包含新 MealPlanCard 的完整方案（替换后的版本）
   4. 旧 MealPlanCard 标记为"已更新"（灰化，不可操作）
 - **影响**: `docs/prd.md` F06 AC9、`app/src/components/MealPlanCard.tsx`、`worker/prompts/agentChat.ts`
+
+---
+
+### [DEC-055] MealPlanCard 生命周期：提案模式 + 替换策略 + 并发防抖
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: MealPlanCard 在 Chat 中可能被多次生成/替换，需要定义：(A) 新旧卡片展示策略 (B) 与 Order 的数据关系 (C) 并发防抖。经四方评审（Opus/Codex/Kimi 标 🔴）后逐项讨论。
+
+#### 子决策 A：新旧卡片展示
+- **选项**: 追加（保留所有版本）/ 替换（新覆盖旧）/ 灰化（旧卡片折叠保留）
+- **决策**: **替换**。新 MealPlanCard 直接替换旧卡片在对话流中的位置，不保留历史。
+- **理由**: 用户看完旧方案后可能的有价值行为（回退/部分回退）都无法直接满足，需要 AI 重新生成。保留旧版只增加视觉噪音，无操作价值。
+
+#### 子决策 B：MealPlanCard 与 Order 的关系
+- **选项**:
+  - 模型 A（提案模式）：MealPlanCard 和 Order 独立数据，「整套加入」= 复制到 Order，之后脱钩
+  - 模型 B（共享视图）：MealPlanCard 是 Order 的结构化视图，共享单一数据源
+- **决策**: **模型 A（提案模式）**
+- **理由**:
+  1. MealPlanCard 的核心价值 = AI 搭配逻辑。搭配逻辑依赖菜品组合完整性，外部修改会导致逻辑失效
+  2. 模型 B 下每次 Order 变更都要重新调用 AI 更新搭配文字（3-5s），Order 页面应即时响应
+  3. 提案模式职责清晰：MealPlanCard 负责决策辅助，Order 负责执行
+- **「整套加入」行为**: 方案菜品复制到 Order，同名菜品合并数量 + 轻提示 toast
+
+#### 子决策 C：替换并发防抖
+- 用户点「🔄 换一道」后按钮立即禁用（loading 态）
+- 请求带 `basedOnVersion` 版本号
+- 只有 `version === activeMealPlanId + 1` 的响应落地，旧响应丢弃
+- 前端维护 `activeMealPlanVersion` 状态
+
+- **影响**: `docs/prd.md` F06/F08、`shared/types.ts`（MealPlan + Order 类型）、`app/src/stores/orderStore.ts`、`app/src/components/MealPlanCard.tsx`
