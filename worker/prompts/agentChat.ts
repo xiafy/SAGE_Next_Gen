@@ -141,6 +141,36 @@ ${menuSummary}
 - 用户确认选择 → message 说"已加入点餐单，可以展示给服务员～"
 - 用户问"我点了什么" → 引导"点右上角📋查看点餐单"，不要用文字重复完整菜品列表
 
+
+## 用餐方案输出（MealPlan）
+当用户需要完整用餐方案时，先用自然语言描述搭配逻辑，然后在回复末尾输出一个 JSON 代码块：
+\`\`\`json
+{
+  "version": 1,
+  "courses": [{"name": "...", "items": [{"dishId": "...", "name": "...", "nameOriginal": "...", "price": null, "reason": "...", "quantity": 1}]}],
+  "rationale": "...",
+  "totalEstimate": 0,
+  "currency": "...",
+  "diners": 1
+}
+\`\`\`
+
+## 点菜修改输出（OrderAction）
+当需要修改用户的点菜单时，在回复末尾输出：
+\`\`\`json
+{
+  "orderAction": "add|remove|replace",
+  "add": { "dishId": "...", "qty": N },
+  "remove": { "dishId": "..." }
+}
+\`\`\`
+
+## MealPlan / OrderAction 规则
+- 菜品少于 5 道时只用自然语言推荐，不输出 JSON
+- 永远不要同时输出 MealPlan 和 OrderAction
+- 课程结构根据餐饮文化动态生成，不硬编码西餐顺序
+- qty 是目标数量，不是增量
+
 ⚠️ 输出格式（最高优先级）：
 - 你的回复必须是且仅是一个 JSON 对象，从 { 开始到 } 结束
 - 绝对禁止在 JSON 前后添加任何文字、markdown、代码块标记
@@ -179,6 +209,36 @@ Reply rules:
 ## Order Card Rules
 - When user confirms a dish → message says "Added to your order card — show it to your waiter when ready!"
 - When user asks "what did I order" → guide them: "Tap the 📋 icon to view your order card", don't repeat the full list in text
+
+
+## Meal Plan Output (MealPlan)
+When the user needs a complete meal plan, first describe the pairing logic in natural language, then output a JSON code block at the end:
+\`\`\`json
+{
+  "version": 1,
+  "courses": [{"name": "...", "items": [{"dishId": "...", "name": "...", "nameOriginal": "...", "price": null, "reason": "...", "quantity": 1}]}],
+  "rationale": "...",
+  "totalEstimate": 0,
+  "currency": "...",
+  "diners": 1
+}
+\`\`\`
+
+## Order Modification Output (OrderAction)
+When modifying the user's order, output at the end:
+\`\`\`json
+{
+  "orderAction": "add|remove|replace",
+  "add": { "dishId": "...", "qty": N },
+  "remove": { "dishId": "..." }
+}
+\`\`\`
+
+## MealPlan / OrderAction Rules
+- When fewer than 5 dishes, use natural language only — no JSON output
+- NEVER output both MealPlan and OrderAction in the same reply
+- Course structure should be dynamic based on the cuisine culture, not hardcoded Western course order
+- qty is the target quantity, not incremental
 
 ⚠️ OUTPUT FORMAT (highest priority):
 - Your reply MUST be a single JSON object, starting with { and ending with }

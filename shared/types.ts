@@ -292,3 +292,88 @@ export const VALID_TAGS: readonly MenuItemTag[] = [
   'contains_nuts', 'contains_seafood', 'contains_pork',
   'contains_alcohol', 'popular', 'signature',
 ] as const;
+
+// ─────────────────────────────────────────────
+// MealPlan（DEC-052v2/055/059）
+// ─────────────────────────────────────────────
+
+export interface MealPlanItem {
+  dishId: string;
+  name: string;
+  nameOriginal: string;
+  price: number | null;
+  reason: string;
+  quantity: number;
+}
+
+export interface MealPlanCourse {
+  name: string;
+  items: MealPlanItem[];
+}
+
+export interface MealPlan {
+  version: number;
+  totalEstimate: number;
+  currency: string;
+  rationale: string;
+  courses: MealPlanCourse[];
+  diners: number;
+}
+
+// ─────────────────────────────────────────────
+// OrderAction（DEC-058）
+// ─────────────────────────────────────────────
+
+export type OrderActionType = 'add' | 'remove' | 'replace';
+
+export interface OrderAction {
+  orderAction: OrderActionType;
+  remove?: { dishId: string };
+  add?: { dishId: string; qty: number };
+}
+
+// ─────────────────────────────────────────────
+// Waiter 沟通面板（DEC-060）
+// ─────────────────────────────────────────────
+
+export type CommunicationAction = 'sold_out' | 'change' | 'add_more' | 'other';
+
+export interface CommunicationOption {
+  action: CommunicationAction;
+  icon: string;
+  labelUser: string;
+  labelLocal: string;
+}
+
+// ─────────────────────────────────────────────
+// Explore→Chat 注入（DEC-053v2）
+// ─────────────────────────────────────────────
+
+export interface SelectedDishSummary {
+  dishId: string;
+  name: string;
+  nameOriginal: string;
+  price: number | null;
+  category: string;
+}
+
+export interface SelectedDishesPayload {
+  newlySelected: SelectedDishSummary[];
+  existingOrder: SelectedDishSummary[];
+}
+
+// ─────────────────────────────────────────────
+// Waiter 过敏栏（DEC-056）
+// ─────────────────────────────────────────────
+
+export interface AllergyBannerItem {
+  type: string;
+  icon: string;
+  labelEn: string;
+  labelLocal: string;
+}
+
+export interface AllergyBannerData {
+  items: AllergyBannerItem[];
+  detectedLanguage: string;
+}
