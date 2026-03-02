@@ -498,6 +498,28 @@
 
 ---
 
+### [DEC-045] VL 模型换用 Gemini 2.0 Flash
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia / SAGE Agent（实测数据驱动）
+- **背景**: qwen3-vl-flash 经 CF Worker 调用耗时 ~23s，用户体验不可接受。测试 Gemini 2.0 Flash 同等任务仅需 ~8s（直连），经 CF 东京节点调用也不走国内→东京→国内跨境路由，延迟更稳定。
+- **实测数据（2026-03-02）**:
+  - Gemini 2.0 Flash stream=false：均值 **8.2s**（3次：8605/7843/8151ms）
+  - Gemini 2.0 Flash stream=true：均值 **7.8s**，TTFT ~2.8s
+  - qwen3-vl-flash stream=false（直连）：均值 ~13.3s
+  - qwen3-vl-flash 经 Worker：~23s
+- **识别质量**：与 qwen3-vl-flash 相当，中文翻译准确，价格提取完整
+- **决策**:
+  1. `worker/utils/gemini.ts`：新增 `fetchGeminiComplete()` 封装 Gemini generateContent API
+  2. `worker/handlers/analyze.ts`：VL 阶段从 qwen3-vl-flash 换用 gemini-2.0-flash
+  3. `worker/middleware/cors.ts`：Env 接口新增 `GEMINI_API_KEY`
+  4. Enrich 阶段继续使用 qwen3.5-flash（纯文本，无需视觉，~2s 够快）
+  5. 预期总链路：~8s（VL）+ ~2s（Enrich）≈ **~10s**
+- **API Key 存放**: `GEMINI_API_KEY` 存于 Cloudflare Worker wrangler secret，不出现在代码中
+- **影响**: `worker/utils/gemini.ts`（新建）、`worker/handlers/analyze.ts`、`worker/middleware/cors.ts`、`docs/api-design.md`
+
+---
+
 ### [DEC-035] 研发方法论：Spec-Driven + Test-Driven
 
 - **日期**: 2026-02-27

@@ -2,6 +2,7 @@
 
 export interface Env {
   BAILIAN_API_KEY: string;
+  GEMINI_API_KEY: string;   // Gemini 2.0 Flash，用于 VL 识别（DEC-045）
   ALLOWED_ORIGINS?: string;
 }
 

@@ -2,6 +2,7 @@ import { type Env } from '../middleware/cors.js';
 import { getCorsHeaders } from '../middleware/cors.js';
 import { checkRateLimit } from '../utils/rateLimit.js';
 import { fetchComplete } from '../utils/bailian.js';
+import { fetchGeminiComplete } from '../utils/gemini.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { AnalyzeRequestSchema } from '../schemas/chatSchema.js';
@@ -278,24 +279,11 @@ async function runAnalyzePipeline(
     message: context.language === 'zh' ? '图片上传完成，准备识别…' : 'Upload complete. Preparing vision analysis…',
   });
 
-  const imageContents = images.map((img) => ({
-    type: 'image_url' as const,
-    image_url: { url: `data:${img.mimeType};base64,${img.data}` },
-  }));
-
-  const userMessage = {
-    role: 'user' as const,
-    content: [
-      ...imageContents,
-      { type: 'text' as const, text: buildMenuAnalysisUserMessage(context.language, images.length) },
-    ],
-  };
-
   const startMs = Date.now();
   const tVisionStart = Date.now();
   let tVisionEnd = tVisionStart;
   let rawText: string;
-  const modelUsed = 'qwen3-vl-flash';
+  const modelUsed = 'gemini-2.0-flash';  // DEC-045: Gemini 2.0 Flash (~8s vs ~23s)
 
   onProgress?.({
     stage: 'analyzing',
@@ -304,11 +292,13 @@ async function runAnalyzePipeline(
   });
 
   try {
-    rawText = await fetchComplete({
-      model: 'qwen3-vl-flash',
-      messages: [{ role: 'system', content: MENU_ANALYSIS_SYSTEM }, userMessage],
-      apiKey: env.BAILIAN_API_KEY,
-      timeoutMs: 30_000,  // stream=false 等完整响应，超时适当放宽（DEC-044）
+    rawText = await fetchGeminiComplete({
+      model: 'gemini-2.0-flash',
+      systemPrompt: MENU_ANALYSIS_SYSTEM,
+      userText: buildMenuAnalysisUserMessage(context.language, images.length),
+      images: images.map((img) => ({ mimeType: img.mimeType, data: img.data })),
+      apiKey: env.GEMINI_API_KEY,
+      timeoutMs: 25_000,
       requestId,
     });
     tVisionEnd = Date.now();
