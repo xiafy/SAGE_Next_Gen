@@ -303,7 +303,7 @@ export function ExploreView() {
           variant="secondary"
           size="sm"
           onClick={handleShowToWaiter}
-          disabled={!hasSelectedDishes}
+          disabled={state.orderItems.length === 0}
           className="flex-1"
         >
           {isZh ? '展示给服务员' : 'Show to Waiter'}

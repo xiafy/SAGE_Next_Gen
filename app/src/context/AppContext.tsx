@@ -52,6 +52,7 @@ const initialState: AppState = {
   analyzingFiles: null,
   isSupplementing: false,
   navigationPayload: null,
+  waiterAllergyConfirmed: false,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -167,6 +168,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           ...initialState.preferences,
           language: state.preferences.language,
         },
+        waiterAllergyConfirmed: false,
       };
 
     case 'SET_LANGUAGE':
@@ -277,6 +279,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       }
       return { ...state, orderItems: newOrderItems };
     }
+    case 'SET_WAITER_ALLERGY_CONFIRMED':
+      return { ...state, waiterAllergyConfirmed: action.confirmed };
   }
 }
 

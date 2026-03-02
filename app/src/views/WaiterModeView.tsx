@@ -15,15 +15,21 @@ interface WakeLockSentinelLike {
   addEventListener: (type: 'release', listener: () => void) => void;
 }
 
+// 🔴-1: Secondary action types for post-confirm flows
+type SecondaryActionType =
+  | { kind: 'sold_out_recommend'; dishName: string }
+  | { kind: 'change_choice'; dishName: string }
+  | { kind: 'empty_order' };
+
 export function WaiterModeView() {
   const { state, dispatch } = useAppState();
   const wakeLockRef = useRef<WakeLockSentinelLike | null>(null);
   const [wakeLockUnavailable, setWakeLockUnavailable] = useState(false);
   const [showWarningSheet, setShowWarningSheet] = useState(false);
-  const [warningChecked, setWarningChecked] = useState(false);
   const [selectedDish, setSelectedDish] = useState<MenuItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [secondaryAction, setSecondaryAction] = useState<SecondaryActionType | null>(null);
   const isZh = state.preferences.language === 'zh';
 
   const detectedLanguage = state.menuData?.detectedLanguage ?? 'en';
@@ -40,7 +46,6 @@ export function WaiterModeView() {
       labelEn: getAllergyLabel(a, 'en'),
       labelLocal: getAllergyLabel(a, detectedLanguage),
     }));
-    // Also add dietary restrictions that aren't allergens (vegetarian, halal, vegan)
     const dietaryRestrictions = state.preferences.dietary.filter((d) =>
       ['vegetarian', 'halal', 'vegan'].includes(d),
     );
@@ -57,26 +62,23 @@ export function WaiterModeView() {
     return { items, detectedLanguage };
   }, [userAllergens, detectedLanguage, state.preferences.dietary]);
 
-  // Compute risk items for warning sheet
+  // 🔴-2: Compute risk items with uncertain info
   const riskItems = useMemo(() => {
     if (userAllergens.length === 0) return [];
     return state.orderItems
       .map((oi) => {
         const matched = (oi.menuItem.allergens ?? [])
           .filter((a) => userAllergens.includes(a.type))
-          .map((a) => a.type as string);
+          .map((a) => ({ type: a.type as string, uncertain: a.uncertain }));
         return matched.length > 0 ? { menuItem: oi.menuItem, allergens: matched } : null;
       })
-      .filter((x): x is { menuItem: MenuItem; allergens: string[] } => x !== null);
+      .filter((x): x is { menuItem: MenuItem; allergens: { type: string; uncertain: boolean }[] } => x !== null);
   }, [state.orderItems, userAllergens]);
 
-  // On mount: check for allergen risks
+  // 🔴-3: On mount check allergen risks (session-level persistence)
   useEffect(() => {
-    if (!warningChecked && riskItems.length > 0) {
+    if (!state.waiterAllergyConfirmed && riskItems.length > 0) {
       setShowWarningSheet(true);
-      setWarningChecked(true);
-    } else {
-      setWarningChecked(true);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -130,26 +132,57 @@ export function WaiterModeView() {
     };
   }, []);
 
-  // Handle communication actions
+  // 🔴-1: Handle communication actions with full flows
   const handleCommAction = (action: CommunicationAction, dish: MenuItem) => {
+    const dishName = isZh ? dish.nameTranslated : dish.nameOriginal;
+
     switch (action) {
-      case 'sold_out':
+      case 'sold_out': {
+        // 1. Remove from order
         dispatch({ type: 'REMOVE_FROM_ORDER', itemId: dish.id });
         setToast(isZh ? `已移除 ${dish.nameTranslated}` : `Removed ${dish.nameOriginal}`);
+
+        // Check if order will be empty after removal
+        const remainingItems = state.orderItems.filter(oi => oi.menuItem.id !== dish.id);
+        if (remainingItems.length === 0) {
+          // 🟡-5: Empty order prompt
+          setSecondaryAction({ kind: 'empty_order' });
+        } else {
+          // 3. Ask if AI should recommend replacement
+          setSecondaryAction({ kind: 'sold_out_recommend', dishName });
+        }
         break;
-      case 'change':
-        setToast(isZh ? '请选择替代菜品' : 'Please choose a replacement');
-        dispatch({ type: 'NAV_TO', view: 'explore' });
+      }
+      case 'change': {
+        // Don't remove from order (user might not end up changing)
+        setSecondaryAction({ kind: 'change_choice', dishName });
         break;
+      }
       case 'add_more':
         dispatch({ type: 'ADD_TO_ORDER', item: dish });
         setToast(isZh ? `${dish.nameTranslated} +1` : `${dish.nameOriginal} +1`);
         break;
       case 'other':
-        // Pure communication, no data operation
+        // Navigate to Chat, no auto-message
+        dispatch({ type: 'NAV_TO', view: 'chat' });
         break;
     }
     setSelectedDish(null);
+  };
+
+  // Helper: navigate to chat with auto-message
+  const goToChatWithMessage = (message: string) => {
+    // Add a user message to chat
+    dispatch({
+      type: 'ADD_MESSAGE',
+      message: {
+        id: `auto-${Date.now()}`,
+        role: 'user',
+        content: message,
+        timestamp: Date.now(),
+      },
+    });
+    dispatch({ type: 'NAV_TO', view: 'chat' });
   };
 
   return (
@@ -254,12 +287,15 @@ export function WaiterModeView() {
         </div>
       )}
 
-      {/* Allergen Warning Sheet */}
+      {/* 🔴-3: Allergen Warning Sheet (session-level persistence) */}
       {showWarningSheet && (
         <AllergenWarningSheet
           riskItems={riskItems}
           isZh={isZh}
-          onConfirm={() => setShowWarningSheet(false)}
+          onConfirm={() => {
+            setShowWarningSheet(false);
+            dispatch({ type: 'SET_WAITER_ALLERGY_CONFIRMED', confirmed: true });
+          }}
           onCancel={() => {
             setShowWarningSheet(false);
             dispatch({ type: 'NAV_TO', view: 'order' });
@@ -276,6 +312,104 @@ export function WaiterModeView() {
           onAction={handleCommAction}
           onClose={() => setSelectedDish(null)}
         />
+      )}
+
+      {/* 🔴-1: Secondary Action Dialogs */}
+      {secondaryAction && secondaryAction.kind === 'sold_out_recommend' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative bg-white rounded-3xl px-8 py-6 max-w-sm w-[90%]">
+            <p className="text-center text-lg font-bold text-gray-900 mb-2">
+              {isZh ? '需要 AI 推荐替代品吗？' : 'Want AI to recommend a replacement?'}
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setSecondaryAction(null)}
+                className="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              >
+                {isZh ? '不用了' : 'No thanks'}
+              </button>
+              <button
+                onClick={() => {
+                  const msg = isZh
+                    ? `刚才的 ${secondaryAction.dishName} 没有了，请推荐一道替代品`
+                    : `${secondaryAction.dishName} is sold out, please recommend a replacement`;
+                  setSecondaryAction(null);
+                  goToChatWithMessage(msg);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-indigo-500 text-white font-bold hover:bg-indigo-600 transition-colors"
+              >
+                {isZh ? '好的' : 'Yes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {secondaryAction && secondaryAction.kind === 'change_choice' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative bg-white rounded-3xl px-8 py-6 max-w-sm w-[90%]">
+            <p className="text-center text-lg font-bold text-gray-900 mb-2">
+              {isZh ? '怎么换？' : 'How to change?'}
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setSecondaryAction(null);
+                  dispatch({ type: 'NAV_TO', view: 'explore' });
+                }}
+                className="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              >
+                {isZh ? '自己选' : 'Browse'}
+              </button>
+              <button
+                onClick={() => {
+                  const msg = isZh
+                    ? `我想把 ${secondaryAction.dishName} 换成别的，请推荐`
+                    : `I want to replace ${secondaryAction.dishName}, please recommend`;
+                  setSecondaryAction(null);
+                  goToChatWithMessage(msg);
+                }}
+                className="flex-1 py-3 rounded-2xl bg-indigo-500 text-white font-bold hover:bg-indigo-600 transition-colors"
+              >
+                {isZh ? '让 AI 推荐' : 'AI Suggest'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🟡-5: Empty order prompt */}
+      {secondaryAction && secondaryAction.kind === 'empty_order' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative bg-white rounded-3xl px-8 py-6 max-w-sm w-[90%]">
+            <p className="text-center text-lg font-bold text-gray-900 mb-2">
+              {isZh ? '点菜单已空' : 'Order is empty'}
+            </p>
+            <p className="text-center text-sm text-gray-500 mb-5">
+              {isZh ? '需要继续加菜吗？' : 'Would you like to add more dishes?'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSecondaryAction(null)}
+                className="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              >
+                {isZh ? '暂不' : 'Not now'}
+              </button>
+              <button
+                onClick={() => {
+                  setSecondaryAction(null);
+                  dispatch({ type: 'NAV_TO', view: 'explore' });
+                }}
+                className="flex-1 py-3 rounded-2xl bg-indigo-500 text-white font-bold hover:bg-indigo-600 transition-colors"
+              >
+                {isZh ? '去加菜' : 'Add dishes'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

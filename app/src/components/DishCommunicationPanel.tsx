@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { MenuItem, CommunicationAction } from '../../../shared/types';
-import { COMM_ICONS, getPhrase } from '../utils/localLanguage';
+import { COMM_ICONS, getConfirmPhrase } from '../utils/localLanguage';
 
 interface DishCommunicationPanelProps {
   dish: MenuItem;
@@ -11,6 +11,9 @@ interface DishCommunicationPanelProps {
 }
 
 const ACTIONS: CommunicationAction[] = ['sold_out', 'change', 'add_more', 'other'];
+
+// Import getPhrase for option labels
+import { getPhrase } from '../utils/localLanguage';
 
 export function DishCommunicationPanel({
   dish,
@@ -24,11 +27,14 @@ export function DishCommunicationPanel({
   const userLang = isZh ? 'zh' : 'en';
   const localLang = detectedLanguage !== userLang ? detectedLanguage : null;
 
-  // ─── Confirmation Screen ───
+  // ─── Confirmation Screen (🔴-5: combined sentence with dish name) ───
   if (confirmAction) {
-    const userPhrase = getPhrase(confirmAction, userLang);
-    const localPhrase = localLang ? getPhrase(confirmAction, localLang) : null;
     const icon = COMM_ICONS[confirmAction];
+    // 🔴-5: "{dish.name} — {actionLabel}" bilingual
+    const userLine = getConfirmPhrase(confirmAction, userLang, isZh ? dish.nameTranslated : dish.nameOriginal);
+    const localLine = localLang
+      ? getConfirmPhrase(confirmAction, localLang, dish.nameOriginal)
+      : null;
 
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center px-8">
@@ -36,20 +42,14 @@ export function DishCommunicationPanel({
 
         {/* User language - big */}
         <p className="text-white text-[36px] font-bold text-center leading-tight mb-2">
-          {userPhrase}
+          {userLine}
         </p>
 
         {/* Local language - big */}
-        {localPhrase && localPhrase !== userPhrase && (
+        {localLine && localLine !== userLine && (
           <p className="text-white/80 text-[32px] font-bold text-center leading-tight mb-4">
-            {localPhrase}
+            {localLine}
           </p>
-        )}
-
-        {/* Dish name */}
-        <p className="text-white/70 text-2xl text-center mt-4">{dish.nameOriginal}</p>
-        {dish.nameTranslated !== dish.nameOriginal && (
-          <p className="text-white/50 text-xl text-center">{dish.nameTranslated}</p>
         )}
 
         {/* Buttons */}
@@ -63,6 +63,8 @@ export function DishCommunicationPanel({
           <button
             onClick={() => {
               onAction(confirmAction, dish);
+              // 🟡-4: Reset confirmAction after callback
+              setConfirmAction(null);
             }}
             className="flex-1 py-4 rounded-2xl bg-green-500 text-white text-lg font-bold hover:bg-green-600 transition-colors"
           >

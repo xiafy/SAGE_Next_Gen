@@ -50,12 +50,70 @@ export const COMM_ICONS: Record<CommunicationAction, string> = {
   other: '❓',
 };
 
+// ─── Confirm Phrases (🔴-5: 大字确认屏组合句式) ───
+
+export type ConfirmPhraseKey = 'confirm_soldout' | 'confirm_change' | 'confirm_addmore' | 'confirm_other';
+
+const CONFIRM_PHRASES: Record<ConfirmPhraseKey, Record<string, string>> = {
+  confirm_soldout: {
+    en: '{dish} is sold out',
+    zh: '{dish} 没有了',
+    th: '{dish} ไม่มี',
+    ja: '{dish} 売り切れ',
+    ko: '{dish} 품절',
+  },
+  confirm_change: {
+    en: 'Change {dish}',
+    zh: '换掉 {dish}',
+    th: 'เปลี่ยน {dish}',
+    ja: '{dish} を変更',
+    ko: '{dish} 변경',
+  },
+  confirm_addmore: {
+    en: 'One more {dish}',
+    zh: '加一份 {dish}',
+    th: 'เพิ่ม {dish}',
+    ja: '{dish} もう一つ',
+    ko: '{dish} 추가',
+  },
+  confirm_other: {
+    en: 'Question about {dish}',
+    zh: '关于 {dish} 的问题',
+    th: 'คำถามเกี่ยวกับ {dish}',
+    ja: '{dish} について質問',
+    ko: '{dish}에 대한 질문',
+  },
+};
+
+const ACTION_TO_CONFIRM_KEY: Record<CommunicationAction, ConfirmPhraseKey> = {
+  sold_out: 'confirm_soldout',
+  change: 'confirm_change',
+  add_more: 'confirm_addmore',
+  other: 'confirm_other',
+};
+
+/** Get a confirm phrase with dish name interpolated */
+export function getConfirmPhrase(action: CommunicationAction, lang: string, dishName: string): string {
+  lang = lang.toLowerCase().split('-')[0]!;
+  const key = ACTION_TO_CONFIRM_KEY[action];
+  const phrases = CONFIRM_PHRASES[key];
+  const template = phrases[lang] ?? phrases['en'] ?? '{dish}';
+  return template.replace('{dish}', dishName);
+}
+
+// 🟡-1: normalize lang codes
+function normalizeLang(lang: string): string {
+  return lang.toLowerCase().split('-')[0]!;
+}
+
 export function getPhrase(action: CommunicationAction, lang: string): string {
+  lang = normalizeLang(lang);
   const phrases = COMM_PHRASES[action];
   return phrases[lang] ?? phrases["en"] ?? "";
 }
 
 export function getAllergyLabel(allergen: string, lang: string): string {
+  lang = normalizeLang(lang);
   const entry = ALLERGY_TRANSLATIONS[allergen]; return entry?.[lang] ?? entry?.en ?? allergen;
 }
 

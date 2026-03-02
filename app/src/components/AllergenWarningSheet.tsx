@@ -1,8 +1,13 @@
 import type { MenuItem } from '../../../shared/types';
 
+interface AllergenInfo {
+  type: string;
+  uncertain: boolean;
+}
+
 interface RiskItem {
   menuItem: MenuItem;
-  allergens: string[];
+  allergens: AllergenInfo[];
 }
 
 interface AllergenWarningSheetProps {
@@ -34,8 +39,8 @@ export function AllergenWarningSheet({ riskItems, onConfirm, onCancel, isZh }: A
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" onClick={onCancel} />
+      {/* 🟡-3: Backdrop — no onClick (prevent accidental dismiss in allergy safety context) */}
+      <div className="absolute inset-0 bg-black/60" />
 
       {/* Sheet */}
       <div className="relative w-full max-w-lg bg-white rounded-t-3xl px-6 py-6 animate-slide-up">
@@ -52,18 +57,31 @@ export function AllergenWarningSheet({ riskItems, onConfirm, onCancel, isZh }: A
           {riskItems.map((ri) => (
             <div key={ri.menuItem.id} className="flex items-start gap-3 bg-orange-50 rounded-xl px-4 py-3">
               <span className="text-xl shrink-0">
-                {ri.allergens.map((a) => ALLERGEN_ICONS[a] ?? '⚠️').join('')}
+                {ri.allergens.map((a) => ALLERGEN_ICONS[a.type] ?? '⚠️').join('')}
               </span>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-900 text-base">
                   {isZh ? ri.menuItem.nameTranslated : ri.menuItem.nameOriginal}
                 </p>
-                <p className="text-sm text-orange-700">
+                {/* 🔴-2: Show uncertain vs definite allergen labels */}
+                <div className="flex flex-col gap-0.5">
                   {ri.allergens.map((a) => {
-                    const l = ALLERGEN_LABELS[a];
-                    return l ? (isZh ? l.zh : l.en) : a;
-                  }).join(', ')}
-                </p>
+                    const l = ALLERGEN_LABELS[a.type];
+                    const name = l ? (isZh ? l.zh : l.en) : a.type;
+                    if (a.uncertain) {
+                      return (
+                        <p key={a.type} className="text-sm text-yellow-700">
+                          ⚠️ {isZh ? `可能含有 ${name}` : `May contain ${name}`}
+                        </p>
+                      );
+                    }
+                    return (
+                      <p key={a.type} className="text-sm text-red-700">
+                        ❌ {isZh ? `含有 ${name}` : `Contains ${name}`}
+                      </p>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ))}
@@ -77,11 +95,12 @@ export function AllergenWarningSheet({ riskItems, onConfirm, onCancel, isZh }: A
           >
             {isZh ? '返回修改' : 'Go Back'}
           </button>
+          {/* 🟡-2: Updated button text */}
           <button
             onClick={onConfirm}
             className="flex-1 py-3 rounded-2xl bg-orange-500 text-white font-bold text-base hover:bg-orange-600 transition-colors"
           >
-            {isZh ? '我已确认' : 'I Understand'}
+            {isZh ? '确认并继续' : 'Confirm and Continue'}
           </button>
         </div>
 

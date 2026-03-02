@@ -93,6 +93,7 @@ export interface AppState {
   analyzingFiles: File[] | null;
   isSupplementing: boolean;
   navigationPayload?: import('../../../shared/types').SelectedDishesPayload | null;
+  waiterAllergyConfirmed: boolean;
 }
 
 export type AppAction =
@@ -114,4 +115,5 @@ export type AppAction =
   | { type: 'SET_LOCATION'; location: import('../../../shared/types').GeoLocation | null }
   | { type: 'SET_NAV_PAYLOAD'; payload: import('../../../shared/types').SelectedDishesPayload | null }
   | { type: 'BATCH_ADD_TO_ORDER'; items: { menuItem: import('../../../shared/types').MenuItem; quantity: number }[] }
-  | { type: 'APPLY_ORDER_ACTION'; payload: import('../../../shared/types').OrderAction };
+  | { type: 'APPLY_ORDER_ACTION'; payload: import('../../../shared/types').OrderAction }
+  | { type: 'SET_WAITER_ALLERGY_CONFIRMED'; confirmed: boolean };
