@@ -1,0 +1,663 @@
+{
+  "model": "gemini-2.0-flash",
+  "image": "B_es_seafood",
+  "raw": "```json\n{\n  \"menuType\": \"restaurant\",\n  \"detectedLanguage\": \"es\",\n  \"priceLevel\": 3,\n  \"currency\": \"EUR\",\n  \"categories\": [\n    {\n      \"nameOriginal\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"nameTranslated\": \"阿尔马德拉巴野生红金枪鱼\"\n    },\n    {\n      \"nameOriginal\": \"OSTRAS\",\n      \"nameTranslated\": \"生蚝\"\n    },\n    {\n      \"nameOriginal\": \"SASHIMI DE SALMÓN\",\n      \"nameTranslated\": \"三文鱼刺身\"\n    },\n    {\n      \"nameOriginal\": \"CURADOS DEL MAR\",\n      \"nameTranslated\": \"腌制和烟熏海鲜\"\n    },\n    {\n      \"nameOriginal\": \"RÍAS GALLEGAS\",\n      \"nameTranslated\": \"加利西亚海湾菜肴\"\n    },\n    {\n      \"nameOriginal\": \"CAVIAR\",\n      \"nameTranslated\": \"鱼子酱\"\n    }\n  ],\n  \"items\": [\n    {\n      \"nameOriginal\": \"Tosta de Atún Rojo Picante\",\n      \"nameTranslated\": \"香辣红金枪鱼吐司\",\n      \"priceText\": \"10€\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"香辣红金枪鱼吐司\",\n      \"briefDetail\": \"开胃小食，香辣口味\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"Carpiaccio de Ventresa Atún Rojo\",\n      \"nameTranslated\": \"红金枪鱼腩薄片\",\n      \"priceText\": \"19€\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼腩薄片\",\n      \"briefDetail\": \"口感细腻，风味浓郁\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tataki de Atún Rojo Descargamento\",\n      \"nameTranslated\": \"卸货红金枪鱼塔塔基\",\n      \"priceText\": \"21€\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼塔塔基\",\n      \"briefDetail\": \"日式做法，鲜美可口\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Sashimi Atún Rojo Descargamento\",\n      \"nameTranslated\": \"卸货红金枪鱼刺身\",\n      \"priceText\": \"21€/8ud\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼刺身\",\n      \"briefDetail\": \"新鲜红金枪鱼，口感顺滑\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Sashimi Atún Rojo Descargamento\",\n      \"nameTranslated\": \"卸货红金枪鱼刺身\",\n      \"priceText\": \"29€/12ud\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼刺身\",\n      \"briefDetail\": \"新鲜红金枪鱼，口感顺滑\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tartar Atún Rojo Descargamento\",\n      \"nameTranslated\": \"卸货红金枪鱼鞑靼\",\n      \"priceText\": \"21€/110g\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼鞑靼\",\n      \"briefDetail\": \"新鲜红金枪鱼，切碎拌制\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tartar Atún Rojo Descargamento\",\n      \"nameTranslated\": \"卸货红金枪鱼鞑靼\",\n      \"priceText\": \"26€/150g\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼鞑靼\",\n      \"briefDetail\": \"新鲜红金枪鱼，切碎拌制\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tartar Atún Rojo con Caviar\",\n      \"nameTranslated\": \"红金枪鱼鞑靼配鱼子酱\",\n      \"priceText\": \"35€/110g\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼鞑靼配鱼子酱\",\n      \"briefDetail\": \"鲜美奢华，口感丰富\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tartar Atún Rojo con Caviar\",\n      \"nameTranslated\": \"红金枪鱼鞑靼配鱼子酱\",\n      \"priceText\": \"45€/150g\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼鞑靼配鱼子酱\",\n      \"briefDetail\": \"鲜美奢华，口感丰富\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cata de Atún Rojo\",\n      \"nameTranslated\": \"红金枪鱼品鉴\",\n      \"priceText\": \"35€\",\n      \"category\": \"ATÚN ROJO SALVAJE DE ALMADRABA\",\n      \"brief\": \"红金枪鱼品鉴\",\n      \"briefDetail\": \"包含鞑靼、塔塔基和刺身\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Trilogía Salmón Noruego Ahumado\",\n      \"nameTranslated\": \"挪威烟熏三文鱼三重奏\",\n      \"priceText\": \"25€\",\n      \"category\": \"SASHIMI DE SALMÓN\",\n      \"brief\": \"挪威烟熏三文鱼\",\n      \"briefDetail\": \"原味/芥末/松露\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Anchoas del Cantábrico Sanfilippo / 6 ud\",\n      \"nameTranslated\": \"坎塔布里科凤尾鱼Sanfilippo / 6个\",\n      \"priceText\": \"17,00€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"坎塔布里科凤尾鱼\",\n      \"briefDetail\": \"咸鲜风味，开胃小菜\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Anchoas Mariposa en AOVE / 10-12 ud\",\n      \"nameTranslated\": \"AOVE凤尾鱼 / 10-12个\",\n      \"priceText\": \"24,00€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"AOVE凤尾鱼\",\n      \"briefDetail\": \"橄榄油浸泡，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Anchoas del Cantábrico \\\"000\\\" / ud\",\n      \"nameTranslated\": \"坎塔布里科凤尾鱼“000” / 个\",\n      \"priceText\": \"2,50€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"坎塔布里科凤尾鱼\",\n      \"briefDetail\": \"咸鲜风味，开胃小菜\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Mojama de Atún Extra Barbate\",\n      \"nameTranslated\": \"巴巴特特级金枪鱼干\",\n      \"priceText\": \"4,00€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"巴巴特金枪鱼干\",\n      \"briefDetail\": \"风干金枪鱼，口感紧实\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Mojama de Atún Extra Barbate\",\n      \"nameTranslated\": \"巴巴特特级金枪鱼干\",\n      \"priceText\": \"10,00€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"巴巴特金枪鱼干\",\n      \"briefDetail\": \"风干金枪鱼，口感紧实\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Hueva de Maruca Extra Barbate\",\n      \"nameTranslated\": \"巴巴特鳕鱼籽\",\n      \"priceText\": \"5,00€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"巴巴特鳕鱼籽\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Hueva de Maruca Extra Barbate\",\n      \"nameTranslated\": \"巴巴特鳕鱼籽\",\n      \"priceText\": \"12,00€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"巴巴特鳕鱼籽\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Gilda Anchoa / Boquerón / Picante\",\n      \"nameTranslated\": \"凤尾鱼/鳀鱼/香辣Gilda\",\n      \"priceText\": \"2.50€\",\n      \"category\": \"CURADOS DEL MAR\",\n      \"brief\": \"凤尾鱼/鳀鱼/香辣\",\n      \"briefDetail\": \"西班牙小吃，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"Ostra Gillardeau N°2\",\n      \"nameTranslated\": \"吉拉多生蚝 N°2\",\n      \"priceText\": \"5.50€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"吉拉多生蚝\",\n      \"briefDetail\": \"法国，Marennes-Oléron产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Ostra Josephine N°2\",\n      \"nameTranslated\": \"约瑟芬生蚝 N°2\",\n      \"priceText\": \"4,95€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"约瑟芬生蚝\",\n      \"briefDetail\": \"葡萄牙，Algarve产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Ostra Utah Beach N°2\",\n      \"nameTranslated\": \"犹他海滩生蚝 N°2\",\n      \"priceText\": \"4.95€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"犹他海滩生蚝\",\n      \"briefDetail\": \"法国，Normandia产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Ostra Tía Maraa N°3\",\n      \"nameTranslated\": \"蒂亚玛拉生蚝 N°3\",\n      \"priceText\": \"4.50€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"蒂亚玛拉生蚝\",\n      \"briefDetail\": \"爱尔兰产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Ostra Tradicionales N°2\",\n      \"nameTranslated\": \"传统生蚝 N°2\",\n      \"priceText\": \"3,75€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"传统生蚝\",\n      \"briefDetail\": \"法国，Arcachon产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Ostra Utah Beach N°4\",\n      \"nameTranslated\": \"犹他海滩生蚝 N°4\",\n      \"priceText\": \"2.95€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"犹他海滩生蚝\",\n      \"briefDetail\": \"法国，Normandia产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Ostra Gillardeau N°2 con Caviar\",\n      \"nameTranslated\": \"吉拉多生蚝 N°2配鱼子酱\",\n      \"priceText\": \"15,00€/ud\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"吉拉多生蚝配鱼子酱\",\n      \"briefDetail\": \"法国，Marennes-Oléron产区\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cata de Ostras 8 (4 tipos x 2 ud.)\",\n      \"nameTranslated\": \"生蚝品鉴 8个（4种 x 2个）\",\n      \"priceText\": \"29,00€\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"生蚝品鉴\",\n      \"briefDetail\": \"包含多种生蚝\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cata de Ostras 12 (4 tipos x 3 ud.)\",\n      \"nameTranslated\": \"生蚝品鉴 12个（4种 x 3个）\",\n      \"priceText\": \"45,00€\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"生蚝品鉴\",\n      \"briefDetail\": \"包含多种生蚝\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cata de Ostras 16 (4 tipos x 4 ud.)\",\n      \"nameTranslated\": \"生蚝品鉴 16个（4种 x 4个）\",\n      \"priceText\": \"69.00€\",\n      \"category\": \"OSTRAS\",\n      \"brief\": \"生蚝品鉴\",\n      \"briefDetail\": \"包含多种生蚝\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Mejillones fritos en escabeche\",\n      \"nameTranslated\": \"油浸炸贻贝\",\n      \"priceText\": \"12,50€\",\n      \"category\": \"RÍAS GALLEGAS\",\n      \"brief\": \"油浸炸贻贝\",\n      \"briefDetail\": \"西班牙风味，酸甜可口\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Zamburiñas en salsa Vieira\",\n      \"nameTranslated\": \"维埃拉酱扇贝\",\n      \"priceText\": \"12,50€\",\n      \"category\": \"RÍAS GALLEGAS\",\n      \"brief\": \"维埃拉酱扇贝\",\n      \"briefDetail\": \"鲜美可口，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Caviar de Erizo\",\n      \"nameTranslated\": \"海胆鱼子酱\",\n      \"priceText\": \"37,50€\",\n      \"category\": \"RÍAS GALLEGAS\",\n      \"brief\": \"海胆鱼子酱\",\n      \"briefDetail\": \"鲜美奢华，口感丰富\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Navajas Natural o AOVE\",\n      \"nameTranslated\": \"天然或AOVE蛏子\",\n      \"priceText\": \"16,00€\",\n      \"category\": \"RÍAS GALLEGAS\",\n      \"brief\": \"天然或橄榄油蛏子\",\n      \"briefDetail\": \"鲜美可口，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Sardinillas Vintage en AOVE\",\n      \"nameTranslated\": \"AOVE复古沙丁鱼\",\n      \"priceText\": \"8,50€\",\n      \"category\": \"RÍAS GALLEGAS\",\n      \"brief\": \"橄榄油浸复古沙丁鱼\",\n      \"briefDetail\": \"风味独特，口感丰富\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Focaccia de Esturión Ahumado\",\n      \"nameTranslated\": \"烟熏鲟鱼佛卡夏\",\n      \"priceText\": \"12€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"烟熏鲟鱼佛卡夏\",\n      \"briefDetail\": \"意式面包，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": true\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Focaccia de Esturión Ahumado con Caviar\",\n      \"nameTranslated\": \"鱼子酱烟熏鲟鱼佛卡夏\",\n      \"priceText\": \"21€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"鱼子酱烟熏鲟鱼佛卡夏\",\n      \"briefDetail\": \"意式面包，风味独特\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": true\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Caviar de España Baeri Premium\",\n      \"nameTranslated\": \"西班牙Baeri特级鱼子酱\",\n      \"priceText\": \"10g/21€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"西班牙Baeri特级鱼子酱\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Caviar de España Baeri Premium\",\n      \"nameTranslated\": \"西班牙Baeri特级鱼子酱\",\n      \"priceText\": \"20g/39€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"西班牙Baeri特级鱼子酱\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Caviar de España Baeri Premium\",\n      \"nameTranslated\": \"西班牙Baeri特级鱼子酱\",\n      \"priceText\": \"50g/96€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"西班牙Baeri特级鱼子酱\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Caviar de Beluga\",\n      \"nameTranslated\": \"贝鲁加鱼子酱\",\n      \"priceText\": \"10g/29€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"贝鲁加鱼子酱\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Caviar de Beluga\",\n      \"nameTranslated\": \"贝鲁加鱼子酱\",\n      \"priceText\": \"30g/79€\",\n      \"category\": \"CAVIAR\",\n      \"brief\": \"贝鲁加鱼子酱\",\n      \"briefDetail\": \"口感丰富，风味独特\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    }\n  ]\n}\n```",
+  "parsed": {
+    "menuType": "restaurant",
+    "detectedLanguage": "es",
+    "priceLevel": 3,
+    "currency": "EUR",
+    "categories": [
+      {
+        "nameOriginal": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "nameTranslated": "阿尔马德拉巴野生红金枪鱼"
+      },
+      {
+        "nameOriginal": "OSTRAS",
+        "nameTranslated": "生蚝"
+      },
+      {
+        "nameOriginal": "SASHIMI DE SALMÓN",
+        "nameTranslated": "三文鱼刺身"
+      },
+      {
+        "nameOriginal": "CURADOS DEL MAR",
+        "nameTranslated": "腌制和烟熏海鲜"
+      },
+      {
+        "nameOriginal": "RÍAS GALLEGAS",
+        "nameTranslated": "加利西亚海湾菜肴"
+      },
+      {
+        "nameOriginal": "CAVIAR",
+        "nameTranslated": "鱼子酱"
+      }
+    ],
+    "items": [
+      {
+        "nameOriginal": "Tosta de Atún Rojo Picante",
+        "nameTranslated": "香辣红金枪鱼吐司",
+        "priceText": "10€",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "香辣红金枪鱼吐司",
+        "briefDetail": "开胃小食，香辣口味",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "Carpiaccio de Ventresa Atún Rojo",
+        "nameTranslated": "红金枪鱼腩薄片",
+        "priceText": "19€",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼腩薄片",
+        "briefDetail": "口感细腻，风味浓郁",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tataki de Atún Rojo Descargamento",
+        "nameTranslated": "卸货红金枪鱼塔塔基",
+        "priceText": "21€",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼塔塔基",
+        "briefDetail": "日式做法，鲜美可口",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Sashimi Atún Rojo Descargamento",
+        "nameTranslated": "卸货红金枪鱼刺身",
+        "priceText": "21€/8ud",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼刺身",
+        "briefDetail": "新鲜红金枪鱼，口感顺滑",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Sashimi Atún Rojo Descargamento",
+        "nameTranslated": "卸货红金枪鱼刺身",
+        "priceText": "29€/12ud",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼刺身",
+        "briefDetail": "新鲜红金枪鱼，口感顺滑",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tartar Atún Rojo Descargamento",
+        "nameTranslated": "卸货红金枪鱼鞑靼",
+        "priceText": "21€/110g",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼鞑靼",
+        "briefDetail": "新鲜红金枪鱼，切碎拌制",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tartar Atún Rojo Descargamento",
+        "nameTranslated": "卸货红金枪鱼鞑靼",
+        "priceText": "26€/150g",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼鞑靼",
+        "briefDetail": "新鲜红金枪鱼，切碎拌制",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tartar Atún Rojo con Caviar",
+        "nameTranslated": "红金枪鱼鞑靼配鱼子酱",
+        "priceText": "35€/110g",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼鞑靼配鱼子酱",
+        "briefDetail": "鲜美奢华，口感丰富",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tartar Atún Rojo con Caviar",
+        "nameTranslated": "红金枪鱼鞑靼配鱼子酱",
+        "priceText": "45€/150g",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼鞑靼配鱼子酱",
+        "briefDetail": "鲜美奢华，口感丰富",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cata de Atún Rojo",
+        "nameTranslated": "红金枪鱼品鉴",
+        "priceText": "35€",
+        "category": "ATÚN ROJO SALVAJE DE ALMADRABA",
+        "brief": "红金枪鱼品鉴",
+        "briefDetail": "包含鞑靼、塔塔基和刺身",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Trilogía Salmón Noruego Ahumado",
+        "nameTranslated": "挪威烟熏三文鱼三重奏",
+        "priceText": "25€",
+        "category": "SASHIMI DE SALMÓN",
+        "brief": "挪威烟熏三文鱼",
+        "briefDetail": "原味/芥末/松露",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Anchoas del Cantábrico Sanfilippo / 6 ud",
+        "nameTranslated": "坎塔布里科凤尾鱼Sanfilippo / 6个",
+        "priceText": "17,00€",
+        "category": "CURADOS DEL MAR",
+        "brief": "坎塔布里科凤尾鱼",
+        "briefDetail": "咸鲜风味，开胃小菜",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Anchoas Mariposa en AOVE / 10-12 ud",
+        "nameTranslated": "AOVE凤尾鱼 / 10-12个",
+        "priceText": "24,00€",
+        "category": "CURADOS DEL MAR",
+        "brief": "AOVE凤尾鱼",
+        "briefDetail": "橄榄油浸泡，风味独特",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Anchoas del Cantábrico \"000\" / ud",
+        "nameTranslated": "坎塔布里科凤尾鱼“000” / 个",
+        "priceText": "2,50€",
+        "category": "CURADOS DEL MAR",
+        "brief": "坎塔布里科凤尾鱼",
+        "briefDetail": "咸鲜风味，开胃小菜",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Mojama de Atún Extra Barbate",
+        "nameTranslated": "巴巴特特级金枪鱼干",
+        "priceText": "4,00€",
+        "category": "CURADOS DEL MAR",
+        "brief": "巴巴特金枪鱼干",
+        "briefDetail": "风干金枪鱼，口感紧实",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Mojama de Atún Extra Barbate",
+        "nameTranslated": "巴巴特特级金枪鱼干",
+        "priceText": "10,00€",
+        "category": "CURADOS DEL MAR",
+        "brief": "巴巴特金枪鱼干",
+        "briefDetail": "风干金枪鱼，口感紧实",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Hueva de Maruca Extra Barbate",
+        "nameTranslated": "巴巴特鳕鱼籽",
+        "priceText": "5,00€",
+        "category": "CURADOS DEL MAR",
+        "brief": "巴巴特鳕鱼籽",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Hueva de Maruca Extra Barbate",
+        "nameTranslated": "巴巴特鳕鱼籽",
+        "priceText": "12,00€",
+        "category": "CURADOS DEL MAR",
+        "brief": "巴巴特鳕鱼籽",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Gilda Anchoa / Boquerón / Picante",
+        "nameTranslated": "凤尾鱼/鳀鱼/香辣Gilda",
+        "priceText": "2.50€",
+        "category": "CURADOS DEL MAR",
+        "brief": "凤尾鱼/鳀鱼/香辣",
+        "briefDetail": "西班牙小吃，风味独特",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "Ostra Gillardeau N°2",
+        "nameTranslated": "吉拉多生蚝 N°2",
+        "priceText": "5.50€/ud",
+        "category": "OSTRAS",
+        "brief": "吉拉多生蚝",
+        "briefDetail": "法国，Marennes-Oléron产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Ostra Josephine N°2",
+        "nameTranslated": "约瑟芬生蚝 N°2",
+        "priceText": "4,95€/ud",
+        "category": "OSTRAS",
+        "brief": "约瑟芬生蚝",
+        "briefDetail": "葡萄牙，Algarve产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Ostra Utah Beach N°2",
+        "nameTranslated": "犹他海滩生蚝 N°2",
+        "priceText": "4.95€/ud",
+        "category": "OSTRAS",
+        "brief": "犹他海滩生蚝",
+        "briefDetail": "法国，Normandia产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Ostra Tía Maraa N°3",
+        "nameTranslated": "蒂亚玛拉生蚝 N°3",
+        "priceText": "4.50€/ud",
+        "category": "OSTRAS",
+        "brief": "蒂亚玛拉生蚝",
+        "briefDetail": "爱尔兰产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Ostra Tradicionales N°2",
+        "nameTranslated": "传统生蚝 N°2",
+        "priceText": "3,75€/ud",
+        "category": "OSTRAS",
+        "brief": "传统生蚝",
+        "briefDetail": "法国，Arcachon产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Ostra Utah Beach N°4",
+        "nameTranslated": "犹他海滩生蚝 N°4",
+        "priceText": "2.95€/ud",
+        "category": "OSTRAS",
+        "brief": "犹他海滩生蚝",
+        "briefDetail": "法国，Normandia产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Ostra Gillardeau N°2 con Caviar",
+        "nameTranslated": "吉拉多生蚝 N°2配鱼子酱",
+        "priceText": "15,00€/ud",
+        "category": "OSTRAS",
+        "brief": "吉拉多生蚝配鱼子酱",
+        "briefDetail": "法国，Marennes-Oléron产区",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cata de Ostras 8 (4 tipos x 2 ud.)",
+        "nameTranslated": "生蚝品鉴 8个（4种 x 2个）",
+        "priceText": "29,00€",
+        "category": "OSTRAS",
+        "brief": "生蚝品鉴",
+        "briefDetail": "包含多种生蚝",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cata de Ostras 12 (4 tipos x 3 ud.)",
+        "nameTranslated": "生蚝品鉴 12个（4种 x 3个）",
+        "priceText": "45,00€",
+        "category": "OSTRAS",
+        "brief": "生蚝品鉴",
+        "briefDetail": "包含多种生蚝",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cata de Ostras 16 (4 tipos x 4 ud.)",
+        "nameTranslated": "生蚝品鉴 16个（4种 x 4个）",
+        "priceText": "69.00€",
+        "category": "OSTRAS",
+        "brief": "生蚝品鉴",
+        "briefDetail": "包含多种生蚝",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Mejillones fritos en escabeche",
+        "nameTranslated": "油浸炸贻贝",
+        "priceText": "12,50€",
+        "category": "RÍAS GALLEGAS",
+        "brief": "油浸炸贻贝",
+        "briefDetail": "西班牙风味，酸甜可口",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Zamburiñas en salsa Vieira",
+        "nameTranslated": "维埃拉酱扇贝",
+        "priceText": "12,50€",
+        "category": "RÍAS GALLEGAS",
+        "brief": "维埃拉酱扇贝",
+        "briefDetail": "鲜美可口，风味独特",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Caviar de Erizo",
+        "nameTranslated": "海胆鱼子酱",
+        "priceText": "37,50€",
+        "category": "RÍAS GALLEGAS",
+        "brief": "海胆鱼子酱",
+        "briefDetail": "鲜美奢华，口感丰富",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Navajas Natural o AOVE",
+        "nameTranslated": "天然或AOVE蛏子",
+        "priceText": "16,00€",
+        "category": "RÍAS GALLEGAS",
+        "brief": "天然或橄榄油蛏子",
+        "briefDetail": "鲜美可口，风味独特",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Sardinillas Vintage en AOVE",
+        "nameTranslated": "AOVE复古沙丁鱼",
+        "priceText": "8,50€",
+        "category": "RÍAS GALLEGAS",
+        "brief": "橄榄油浸复古沙丁鱼",
+        "briefDetail": "风味独特，口感丰富",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Focaccia de Esturión Ahumado",
+        "nameTranslated": "烟熏鲟鱼佛卡夏",
+        "priceText": "12€",
+        "category": "CAVIAR",
+        "brief": "烟熏鲟鱼佛卡夏",
+        "briefDetail": "意式面包，风味独特",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": true
+          },
+          {
+            "type": "fish",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Focaccia de Esturión Ahumado con Caviar",
+        "nameTranslated": "鱼子酱烟熏鲟鱼佛卡夏",
+        "priceText": "21€",
+        "category": "CAVIAR",
+        "brief": "鱼子酱烟熏鲟鱼佛卡夏",
+        "briefDetail": "意式面包，风味独特",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": true
+          },
+          {
+            "type": "fish",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Caviar de España Baeri Premium",
+        "nameTranslated": "西班牙Baeri特级鱼子酱",
+        "priceText": "10g/21€",
+        "category": "CAVIAR",
+        "brief": "西班牙Baeri特级鱼子酱",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Caviar de España Baeri Premium",
+        "nameTranslated": "西班牙Baeri特级鱼子酱",
+        "priceText": "20g/39€",
+        "category": "CAVIAR",
+        "brief": "西班牙Baeri特级鱼子酱",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Caviar de España Baeri Premium",
+        "nameTranslated": "西班牙Baeri特级鱼子酱",
+        "priceText": "50g/96€",
+        "category": "CAVIAR",
+        "brief": "西班牙Baeri特级鱼子酱",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Caviar de Beluga",
+        "nameTranslated": "贝鲁加鱼子酱",
+        "priceText": "10g/29€",
+        "category": "CAVIAR",
+        "brief": "贝鲁加鱼子酱",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Caviar de Beluga",
+        "nameTranslated": "贝鲁加鱼子酱",
+        "priceText": "30g/79€",
+        "category": "CAVIAR",
+        "brief": "贝鲁加鱼子酱",
+        "briefDetail": "口感丰富，风味独特",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      }
+    ]
+  }
+}

@@ -1,0 +1,378 @@
+{
+  "model": "gemini-2.0-flash",
+  "image": "C_coentro",
+  "raw": "```json\n{\n  \"menuType\": \"restaurant\",\n  \"detectedLanguage\": \"en\",\n  \"priceLevel\": 2,\n  \"currency\": \"USD\",\n  \"categories\": [\n    {\n      \"nameOriginal\": \"STARTERS\",\n      \"nameTranslated\": \"开胃菜\"\n    },\n    {\n      \"nameOriginal\": \"FISH\",\n      \"nameTranslated\": \"鱼\"\n    },\n    {\n      \"nameOriginal\": \"MEAT\",\n      \"nameTranslated\": \"肉\"\n    },\n    {\n      \"nameOriginal\": \"DESSERTS\",\n      \"nameTranslated\": \"甜点\"\n    }\n  ],\n  \"items\": [\n    {\n      \"nameOriginal\": \"Tomato & Lettuce (1,6)\",\n      \"nameTranslated\": \"番茄生菜\",\n      \"priceText\": \"16\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"番茄生菜沙拉\",\n      \"briefDetail\": \"搭配冷番茄汤，烤生菜心和陈年奶酪\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cod Fritter (4un.) (1,3)\",\n      \"nameTranslated\": \"鳕鱼馅饼\",\n      \"priceText\": \"13\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"鳕鱼天妇罗\",\n      \"briefDetail\": \"鳕鱼天妇罗\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Grilled Scallops (6Un.) (2,4)\",\n      \"nameTranslated\": \"烤扇贝\",\n      \"priceText\": \"19\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"烤扇贝配辣椒香菜\",\n      \"briefDetail\": \"搭配辣椒酱和香菜\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"\\\"Brava\\\" Canarian Potatoes (2)\",\n      \"nameTranslated\": \"“布拉瓦”加那利土豆\",\n      \"priceText\": \"15\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"香脆玉米辣味酱\",\n      \"briefDetail\": \"搭配香脆玉米和辣味酱\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"Braised Broccoli (6,9)\",\n      \"nameTranslated\": \"炖西兰花\",\n      \"priceText\": \"17\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"开心果乳化腰果\",\n      \"briefDetail\": \"搭配开心果乳化酱和腰果“法罗法”\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"tree_nut\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tuna-Tartar (1,2,3,6)\",\n      \"nameTranslated\": \"金枪鱼鞑靼\",\n      \"priceText\": \"18\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"腌制金枪鱼牛油果\",\n      \"briefDetail\": \"腌制加那利金枪鱼，搭配黄油布里欧面包，牛油果和腌制蛋黄\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Artichoke au Gratin (1,6)\",\n      \"nameTranslated\": \"焗烤朝鲜蓟\",\n      \"priceText\": \"19\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"柑橘辣椒酱\",\n      \"briefDetail\": \"搭配柑橘辣椒酱和瓜西亚莱\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"Artisan Bread, AOVE oil & \\\"Janubio\\\" Salt (1)\",\n      \"nameTranslated\": \"手工面包，AOVE油和“Janubio”盐\",\n      \"priceText\": \"3\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"手工面包橄榄油盐\",\n      \"briefDetail\": \"手工面包，搭配AOVE油和“Janubio”盐\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Fried Fish (1,3,)\",\n      \"nameTranslated\": \"炸鱼\",\n      \"priceText\": \"27,5\",\n      \"category\": \"FISH\",\n      \"brief\": \"当地鱼天妇罗\",\n      \"briefDetail\": \"当地鱼天妇罗，搭配阿萨伊和法罗法\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Moqueca Local White Fish (3,5)\",\n      \"nameTranslated\": \"莫凯卡当地白鱼\",\n      \"priceText\": \"35\",\n      \"category\": \"FISH\",\n      \"brief\": \"白鱼虾仁\",\n      \"briefDetail\": \"搭配顶级烧烤虾，绿色莫霍酱和香菜\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"peanut\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Canarian Tuna Tataki (3,8)\",\n      \"nameTranslated\": \"加那利金枪鱼塔塔基\",\n      \"priceText\": \"29\",\n      \"category\": \"FISH\",\n      \"brief\": \"金枪鱼蔬菜\",\n      \"briefDetail\": \"搭配炒蔬菜和炒蘑菇\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"sesame\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Pork Cheek (6)\",\n      \"nameTranslated\": \"猪脸肉\",\n      \"priceText\": \"28\",\n      \"category\": \"MEAT\",\n      \"brief\": \"传统炖菜绿咖喱\",\n      \"briefDetail\": \"传统炖菜，搭配“Papa de los Valles”泡沫和绿咖喱酱\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"Spicy Boneless Chicken Leg (10)\",\n      \"nameTranslated\": \"香辣无骨鸡腿\",\n      \"priceText\": \"26\",\n      \"category\": \"MEAT\",\n      \"brief\": \"花生酱烧烤土豆\",\n      \"briefDetail\": \"搭配奶油花生酱和烧烤加那利土豆\",\n      \"allergens\": [\n        {\n          \"type\": \"peanut\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 3\n    },\n    {\n      \"nameOriginal\": \"BBQ Beef Tenderloin (-)\",\n      \"nameTranslated\": \"烧烤牛里脊\",\n      \"priceText\": \"30\",\n      \"category\": \"MEAT\",\n      \"brief\": \"甜菜鳄梨酱柑橘\",\n      \"briefDetail\": \"搭配甜菜鳄梨酱和柑橘沙拉\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Bife de Black Angus (6)\",\n      \"nameTranslated\": \"黑安格斯牛排\",\n      \"priceText\": \"30\",\n      \"category\": \"MEAT\",\n      \"brief\": \"土豆泡沫烤西葫芦\",\n      \"briefDetail\": \"搭配土豆泡沫和烤西葫芦\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Salted Caramel (6)\",\n      \"nameTranslated\": \"咸焦糖\",\n      \"priceText\": \"9\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"焦糖泡沫\",\n      \"briefDetail\": \"焦糖泡沫\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Dark Chocolate (6)\",\n      \"nameTranslated\": \"黑巧克力\",\n      \"priceText\": \"12\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"巧克力火山\",\n      \"briefDetail\": \"巧克力火山\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cheesecake (6)\",\n      \"nameTranslated\": \"芝士蛋糕\",\n      \"priceText\": \"12\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"奶油烤芝士蛋糕\",\n      \"briefDetail\": \"奶油烤芝士蛋糕\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [\n        \"vegetarian\"\n      ],\n      \"spiceLevel\": 0\n    }\n  ]\n}\n```",
+  "parsed": {
+    "menuType": "restaurant",
+    "detectedLanguage": "en",
+    "priceLevel": 2,
+    "currency": "USD",
+    "categories": [
+      {
+        "nameOriginal": "STARTERS",
+        "nameTranslated": "开胃菜"
+      },
+      {
+        "nameOriginal": "FISH",
+        "nameTranslated": "鱼"
+      },
+      {
+        "nameOriginal": "MEAT",
+        "nameTranslated": "肉"
+      },
+      {
+        "nameOriginal": "DESSERTS",
+        "nameTranslated": "甜点"
+      }
+    ],
+    "items": [
+      {
+        "nameOriginal": "Tomato & Lettuce (1,6)",
+        "nameTranslated": "番茄生菜",
+        "priceText": "16",
+        "category": "STARTERS",
+        "brief": "番茄生菜沙拉",
+        "briefDetail": "搭配冷番茄汤，烤生菜心和陈年奶酪",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cod Fritter (4un.) (1,3)",
+        "nameTranslated": "鳕鱼馅饼",
+        "priceText": "13",
+        "category": "STARTERS",
+        "brief": "鳕鱼天妇罗",
+        "briefDetail": "鳕鱼天妇罗",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          },
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Grilled Scallops (6Un.) (2,4)",
+        "nameTranslated": "烤扇贝",
+        "priceText": "19",
+        "category": "STARTERS",
+        "brief": "烤扇贝配辣椒香菜",
+        "briefDetail": "搭配辣椒酱和香菜",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "\"Brava\" Canarian Potatoes (2)",
+        "nameTranslated": "“布拉瓦”加那利土豆",
+        "priceText": "15",
+        "category": "STARTERS",
+        "brief": "香脆玉米辣味酱",
+        "briefDetail": "搭配香脆玉米和辣味酱",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "Braised Broccoli (6,9)",
+        "nameTranslated": "炖西兰花",
+        "priceText": "17",
+        "category": "STARTERS",
+        "brief": "开心果乳化腰果",
+        "briefDetail": "搭配开心果乳化酱和腰果“法罗法”",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          },
+          {
+            "type": "tree_nut",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tuna-Tartar (1,2,3,6)",
+        "nameTranslated": "金枪鱼鞑靼",
+        "priceText": "18",
+        "category": "STARTERS",
+        "brief": "腌制金枪鱼牛油果",
+        "briefDetail": "腌制加那利金枪鱼，搭配黄油布里欧面包，牛油果和腌制蛋黄",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": false
+          },
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Artichoke au Gratin (1,6)",
+        "nameTranslated": "焗烤朝鲜蓟",
+        "priceText": "19",
+        "category": "STARTERS",
+        "brief": "柑橘辣椒酱",
+        "briefDetail": "搭配柑橘辣椒酱和瓜西亚莱",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "Artisan Bread, AOVE oil & \"Janubio\" Salt (1)",
+        "nameTranslated": "手工面包，AOVE油和“Janubio”盐",
+        "priceText": "3",
+        "category": "STARTERS",
+        "brief": "手工面包橄榄油盐",
+        "briefDetail": "手工面包，搭配AOVE油和“Janubio”盐",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Fried Fish (1,3,)",
+        "nameTranslated": "炸鱼",
+        "priceText": "27,5",
+        "category": "FISH",
+        "brief": "当地鱼天妇罗",
+        "briefDetail": "当地鱼天妇罗，搭配阿萨伊和法罗法",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": false
+          },
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Moqueca Local White Fish (3,5)",
+        "nameTranslated": "莫凯卡当地白鱼",
+        "priceText": "35",
+        "category": "FISH",
+        "brief": "白鱼虾仁",
+        "briefDetail": "搭配顶级烧烤虾，绿色莫霍酱和香菜",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "peanut",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Canarian Tuna Tataki (3,8)",
+        "nameTranslated": "加那利金枪鱼塔塔基",
+        "priceText": "29",
+        "category": "FISH",
+        "brief": "金枪鱼蔬菜",
+        "briefDetail": "搭配炒蔬菜和炒蘑菇",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "sesame",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Pork Cheek (6)",
+        "nameTranslated": "猪脸肉",
+        "priceText": "28",
+        "category": "MEAT",
+        "brief": "传统炖菜绿咖喱",
+        "briefDetail": "传统炖菜，搭配“Papa de los Valles”泡沫和绿咖喱酱",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "Spicy Boneless Chicken Leg (10)",
+        "nameTranslated": "香辣无骨鸡腿",
+        "priceText": "26",
+        "category": "MEAT",
+        "brief": "花生酱烧烤土豆",
+        "briefDetail": "搭配奶油花生酱和烧烤加那利土豆",
+        "allergens": [
+          {
+            "type": "peanut",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 3
+      },
+      {
+        "nameOriginal": "BBQ Beef Tenderloin (-)",
+        "nameTranslated": "烧烤牛里脊",
+        "priceText": "30",
+        "category": "MEAT",
+        "brief": "甜菜鳄梨酱柑橘",
+        "briefDetail": "搭配甜菜鳄梨酱和柑橘沙拉",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Bife de Black Angus (6)",
+        "nameTranslated": "黑安格斯牛排",
+        "priceText": "30",
+        "category": "MEAT",
+        "brief": "土豆泡沫烤西葫芦",
+        "briefDetail": "搭配土豆泡沫和烤西葫芦",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Salted Caramel (6)",
+        "nameTranslated": "咸焦糖",
+        "priceText": "9",
+        "category": "DESSERTS",
+        "brief": "焦糖泡沫",
+        "briefDetail": "焦糖泡沫",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Dark Chocolate (6)",
+        "nameTranslated": "黑巧克力",
+        "priceText": "12",
+        "category": "DESSERTS",
+        "brief": "巧克力火山",
+        "briefDetail": "巧克力火山",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cheesecake (6)",
+        "nameTranslated": "芝士蛋糕",
+        "priceText": "12",
+        "category": "DESSERTS",
+        "brief": "奶油烤芝士蛋糕",
+        "briefDetail": "奶油烤芝士蛋糕",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [
+          "vegetarian"
+        ],
+        "spiceLevel": 0
+      }
+    ]
+  }
+}

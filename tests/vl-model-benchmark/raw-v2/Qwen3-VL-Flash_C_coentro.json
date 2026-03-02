@@ -1,0 +1,362 @@
+{
+  "model": "qwen3-vl-flash",
+  "image": "C_coentro",
+  "raw": "{\n  \"menuType\": \"restaurant\",\n  \"detectedLanguage\": \"en\",\n  \"priceLevel\": 2,\n  \"currency\": \"USD\",\n  \"categories\": [\n    {\n      \"nameOriginal\": \"STARTERS\",\n      \"nameTranslated\": \"开胃菜\"\n    },\n    {\n      \"nameOriginal\": \"FISH\",\n      \"nameTranslated\": \"鱼类\"\n    },\n    {\n      \"nameOriginal\": \"MEAT\",\n      \"nameTranslated\": \"肉类\"\n    },\n    {\n      \"nameOriginal\": \"DESSERTS\",\n      \"nameTranslated\": \"甜点\"\n    }\n  ],\n  \"items\": [\n    {\n      \"nameOriginal\": \"Tomato & Lettuce\",\n      \"nameTranslated\": \"番茄生菜汤\",\n      \"priceText\": \"16\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"冷番茄汤配生菜心与陈年奶酪\",\n      \"briefDetail\": \"经典意式开胃汤，清爽酸甜，搭配浓郁奶酪\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cod Fritter\",\n      \"nameTranslated\": \"鳕鱼饼\",\n      \"priceText\": \"13\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"香煎鳕鱼饼配塔可酱\",\n      \"briefDetail\": \"英式街头小吃改良版，外酥内嫩，风味浓郁\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"Grilled Scallops\",\n      \"nameTranslated\": \"烤扇贝\",\n      \"priceText\": \"19\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"辣味酱汁烤扇贝配香草\",\n      \"briefDetail\": \"地中海风味海鲜，鲜甜弹牙，佐以微辣酱汁\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"\\\"Brava\\\" Canarian Potatoes\",\n      \"nameTranslated\": \"“布拉瓦”加那利土豆\",\n      \"priceText\": \"15\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"脆皮玉米辣酱土豆\",\n      \"briefDetail\": \"西班牙加那利群岛特色，外脆内软，辣味突出\",\n      \"allergens\": [\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 3\n    },\n    {\n      \"nameOriginal\": \"Braised Broccoli\",\n      \"nameTranslated\": \"炖西兰花\",\n      \"priceText\": \"17\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"开心果酱炖西兰花\",\n      \"briefDetail\": \"健康轻食选择，坚果香气融合蔬菜本味\",\n      \"allergens\": [\n        {\n          \"type\": \"tree_nut\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Tuna-Tartar\",\n      \"nameTranslated\": \"金枪鱼鞑靼\",\n      \"priceText\": \"18\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"腌制金枪鱼配黄油面包、牛油果\",\n      \"briefDetail\": \"日式风格生食料理，新鲜爽口，搭配丰富口感\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Artichoke au Gratin\",\n      \"nameTranslated\": \"奶油焗朝鲜蓟\",\n      \"priceText\": \"19\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"柑橘酱汁配奶油芝士焗朝鲜蓟\",\n      \"briefDetail\": \"法式经典开胃菜，奶香浓郁，口感绵密\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"Artisan Bread, AOVE oil & \\\"Janubio\\\" Salt\",\n      \"nameTranslated\": \"手工面包、特级初榨橄榄油与“Janubio”盐\",\n      \"priceText\": \"3\",\n      \"category\": \"STARTERS\",\n      \"brief\": \"配橄榄油和海盐的手工面包\",\n      \"briefDetail\": \"餐厅标配开胃小食，强调本地食材与传统工艺\",\n      \"allergens\": [],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Fried Fish\",\n      \"nameTranslated\": \"炸鱼\",\n      \"priceText\": \"27.5\",\n      \"category\": \"FISH\",\n      \"brief\": \"塔马普拉本地炸鱼配阿萨法酱\",\n      \"briefDetail\": \"加那利群岛风味炸鱼，外酥内嫩，酱料独特\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"Moqueca Local White Fish\",\n      \"nameTranslated\": \"本地白鱼摩凯卡\",\n      \"priceText\": \"35\",\n      \"category\": \"FISH\",\n      \"brief\": \"咖喱青柠酱烤白鱼\",\n      \"briefDetail\": \"巴西风味海鲜料理，香料浓郁，酸辣平衡\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 3\n    },\n    {\n      \"nameOriginal\": \"Supreme & BBQ Prawns\",\n      \"nameTranslated\": \"至尊烧烤虾\",\n      \"priceText\": \"29\",\n      \"category\": \"FISH\",\n      \"brief\": \"烧烤酱汁配青柠香茅虾\",\n      \"briefDetail\": \"热带风情海鲜，炭火烤制，香气扑鼻，微辣提味\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"Canarian Tuna Tataki\",\n      \"nameTranslated\": \"加那利金枪鱼刺身\",\n      \"priceText\": \"29\",\n      \"category\": \"FISH\",\n      \"brief\": \"半熟金枪鱼配炒蘑菇与蔬菜\",\n      \"briefDetail\": \"日式技法处理，鲜嫩多汁，搭配中式炒蔬\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Pork Cheek\",\n      \"nameTranslated\": \"猪颊肉\",\n      \"priceText\": \"28\",\n      \"category\": \"MEAT\",\n      \"brief\": \"帕帕德洛斯酱配青咖喱\",\n      \"briefDetail\": \"西班牙传统炖煮肉菜，酱汁浓郁，肉质软烂\",\n      \"allergens\": [\n        {\n          \"type\": \"pork\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"Spicy Boneless Chicken Leg\",\n      \"nameTranslated\": \"辣味无骨鸡腿\",\n      \"priceText\": \"26\",\n      \"category\": \"MEAT\",\n      \"brief\": \"奶油花生酱配烧烤酱鸡腿\",\n      \"briefDetail\": \"美式辣味鸡肉，外焦里嫩，酱料层次丰富\",\n      \"allergens\": [\n        {\n          \"type\": \"egg\",\n          \"uncertain\": true\n        },\n        {\n          \"type\": \"peanut\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 4\n    },\n    {\n      \"nameOriginal\": \"BBQ Beef Tenderloin\",\n      \"nameTranslated\": \"烧烤牛里脊\",\n      \"priceText\": \"30\",\n      \"category\": \"MEAT\",\n      \"brief\": \"甜菜根酱配柑橘沙拉\",\n      \"briefDetail\": \"西式经典牛排，烟熏风味，搭配清新沙拉解腻\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 1\n    },\n    {\n      \"nameOriginal\": \"Bife de Black Angus\",\n      \"nameTranslated\": \"黑安格斯牛排\",\n      \"priceText\": \"30\",\n      \"category\": \"MEAT\",\n      \"brief\": \"盐烤牛排配烤南瓜\",\n      \"briefDetail\": \"高端牛肉，肉质紧实，炭火烘烤香气四溢\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Salted Caramel Foam\",\n      \"nameTranslated\": \"咸焦糖泡沫\",\n      \"priceText\": \"9\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"咸焦糖慕斯配泡沫\",\n      \"briefDetail\": \"甜咸交织的现代甜品，口感轻盈如云\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Dark Chocolate\",\n      \"nameTranslated\": \"黑巧克力\",\n      \"priceText\": \"12\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"黑巧蛋糕配巧克力火山\",\n      \"briefDetail\": \"浓郁苦甜对比，巧克力爱好者必点\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": true\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Chocolate Volcano\",\n      \"nameTranslated\": \"巧克力熔岩\",\n      \"priceText\": \"12\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"热巧克力流心蛋糕\",\n      \"briefDetail\": \"切开即流心，温度与口感双重享受\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Cheesecake\",\n      \"nameTranslated\": \"芝士蛋糕\",\n      \"priceText\": \"12\",\n      \"category\": \"DESSERTS\",\n      \"brief\": \"奶油芝士蛋糕配烤水果\",\n      \"briefDetail\": \"经典甜点，绵密顺滑，适合餐后收尾\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    }\n  ]\n}",
+  "parsed": {
+    "menuType": "restaurant",
+    "detectedLanguage": "en",
+    "priceLevel": 2,
+    "currency": "USD",
+    "categories": [
+      {
+        "nameOriginal": "STARTERS",
+        "nameTranslated": "开胃菜"
+      },
+      {
+        "nameOriginal": "FISH",
+        "nameTranslated": "鱼类"
+      },
+      {
+        "nameOriginal": "MEAT",
+        "nameTranslated": "肉类"
+      },
+      {
+        "nameOriginal": "DESSERTS",
+        "nameTranslated": "甜点"
+      }
+    ],
+    "items": [
+      {
+        "nameOriginal": "Tomato & Lettuce",
+        "nameTranslated": "番茄生菜汤",
+        "priceText": "16",
+        "category": "STARTERS",
+        "brief": "冷番茄汤配生菜心与陈年奶酪",
+        "briefDetail": "经典意式开胃汤，清爽酸甜，搭配浓郁奶酪",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cod Fritter",
+        "nameTranslated": "鳕鱼饼",
+        "priceText": "13",
+        "category": "STARTERS",
+        "brief": "香煎鳕鱼饼配塔可酱",
+        "briefDetail": "英式街头小吃改良版，外酥内嫩，风味浓郁",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "Grilled Scallops",
+        "nameTranslated": "烤扇贝",
+        "priceText": "19",
+        "category": "STARTERS",
+        "brief": "辣味酱汁烤扇贝配香草",
+        "briefDetail": "地中海风味海鲜，鲜甜弹牙，佐以微辣酱汁",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "\"Brava\" Canarian Potatoes",
+        "nameTranslated": "“布拉瓦”加那利土豆",
+        "priceText": "15",
+        "category": "STARTERS",
+        "brief": "脆皮玉米辣酱土豆",
+        "briefDetail": "西班牙加那利群岛特色，外脆内软，辣味突出",
+        "allergens": [
+          {
+            "type": "gluten",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 3
+      },
+      {
+        "nameOriginal": "Braised Broccoli",
+        "nameTranslated": "炖西兰花",
+        "priceText": "17",
+        "category": "STARTERS",
+        "brief": "开心果酱炖西兰花",
+        "briefDetail": "健康轻食选择，坚果香气融合蔬菜本味",
+        "allergens": [
+          {
+            "type": "tree_nut",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Tuna-Tartar",
+        "nameTranslated": "金枪鱼鞑靼",
+        "priceText": "18",
+        "category": "STARTERS",
+        "brief": "腌制金枪鱼配黄油面包、牛油果",
+        "briefDetail": "日式风格生食料理，新鲜爽口，搭配丰富口感",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Artichoke au Gratin",
+        "nameTranslated": "奶油焗朝鲜蓟",
+        "priceText": "19",
+        "category": "STARTERS",
+        "brief": "柑橘酱汁配奶油芝士焗朝鲜蓟",
+        "briefDetail": "法式经典开胃菜，奶香浓郁，口感绵密",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "Artisan Bread, AOVE oil & \"Janubio\" Salt",
+        "nameTranslated": "手工面包、特级初榨橄榄油与“Janubio”盐",
+        "priceText": "3",
+        "category": "STARTERS",
+        "brief": "配橄榄油和海盐的手工面包",
+        "briefDetail": "餐厅标配开胃小食，强调本地食材与传统工艺",
+        "allergens": [],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Fried Fish",
+        "nameTranslated": "炸鱼",
+        "priceText": "27.5",
+        "category": "FISH",
+        "brief": "塔马普拉本地炸鱼配阿萨法酱",
+        "briefDetail": "加那利群岛风味炸鱼，外酥内嫩，酱料独特",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "Moqueca Local White Fish",
+        "nameTranslated": "本地白鱼摩凯卡",
+        "priceText": "35",
+        "category": "FISH",
+        "brief": "咖喱青柠酱烤白鱼",
+        "briefDetail": "巴西风味海鲜料理，香料浓郁，酸辣平衡",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 3
+      },
+      {
+        "nameOriginal": "Supreme & BBQ Prawns",
+        "nameTranslated": "至尊烧烤虾",
+        "priceText": "29",
+        "category": "FISH",
+        "brief": "烧烤酱汁配青柠香茅虾",
+        "briefDetail": "热带风情海鲜，炭火烤制，香气扑鼻，微辣提味",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "Canarian Tuna Tataki",
+        "nameTranslated": "加那利金枪鱼刺身",
+        "priceText": "29",
+        "category": "FISH",
+        "brief": "半熟金枪鱼配炒蘑菇与蔬菜",
+        "briefDetail": "日式技法处理，鲜嫩多汁，搭配中式炒蔬",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Pork Cheek",
+        "nameTranslated": "猪颊肉",
+        "priceText": "28",
+        "category": "MEAT",
+        "brief": "帕帕德洛斯酱配青咖喱",
+        "briefDetail": "西班牙传统炖煮肉菜，酱汁浓郁，肉质软烂",
+        "allergens": [
+          {
+            "type": "pork",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "Spicy Boneless Chicken Leg",
+        "nameTranslated": "辣味无骨鸡腿",
+        "priceText": "26",
+        "category": "MEAT",
+        "brief": "奶油花生酱配烧烤酱鸡腿",
+        "briefDetail": "美式辣味鸡肉，外焦里嫩，酱料层次丰富",
+        "allergens": [
+          {
+            "type": "egg",
+            "uncertain": true
+          },
+          {
+            "type": "peanut",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 4
+      },
+      {
+        "nameOriginal": "BBQ Beef Tenderloin",
+        "nameTranslated": "烧烤牛里脊",
+        "priceText": "30",
+        "category": "MEAT",
+        "brief": "甜菜根酱配柑橘沙拉",
+        "briefDetail": "西式经典牛排，烟熏风味，搭配清新沙拉解腻",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 1
+      },
+      {
+        "nameOriginal": "Bife de Black Angus",
+        "nameTranslated": "黑安格斯牛排",
+        "priceText": "30",
+        "category": "MEAT",
+        "brief": "盐烤牛排配烤南瓜",
+        "briefDetail": "高端牛肉，肉质紧实，炭火烘烤香气四溢",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Salted Caramel Foam",
+        "nameTranslated": "咸焦糖泡沫",
+        "priceText": "9",
+        "category": "DESSERTS",
+        "brief": "咸焦糖慕斯配泡沫",
+        "briefDetail": "甜咸交织的现代甜品，口感轻盈如云",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Dark Chocolate",
+        "nameTranslated": "黑巧克力",
+        "priceText": "12",
+        "category": "DESSERTS",
+        "brief": "黑巧蛋糕配巧克力火山",
+        "briefDetail": "浓郁苦甜对比，巧克力爱好者必点",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": true
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Chocolate Volcano",
+        "nameTranslated": "巧克力熔岩",
+        "priceText": "12",
+        "category": "DESSERTS",
+        "brief": "热巧克力流心蛋糕",
+        "briefDetail": "切开即流心，温度与口感双重享受",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Cheesecake",
+        "nameTranslated": "芝士蛋糕",
+        "priceText": "12",
+        "category": "DESSERTS",
+        "brief": "奶油芝士蛋糕配烤水果",
+        "briefDetail": "经典甜点，绵密顺滑，适合餐后收尾",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      }
+    ]
+  }
+}

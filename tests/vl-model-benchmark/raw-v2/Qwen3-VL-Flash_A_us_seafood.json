@@ -1,0 +1,471 @@
+{
+  "model": "qwen3-vl-flash",
+  "image": "A_us_seafood",
+  "raw": "{\n  \"menuType\": \"restaurant\",\n  \"detectedLanguage\": \"en\",\n  \"priceLevel\": 2,\n  \"currency\": \"USD\",\n  \"categories\": [\n    {\n      \"nameOriginal\": \"TACOS\",\n      \"nameTranslated\": \"塔可\"\n    },\n    {\n      \"nameOriginal\": \"BURGERS\",\n      \"nameTranslated\": \"汉堡\"\n    },\n    {\n      \"nameOriginal\": \"GRILLED & BAKED\",\n      \"nameTranslated\": \"烤制与烘烤\"\n    },\n    {\n      \"nameOriginal\": \"BATTERED & FRIED\",\n      \"nameTranslated\": \"裹粉油炸\"\n    },\n    {\n      \"nameOriginal\": \"MARKET SPECIALTIES\",\n      \"nameTranslated\": \"市场特色\"\n    },\n    {\n      \"nameOriginal\": \"PASTA\",\n      \"nameTranslated\": \"意大利面\"\n    }\n  ],\n  \"items\": [\n    {\n      \"nameOriginal\": \"Jaco Tacos\",\n      \"nameTranslated\": \"杰科塔可\",\n      \"priceText\": \"18.99\",\n      \"category\": \"TACOS\",\n      \"brief\": \"玉米饼配鱼肉、番茄、生菜\",\n      \"briefDetail\": \"经典墨西哥风味塔可，搭配新鲜蔬菜和特制酱料\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Grilled Shrimp Tacos\",\n      \"nameTranslated\": \"烤虾塔可\",\n      \"priceText\": \"18.99\",\n      \"category\": \"TACOS\",\n      \"brief\": \"烤虾配玉米饼与蔬菜\",\n      \"briefDetail\": \"南美风味烤虾塔可，外焦内嫩，搭配清爽沙拉\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Jerky Shrimp Tacos\",\n      \"nameTranslated\": \"腌制虾塔可\",\n      \"priceText\": \"18.99\",\n      \"category\": \"TACOS\",\n      \"brief\": \"腌制虾配玉米饼与酱料\",\n      \"briefDetail\": \"辣味腌虾搭配酸甜酱汁，口感层次丰富\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 2\n    },\n    {\n      \"nameOriginal\": \"Steak Tacos\",\n      \"nameTranslated\": \"牛排塔可\",\n      \"priceText\": \"18.99\",\n      \"category\": \"TACOS\",\n      \"brief\": \"牛排配玉米饼与蔬菜\",\n      \"briefDetail\": \"厚切牛排搭配墨西哥香料，传统街头美食\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Fish N' Chips\",\n      \"nameTranslated\": \"炸鱼薯条\",\n      \"priceText\": \"26.99\",\n      \"category\": \"BATTERED & FRIED\",\n      \"brief\": \"啤酒面衣炸鳕鱼配薯条\",\n      \"briefDetail\": \"英式经典街头小吃，酥脆啤酒面衣包裹鳕鱼\",\n      \"allergens\": [\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"The Admiral's\",\n      \"nameTranslated\": \"海军上将套餐\",\n      \"priceText\": \"48.99\",\n      \"category\": \"GRILLED & BAKED\",\n      \"brief\": \"烤虾、蟹肉、龙虾配蛋糕\",\n      \"briefDetail\": \"豪华海鲜拼盘，融合多种海产与甜点，适合分享\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"The Skipper's\",\n      \"nameTranslated\": \"船长套餐\",\n      \"priceText\": \"38.99\",\n      \"category\": \"GRILLED & BAKED\",\n      \"brief\": \"烤虾、蟹肉、龙虾配蛋糕\",\n      \"briefDetail\": \"精选海鲜组合，搭配自制酱料与烤蔬菜\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Sea Scallops\",\n      \"nameTranslated\": \"海扇贝\",\n      \"priceText\": \"44.99\",\n      \"category\": \"GRILLED & BAKED\",\n      \"brief\": \"烤扇贝配蔬菜\",\n      \"briefDetail\": \"鲜嫩扇贝搭配香草黄油，口感细腻\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Chesapeake Crab Cakes\",\n      \"nameTranslated\": \"切萨皮克蟹饼\",\n      \"priceText\": \"MKT\",\n      \"category\": \"GRILLED & BAKED\",\n      \"brief\": \"蟹肉饼配蔬菜\",\n      \"briefDetail\": \"本地捕捞蟹肉制成，外酥内嫩，佐以柠檬酱\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"The Captain's\",\n      \"nameTranslated\": \"船长套餐\",\n      \"priceText\": \"56.99\",\n      \"category\": \"BATTERED & FRIED\",\n      \"brief\": \"炸蟹肉、虾、鱼片\",\n      \"briefDetail\": \"经典美式油炸组合，配薯条与蘸酱\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"The Fisherman's\",\n      \"nameTranslated\": \"渔夫套餐\",\n      \"priceText\": \"36.99\",\n      \"category\": \"BATTERED & FRIED\",\n      \"brief\": \"炸虾、蟹肉、鱼片\",\n      \"briefDetail\": \"海产三重奏，酥脆外皮包裹鲜嫩内里\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"fish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Fried Shrimp\",\n      \"nameTranslated\": \"炸虾\",\n      \"priceText\": \"25.99\",\n      \"category\": \"BATTERED & FRIED\",\n      \"brief\": \"裹粉炸虾\",\n      \"briefDetail\": \"金黄酥脆，搭配蒜蓉酱或塔可酱\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Fried Oysters\",\n      \"nameTranslated\": \"炸牡蛎\",\n      \"priceText\": \"31.99\",\n      \"category\": \"BATTERED & FRIED\",\n      \"brief\": \"裹粉炸牡蛎\",\n      \"briefDetail\": \"咸香酥脆，搭配柠檬或塔可酱\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Old Town Burger\",\n      \"nameTranslated\": \"老镇汉堡\",\n      \"priceText\": \"18.99\",\n      \"category\": \"BURGERS\",\n      \"brief\": \"牛肉饼配芝士、洋葱、泡菜\",\n      \"briefDetail\": \"经典美式汉堡，搭配酸黄瓜与特制酱料\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Anchor Burger\",\n      \"nameTranslated\": \"锚点汉堡\",\n      \"priceText\": \"18.99\",\n      \"category\": \"BURGERS\",\n      \"brief\": \"牛肉饼配芝士、泡菜、洋葱\",\n      \"briefDetail\": \"加勒比风味汉堡，搭配酸甜酱汁\",\n      \"allergens\": [\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"gluten\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Whole Maine Lobster\",\n      \"nameTranslated\": \"整只缅因龙虾\",\n      \"priceText\": \"MKT\",\n      \"category\": \"MARKET SPECIALTIES\",\n      \"brief\": \"整只龙虾配薯条\",\n      \"briefDetail\": \"顶级海鲜盛宴，配奶油酱与烤蔬菜\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Crab Norfolk\",\n      \"nameTranslated\": \"诺福克蟹肉\",\n      \"priceText\": \"29.99\",\n      \"category\": \"MARKET SPECIALTIES\",\n      \"brief\": \"蟹肉配米饭与蔬菜\",\n      \"briefDetail\": \"美式经典蟹肉料理，搭配奶油酱汁\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Seafood Bake\",\n      \"nameTranslated\": \"海鲜焗烤\",\n      \"priceText\": \"30.99\",\n      \"category\": \"MARKET SPECIALTIES\",\n      \"brief\": \"虾、蟹、蛤蜊焗烤\",\n      \"briefDetail\": \"多类海鲜混合焗烤，配奶油酱与面包屑\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Lobster Linguini\",\n      \"nameTranslated\": \"龙虾意面\",\n      \"priceText\": \"36.99\",\n      \"category\": \"PASTA\",\n      \"brief\": \"龙虾配意大利面\",\n      \"briefDetail\": \"白葡萄酒奶油酱汁，鲜美浓郁\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Spicy Cajun\",\n      \"nameTranslated\": \"辣味卡津意面\",\n      \"priceText\": \"26.99\",\n      \"category\": \"PASTA\",\n      \"brief\": \"辣味意面配虾、蟹肉\",\n      \"briefDetail\": \"卡津风味辣酱，搭配海鲜与奶油，刺激味蕾\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 3\n    },\n    {\n      \"nameOriginal\": \"Linguini & Clams\",\n      \"nameTranslated\": \"蛤蜊意面\",\n      \"priceText\": \"22.99\",\n      \"category\": \"PASTA\",\n      \"brief\": \"蛤蜊配意大利面\",\n      \"briefDetail\": \"白葡萄酒奶油酱汁，鲜美清淡\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    },\n    {\n      \"nameOriginal\": \"Fresh Lobster Mac\",\n      \"nameTranslated\": \"新鲜龙虾通心粉\",\n      \"priceText\": \"36.99\",\n      \"category\": \"PASTA\",\n      \"brief\": \"龙虾配通心粉\",\n      \"briefDetail\": \"奶油酱汁包裹龙虾肉，口感丰腴\",\n      \"allergens\": [\n        {\n          \"type\": \"shellfish\",\n          \"uncertain\": false\n        },\n        {\n          \"type\": \"dairy\",\n          \"uncertain\": false\n        }\n      ],\n      \"dietaryFlags\": [],\n      \"spiceLevel\": 0\n    }\n  ]\n}",
+  "parsed": {
+    "menuType": "restaurant",
+    "detectedLanguage": "en",
+    "priceLevel": 2,
+    "currency": "USD",
+    "categories": [
+      {
+        "nameOriginal": "TACOS",
+        "nameTranslated": "塔可"
+      },
+      {
+        "nameOriginal": "BURGERS",
+        "nameTranslated": "汉堡"
+      },
+      {
+        "nameOriginal": "GRILLED & BAKED",
+        "nameTranslated": "烤制与烘烤"
+      },
+      {
+        "nameOriginal": "BATTERED & FRIED",
+        "nameTranslated": "裹粉油炸"
+      },
+      {
+        "nameOriginal": "MARKET SPECIALTIES",
+        "nameTranslated": "市场特色"
+      },
+      {
+        "nameOriginal": "PASTA",
+        "nameTranslated": "意大利面"
+      }
+    ],
+    "items": [
+      {
+        "nameOriginal": "Jaco Tacos",
+        "nameTranslated": "杰科塔可",
+        "priceText": "18.99",
+        "category": "TACOS",
+        "brief": "玉米饼配鱼肉、番茄、生菜",
+        "briefDetail": "经典墨西哥风味塔可，搭配新鲜蔬菜和特制酱料",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Grilled Shrimp Tacos",
+        "nameTranslated": "烤虾塔可",
+        "priceText": "18.99",
+        "category": "TACOS",
+        "brief": "烤虾配玉米饼与蔬菜",
+        "briefDetail": "南美风味烤虾塔可，外焦内嫩，搭配清爽沙拉",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Jerky Shrimp Tacos",
+        "nameTranslated": "腌制虾塔可",
+        "priceText": "18.99",
+        "category": "TACOS",
+        "brief": "腌制虾配玉米饼与酱料",
+        "briefDetail": "辣味腌虾搭配酸甜酱汁，口感层次丰富",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 2
+      },
+      {
+        "nameOriginal": "Steak Tacos",
+        "nameTranslated": "牛排塔可",
+        "priceText": "18.99",
+        "category": "TACOS",
+        "brief": "牛排配玉米饼与蔬菜",
+        "briefDetail": "厚切牛排搭配墨西哥香料，传统街头美食",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Fish N' Chips",
+        "nameTranslated": "炸鱼薯条",
+        "priceText": "26.99",
+        "category": "BATTERED & FRIED",
+        "brief": "啤酒面衣炸鳕鱼配薯条",
+        "briefDetail": "英式经典街头小吃，酥脆啤酒面衣包裹鳕鱼",
+        "allergens": [
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "The Admiral's",
+        "nameTranslated": "海军上将套餐",
+        "priceText": "48.99",
+        "category": "GRILLED & BAKED",
+        "brief": "烤虾、蟹肉、龙虾配蛋糕",
+        "briefDetail": "豪华海鲜拼盘，融合多种海产与甜点，适合分享",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "The Skipper's",
+        "nameTranslated": "船长套餐",
+        "priceText": "38.99",
+        "category": "GRILLED & BAKED",
+        "brief": "烤虾、蟹肉、龙虾配蛋糕",
+        "briefDetail": "精选海鲜组合，搭配自制酱料与烤蔬菜",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Sea Scallops",
+        "nameTranslated": "海扇贝",
+        "priceText": "44.99",
+        "category": "GRILLED & BAKED",
+        "brief": "烤扇贝配蔬菜",
+        "briefDetail": "鲜嫩扇贝搭配香草黄油，口感细腻",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Chesapeake Crab Cakes",
+        "nameTranslated": "切萨皮克蟹饼",
+        "priceText": "MKT",
+        "category": "GRILLED & BAKED",
+        "brief": "蟹肉饼配蔬菜",
+        "briefDetail": "本地捕捞蟹肉制成，外酥内嫩，佐以柠檬酱",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "The Captain's",
+        "nameTranslated": "船长套餐",
+        "priceText": "56.99",
+        "category": "BATTERED & FRIED",
+        "brief": "炸蟹肉、虾、鱼片",
+        "briefDetail": "经典美式油炸组合，配薯条与蘸酱",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "The Fisherman's",
+        "nameTranslated": "渔夫套餐",
+        "priceText": "36.99",
+        "category": "BATTERED & FRIED",
+        "brief": "炸虾、蟹肉、鱼片",
+        "briefDetail": "海产三重奏，酥脆外皮包裹鲜嫩内里",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "fish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Fried Shrimp",
+        "nameTranslated": "炸虾",
+        "priceText": "25.99",
+        "category": "BATTERED & FRIED",
+        "brief": "裹粉炸虾",
+        "briefDetail": "金黄酥脆，搭配蒜蓉酱或塔可酱",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Fried Oysters",
+        "nameTranslated": "炸牡蛎",
+        "priceText": "31.99",
+        "category": "BATTERED & FRIED",
+        "brief": "裹粉炸牡蛎",
+        "briefDetail": "咸香酥脆，搭配柠檬或塔可酱",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Old Town Burger",
+        "nameTranslated": "老镇汉堡",
+        "priceText": "18.99",
+        "category": "BURGERS",
+        "brief": "牛肉饼配芝士、洋葱、泡菜",
+        "briefDetail": "经典美式汉堡，搭配酸黄瓜与特制酱料",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Anchor Burger",
+        "nameTranslated": "锚点汉堡",
+        "priceText": "18.99",
+        "category": "BURGERS",
+        "brief": "牛肉饼配芝士、泡菜、洋葱",
+        "briefDetail": "加勒比风味汉堡，搭配酸甜酱汁",
+        "allergens": [
+          {
+            "type": "dairy",
+            "uncertain": false
+          },
+          {
+            "type": "gluten",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Whole Maine Lobster",
+        "nameTranslated": "整只缅因龙虾",
+        "priceText": "MKT",
+        "category": "MARKET SPECIALTIES",
+        "brief": "整只龙虾配薯条",
+        "briefDetail": "顶级海鲜盛宴，配奶油酱与烤蔬菜",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Crab Norfolk",
+        "nameTranslated": "诺福克蟹肉",
+        "priceText": "29.99",
+        "category": "MARKET SPECIALTIES",
+        "brief": "蟹肉配米饭与蔬菜",
+        "briefDetail": "美式经典蟹肉料理，搭配奶油酱汁",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Seafood Bake",
+        "nameTranslated": "海鲜焗烤",
+        "priceText": "30.99",
+        "category": "MARKET SPECIALTIES",
+        "brief": "虾、蟹、蛤蜊焗烤",
+        "briefDetail": "多类海鲜混合焗烤，配奶油酱与面包屑",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Lobster Linguini",
+        "nameTranslated": "龙虾意面",
+        "priceText": "36.99",
+        "category": "PASTA",
+        "brief": "龙虾配意大利面",
+        "briefDetail": "白葡萄酒奶油酱汁，鲜美浓郁",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Spicy Cajun",
+        "nameTranslated": "辣味卡津意面",
+        "priceText": "26.99",
+        "category": "PASTA",
+        "brief": "辣味意面配虾、蟹肉",
+        "briefDetail": "卡津风味辣酱，搭配海鲜与奶油，刺激味蕾",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 3
+      },
+      {
+        "nameOriginal": "Linguini & Clams",
+        "nameTranslated": "蛤蜊意面",
+        "priceText": "22.99",
+        "category": "PASTA",
+        "brief": "蛤蜊配意大利面",
+        "briefDetail": "白葡萄酒奶油酱汁，鲜美清淡",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      },
+      {
+        "nameOriginal": "Fresh Lobster Mac",
+        "nameTranslated": "新鲜龙虾通心粉",
+        "priceText": "36.99",
+        "category": "PASTA",
+        "brief": "龙虾配通心粉",
+        "briefDetail": "奶油酱汁包裹龙虾肉，口感丰腴",
+        "allergens": [
+          {
+            "type": "shellfish",
+            "uncertain": false
+          },
+          {
+            "type": "dairy",
+            "uncertain": false
+          }
+        ],
+        "dietaryFlags": [],
+        "spiceLevel": 0
+      }
+    ]
+  }
+}
