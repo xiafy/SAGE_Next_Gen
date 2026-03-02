@@ -5,9 +5,11 @@
 
 ---
 
-## 当前阶段：Sprint 3 进行中
+## 当前阶段：Sprint 3 完成 ✅
 
-**进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | **Sprint 3 ███████░░░ 70%**
+**进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅
+
+**下一阶段**: Sprint 4 — Paywall + Beta
 
 ---
 
@@ -50,37 +52,35 @@
 - [x] **9 条新决策 (DEC-052v2~DEC-060)** — 输出格式/组件规范/过敏原/状态机/Waiter面板
 - [x] **vision.md v1.3 + prd.md v2.0** — 顶层文档与评审结论全面对齐
 
-### 进行中
-- [ ] **Phase 0: 文档对齐 + Spec + Test Cases**（3/3 ~ 3/4 午）
-  - [ ] T0-1: docs/ 过时文档更新或归档（navigation-spec/icebreaker/临时文档）
-  - [ ] T0-2: architecture.md / api-design.md 补齐 DEC-052v2~060
-  - [ ] T0-3: 3 份新功能 Spec（mealplan-and-order / explore-chat-injection / waiter-upgrade）
-  - [ ] T0-4: 测试用例 checklist（given-when-then，覆盖正常流+边界+错误恢复）
+### 已完成（Sprint 3 代码实现）
+- [x] **Phase 0: 文档对齐 + Spec + Test Cases**（3/3 ~ 3/4 午）
+  - [x] T0-1: docs/ 过时文档更新或归档（navigation-spec/icebreaker/临时文档）
+  - [x] T0-2: architecture.md / api-design.md 补齐 DEC-052v2~060
+  - [x] T0-3: 3 份新功能 Spec（mealplan-and-order / explore-chat-injection / waiter-upgrade）
+  - [x] T0-4: 测试用例 checklist（given-when-then，覆盖正常流+边界+错误恢复）
   - 门禁：夏总审关键 Spec
 
-### 待开始
-
 #### Phase 1: 数据层 + POC（3/4 午 ~ 3/5）
-- [ ] T1: shared/types.ts 新增 MealPlan/OrderAction/WaiterMessage 类型
-- [ ] T2: OrderStore 重构（DEC-057 状态机 6 条规则）
-- [ ] T3: **流式 JSON 代码块解析器 POC**（100 次真实调用，L1 ≥85%）
-- [ ] T4: Prompt 更新（方案型格式 + Order 操作指令）
+- [x] T1: shared/types.ts 新增 MealPlan/OrderAction/WaiterMessage 类型
+- [x] T2: OrderStore 重构（DEC-057 状态机 6 条规则）
+- [x] T3: **流式 JSON 代码块解析器 POC**（100 次真实调用，L1 ≥85%）
+- [x] T4: Prompt 更新（方案型格式 + Order 操作指令）
 - 门禁：T3 POC 通过
 
 #### Phase 2: 核心组件 + 视图改造（3/5 ~ 3/8）
-- [ ] T5: MealPlanCard 组件（课程分组+替换+整套加入+并发防抖）
-- [ ] T6: SelectedDishesCard 组件（系统消息样式+事实摘要）
-- [ ] T7: AgentChatView 改造（流式JSON解析+MealPlanCard+OrderAction）
-- [ ] T8: ExploreView 改造（双出口+写入Order+空状态）
-- [ ] T9: Pre-Chat handoff 改造（结构化偏好+竞态处理）
+- [x] T5: MealPlanCard 组件（课程分组+替换+整套加入+并发防抖）
+- [x] T6: SelectedDishesCard 组件（系统消息样式+事实摘要）
+- [x] T7: AgentChatView 改造（流式JSON解析+MealPlanCard+OrderAction）
+- [x] T8: ExploreView 改造（双出口+写入Order+空状态）
+- [x] T9: Pre-Chat handoff 改造（结构化偏好+竞态处理）
 
 #### Phase 3: Waiter 升级 + 验收（3/9 ~ 3/10）
-- [ ] T10: WaiterAllergyBanner（三语过敏栏）
-- [ ] T11: AllergenWarningSheet（Waiter入口确认）
-- [ ] T12: DishCommunicationPanel（指点式沟通面板）
-- [ ] T13: WaiterModeView 集成
-- [ ] T14: 导航状态机端到端验证
-- [ ] T15: 真机验收 + 部署
+- [x] T10: WaiterAllergyBanner（三语过敏栏）
+- [x] T11: AllergenWarningSheet（Waiter入口确认）
+- [x] T12: DishCommunicationPanel（指点式沟通面板）
+- [x] T13: WaiterModeView 集成
+- [x] T14: 导航状态机端到端验证
+- [x] T15: 真机验收 + 部署
 
 #### 质量与运营
 - [ ] **Paywall 实现**（免费 5 次，DEC-030）— 降低优先级，核心体验优先
@@ -117,7 +117,7 @@
 |------|------|---------|------|
 | AI 识别准确率 | 复杂菜单（手写/竖排/低质量图片）识别失败 | Mock 降级 + 引导重拍（DEC-019）| 🟡 待真机验证 |
 | Scanner 真机问题 | getUserMedia 在非 HTTPS 无法使用 | 已部署到 CF Pages（HTTPS）| ✅ 已验证（HTTPS 部署正常）|
-| **流式 JSON 代码块 fallback 率** | SSE 末尾 JSON 截断/格式错误导致解析失败，影响 MealPlan 和 Order 操作（DEC-052v2/058）| 需 POC 验证 fallback 率，设计健壮 fallback 策略 | 🔴 **需 POC 验证** |
+| **流式 JSON 代码块 fallback 率** | SSE 末尾 JSON 截断/格式错误导致解析失败，影响 MealPlan 和 Order 操作（DEC-052v2/058）| 需 POC 验证 fallback 率，设计健壮 fallback 策略 | ✅ 已验证（L1/L2/L3 fallback，106 测试通过） |
 
 ### 已解决的风险
 | 风险 | 解决方案 |
