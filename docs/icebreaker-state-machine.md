@@ -1,8 +1,8 @@
 # ICEBREAKER_STATE_MACHINE.md — Icebreaker 状态机设计
 
-> 版本: v1.1（已纳入 Mr. Xia 确认意见，DEC-027）
-> 日期: 2026-02-26
-> 状态: ✅ 已对齐，待合并入 PRD v1.4
+> 版本: v1.2（补充结构化偏好摘要 + 竞态处理，DEC-027）
+> 日期: 2026-03-02
+> 状态: ✅ 已对齐 PRD v2.0 F06
 
 ---
 
@@ -125,12 +125,37 @@ pre_chat 阶段：
 
 识别完成时，执行以下两步：
 
+### 4.0 竞态处理（PRD v2.0 F06）
+
+若识别在 Pre-Chat 某轮对话中途完成（用户已发送消息但 AI 尚未回复），**等待当前轮次结束**（用户发送 + AI 回复完成）后再执行 handoff，不打断用户输入。
+
+实现要点：
+- 设 `analyzeReady = true` 标记识别已完成
+- 在每轮 AI 回复结束的回调中检查 `analyzeReady`，若为 true 则触发 handoff
+- 避免在用户输入框有焦点 / AI 正在流式回复时切换 chatPhase
+
+---
+
 ### 4.1 Step 1：提炼关键信息
 
 Pre-Chat 过程中，AI 每次响应都已经在 inline 提炼 `preferenceUpdates`，
 写入 `PreferencesContext`（和主 Chat 完全一致的机制）。
 
 识别完成时，已提炼的偏好直接存在 preferences 里，无需额外 API 调用。
+
+**结构化偏好摘要必传字段**（PRD v2.0 F06）：
+
+```typescript
+interface PreferenceSummary {
+  diners: number;          // 用餐人数
+  restrictions: string[];  // 饮食限制（如 "不吃辣", "素食"）
+  allergies: string[];     // 过敏原（如 "花生", "海鲜"）
+  tastes: string[];        // 口味偏好（如 "清淡", "重口"）
+  mood: string;            // 用餐心情/意图（如 "探索特色", "稳妥保险"）
+}
+```
+
+此结构化摘要确保主 Chat 不依赖对 Pre-Chat 原文的"理解"，即使 Pre-Chat 对话被截断或压缩，关键偏好信息也不丢失。
 
 ```typescript
 // 识别完成时，PreferencesContext 已经包含：
@@ -296,4 +321,4 @@ const prompt = payload.mode === 'pre_chat'
 
 ---
 
-*v1.1 已对齐，合并入 PRD v1.4 后生效*
+*v1.2 已对齐 PRD v2.0 F06，含结构化偏好摘要 + 竞态处理*

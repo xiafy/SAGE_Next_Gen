@@ -380,6 +380,44 @@ Chat 降级:
 
 ---
 
+## 七-B、Chat 输出与 Order 交互架构（DEC-052v2/055/057/058/059/060）
+
+> 以下决策在 2026-03-02 批量确认，补充 Chat↔Order↔Waiter 的数据流架构。
+
+### Chat 回复末尾 JSON 代码块（DEC-052v2）
+
+AI 对话回复采用"流式叙事文字 + 末尾 \`\`\`json 代码块"格式。代码块可能包含两种结构：
+- **MealPlan**：完整用餐方案（courses 数组），前端提取后渲染 MealPlanCard
+- **OrderAction**：Order 操作指令（add/remove/replace），前端自动执行
+
+分级 fallback：L1 完整解析→卡片 / L2 jsonrepair→简化卡片 / L3 纯文字+"重新生成方案"按钮。
+
+### MealPlanCard 提案模式（DEC-055）
+
+MealPlanCard 与 Order 是独立数据：
+- MealPlanCard = AI 搭配提案，「整套加入」= 复制到 Order 后脱钩
+- Order = 唯一执行数据源，用户可在 Order 页自由增删
+- 新 MealPlanCard 替换旧卡片（不保留历史版本）
+- 并发防抖：`basedOnVersion` 版本号，旧响应丢弃
+
+### 导航状态机（DEC-057）
+
+Order 是 Waiter 的唯一数据源。Explore 的两个出口（展示给服务员 / 咨询 AI）都先将已选菜品写入 Order。详见 `docs/navigation-spec.md` v2.0。
+
+### Chat 直接操作 Order（DEC-058）
+
+AI 回复末尾 JSON 代码块可包含 `orderAction`（add/remove/replace），前端检测到后自动执行 Order 修改。用户在 Chat 中说"把牛排换成龙虾"→ AI 直接操作，无需二次确认。
+
+### 课程结构动态生成（DEC-059）
+
+MealPlan 的 `courses` 数组由 AI 根据菜单所属餐饮文化动态生成（中餐/日料/泰餐/西餐各有不同课程结构），前端不假设固定顺序。菜品 <5 道时不输出 MealPlanCard。
+
+### Waiter 指点式沟通面板（DEC-060）
+
+Waiter Mode 下点击菜品弹出双语沟通面板（用户语言 + `detectedLanguage`），支持：售罄标记（移除+推荐替代）、换菜、加份、其他问题（转 Chat）。详见 `docs/navigation-spec.md` v2.0。
+
+---
+
 ## 八、性能基准（2026-03-02 实测）
 
 | 指标 | 数值 | 备注 |

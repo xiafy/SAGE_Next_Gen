@@ -379,6 +379,58 @@ const chatRetryConfig = {
 
 ---
 
+### Chat 输出格式：末尾 JSON 代码块（DEC-052v2、DEC-058、DEC-059）
+
+AI 对话回复（`/api/chat` SSE 流）采用"流式叙事文字 + 末尾 \`\`\`json 代码块"格式。
+
+**代码块可能包含的结构**：
+
+```typescript
+// 方案型：MealPlan（DEC-052v2、DEC-059）
+interface MealPlan {
+  courses: {
+    name: string;            // AI 动态生成（如"凉菜"/"Starter"/"刺身"）
+    items: {
+      dishId: string;
+      name: string;
+      reason: string;        // 推荐理由
+    }[];
+  }[];
+  totalEstimate?: number;    // 预估总价
+  pairingNote?: string;      // 搭配逻辑说明
+}
+
+// 操作型：OrderAction（DEC-058）
+interface OrderAction {
+  orderAction: 'add' | 'remove' | 'replace';
+  remove?: { dishId: string };
+  add?: { dishId: string; qty: number };
+}
+```
+
+**前端解析流程**：
+1. 流式中检测到 \`\`\`json → 显示"🍽 正在生成方案…"占位
+2. 流式结束后提取最后一个 json 代码块 → parse
+3. 含 `courses` → 渲染 MealPlanCard（DEC-055 提案模式，与 Order 独立）
+4. 含 `orderAction` → 自动执行 Order 修改（DEC-058）
+5. 分级 fallback：L1 完整→卡片 / L2 jsonrepair→简化卡片 / L3 纯文字+「重新生成方案」按钮
+
+> MealPlanCard 是提案模式（DEC-055）：与 Order 独立数据，「整套加入」= 复制到 Order 后脱钩。新卡片替换旧卡片，不保留历史。
+
+> 课程结构由 AI 动态生成（DEC-059）：不硬编码西餐"前菜→主菜→甜品"，根据菜单所属餐饮文化决定。
+
+### Waiter 沟通面板交互（DEC-060）
+
+Waiter Mode 下点击菜品触发的沟通面板不涉及新 API 端点，所有操作在前端完成：
+- 🚫 售罄 → 从 Order 移除（前端状态）→ 可选跳转 Chat 获取 AI 替代推荐
+- 🔄 换菜 → 跳转 Explore 或 Chat
+- ➕ 加份 → Order 数量 +1（前端状态）
+- ❓ 其他 → 跳转 Chat（携带菜品上下文作为 system message）
+
+导航状态机（DEC-057）：Order 是 Waiter 唯一数据源，详见 `docs/navigation-spec.md` v2.0。
+
+---
+
 ### `GET /api/health`
 
 **功能**: 健康检查（CI/CD 部署验证、监控探针）
