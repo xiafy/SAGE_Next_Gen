@@ -1,7 +1,8 @@
-# TASK_TEMPLATE.md — 编码任务下发模板 v2.0
+# TASK_TEMPLATE.md — 编码任务下发模板
 
 > SAGE Agent 向子 Agent 下发任务时，必须使用此模板。
-> 更新日志：v2.0 (2026-03-02) — 新增决策上下文、冲突检查、集成测试要求（DEC-063/064 复盘改进）
+> 禁止内联 API schema 或类型定义——必须引用源文件。
+> 最后更新: 2026-03-02（DEC-063/064/065 升级）
 
 ---
 
@@ -10,118 +11,116 @@
 ```markdown
 # TASK: [任务名称]
 
-## 决策上下文（MUST READ）
+## 0. 前置检查（开始前确认）
 
-> 列出与本任务相关的所有 DEC，每条用一句话解释决策动机和约束。
-> 子 Agent 必须理解"为什么"，不只是"做什么"。
+- [ ] vision.md 与本次变更方向一致
+- [ ] PRD.md 已更新，验收标准明确，无 [TBD] 项悬空
+- [ ] Spec 已写，[MUST]/[SHOULD]/[TBD] 均已标注
+- [ ] shared/types.ts 已更新（如涉及）
+- [ ] 相关 DEC 之间无矛盾
+- [ ] P0 功能测试骨架已写（见下方"测试要求"）
 
-- DEC-XXX: [一句话解释决策动机和约束]
-- DEC-YYY: [一句话解释决策动机和约束]
+> ⚠️ 任何一项未通过 → 停止，先解决再继续编码。
 
-## 冲突检查（编码前逐条确认）
+## 1. 必读文件（开始编码前先完整读取）
 
-> 列出与本任务数据模型相关的所有 DEC/Spec，确认无矛盾。
-
-| DEC/Spec A | DEC/Spec B | 冲突点 | 确认无矛盾 |
-|-----------|-----------|--------|-----------|
-| DEC-XXX   | DEC-YYY   | [可能冲突的点] | □ |
-
-## 必读文件（开始编码前先 cat 以下文件）
-
-- `CLAUDE.md` — Agent 行为基准
+- `docs/vision.md` — 产品愿景（顶层权威）
 - `docs/prd.md` 的 [F编号] 章节 — 验收标准
-- `docs/api-design.md` 的 [§编号] — API 契约
+- `specs/[spec文件].md` — 功能 Spec（执行细则）
 - `shared/types.ts` — 权威类型定义
-- `specs/[相关spec].md` — 功能 Spec（注意 [MUST]/[SHOULD]/[TBD] 标注）
-- [其他相关文件]
+- `docs/api-design.md` §[编号] — API 契约（如涉及）
+- [其他相关文件，如现有 view 代码、worker handler]
 
-## 硬门禁（必须按顺序执行）
+## 2. 关键决策上下文（MUST READ）
 
-- [ ] G0 一致性矩阵：DEC ↔ PRD ↔ Spec ↔ types.ts ↔ Prompt 已确认一致
-- [ ] G1 Spec：[TBD] 项已全部确认，无模糊项
-- [ ] G2 Test：P0 验收测试骨架已写（.test.ts）
-- [ ] G3 Code：开始编码
-- [ ] G4 Unit+Component Test：单元 + 组件测试通过
-- [ ] G5 Integration Test：集成测试通过（跨组件数据流）
-- [ ] G6 Build：`npm run build` + `npx tsc --noEmit` 通过
-- [ ] G7 Local Preview：`npm run dev` 走完目标路径
+> 说明每条 DEC 的决策动机和核心约束，不只列编号。
 
-## PRD 验收标准清单（完成后逐条确认）
+- **DEC-XXX**：[一句话：为什么这么决策 + 关键约束]
+- **DEC-YYY**：[一句话：为什么这么决策 + 关键约束]
 
-- [ ] [F编号] AC1: [具体验收条件]
+## 3. 冲突检查
+
+以下 DEC 涉及同一数据模型，确认互相不矛盾：
+- DEC-XXX [字段A] vs DEC-YYY [字段A] → [已对齐/差异说明]
+
+## 4. PRD 验收标准清单（完成后逐条确认）
+
+- [ ] [F编号] AC1: [具体验收条件，引用 Spec §X.X]
 - [ ] [F编号] AC2: [具体验收条件]
+- [ ] 边界场景: [至少列 2 个边界/异常场景]
 
-## 必须新增的测试（DEC-064 要求）
+## 5. 测试要求（DEC-064）
 
-### 单元测试（必须）
-- [ ] [描述要测的 reducer/util 行为]
+> 配比目标：单元 50% / 组件 20% / 集成 20% / E2E 10%
 
-### 组件测试（必须）
-- [ ] [描述要测的组件渲染/交互]
+必须新增的测试（写出具体测试描述，不是"写测试"）：
+- 单元: `[测试文件]` — [具体场景，如"sold_out 后 orderItems 移除对应菜品"]
+- 组件: `[测试文件]` — [具体渲染行为]
+- 集成: `[测试文件]` — [跨层验证场景，如"Explore选菜→注入Chat→AI响应"]
+- Worker: `[handler测试]` — [至少 1 个 handler 单元测试]
 
-### 集成测试（如涉及跨组件数据流）
-- [ ] [描述要测的数据流链路]
-
-### Worker 测试（如涉及 handler 变更）
-- [ ] [描述要测的 handler 行为]
-
-## 契约断言（完成后 grep 验证）
+## 6. 契约断言（完成后 grep 验证）
 
 ```bash
-# 示例
-grep -n "import.*shared/types" src/api/         # 确认从 shared 导入
-grep -rn "orderStore" src/ --include="*.tsx"     # 确认无遗留引用
+grep -n "[关键字段]" [文件路径]     # 确认 [预期行为]
+grep -n "[关键字段]" [文件路径]     # 确认 [预期行为]
 ```
 
-## 技术约束
+## 7. 禁止项
 
-- 所有 API 相关类型必须从 `shared/types.ts` 导入，禁止重新定义
+- 禁止 `any`、禁止 `console.log`（用 logger.ts）
+- 禁止内联 API schema，引用 shared/types.ts
+- 禁止遗留废弃文件（修改前 grep 确认无残留引用后删除）
+- 百炼 API 必须 `enable_thinking: false`（DEC-028）
 - Tailwind v4：用 `@theme`，不用 `tailwind.config.js`
-- 禁止 `any`、禁止 `console.log`（调试用 debug 面板）
-- 百炼 API 调用必须有 `enable_thinking: false`（DEC-028）
 
-## 任务描述
+## 8. 任务描述
 
-[具体编码要求。禁止内联 schema，用"按照 shared/types.ts 的 XXX 接口"引用。]
+[具体编码要求，不内联 schema。用"按照 shared/types.ts 的 XxxType 接口"代替复述类型定义]
 
-## Spec 模糊项处理
-
-> 如果 Spec 中有 [TBD] 标注的项，**必须停下来问**，不得自行跳过或猜测实现。
-
-## 完成后自检
+## 9. 完成自检
 
 1. `npx tsc --noEmit` — 零错误
 2. `npm run build` — 零警告
-3. `npm test` — 全部通过
-4. 上方"硬门禁 G0~G7"全部打 ✅
-5. 上方"PRD 验收标准清单"全部打 ✅
-6. 上方"必须新增的测试"全部打 ✅
-7. 上方"契约断言"全部 grep 通过
-8. 状态机 trace：手动确认主路径 home → scanner → chat → order → waiter 无断裂
+3. `npx vitest run` — 全部通过，无新 skip
+4. 上方"PRD 验收标准清单"全部打 ✅
+5. 上方"契约断言"全部 grep 通过
+6. 新增测试覆盖上方"测试要求"所有场景
+7. 若改了公共组件，全局 grep 使用点并逐页回归
+8. 若涉及导航，手动确认主路径 Home→Scanner→Chat→Explore→Order→Waiter 无断裂
 
 ## 完成信号
 
-TASK_DONE
+输出变更摘要（文件数 + 新增/修改行数 + 测试通过数），然后：TASK_DONE
 ```
 
 ---
 
-## 反模式
+## 反模式（禁止）
+
+### ❌ 跳过前置检查直接编码
+
+**为什么错**：Sprint 3 复盘显示 40% 的 🔴 来自规格不一致。目标不清晰时进入研发是最大的返工风险。
 
 ### ❌ 内联 API schema
-在 TASK.md 中手写简化版接口定义 → 子 Agent 照着简化版写代码，丢失字段结构。
+
+```markdown
+# 错误示例
+/api/chat 请求体：{ "mode": "pre_chat", "messages": [...] }
+```
+
+**为什么错**：简化版丢失字段结构，子 Agent 会照着简化版写代码。
 
 ### ✅ 正确做法
-"请求体类型严格按照 `shared/types.ts` 的 `ChatRequest` 接口。开始前先 `cat shared/types.ts` 确认字段。"
 
-### ❌ 跳过冲突检查
-多条 DEC 涉及同一数据模型但未交叉验证 → 实现后审查发现矛盾 → 返工。
+```markdown
+请求体类型严格按照 shared/types.ts 的 ChatRequest 接口。
+```
 
-### ✅ 正确做法
-在"冲突检查"表中列出所有相关 DEC 对，逐一确认无矛盾后再编码。
+### ❌ 只写单元测试
 
-### ❌ 遇到 [TBD] 自行猜测
-Spec 中标注 [TBD] 的需求项，子 Agent 选择跳过或猜一个实现 → 审查发现遗漏。
+**为什么错**：106 条单元测试，覆盖率仍只有 5/10（Sprint 3 教训）。集成测试和 E2E 才能验证真实行为链路。
 
-### ✅ 正确做法
-遇到 [TBD] 立即停止编码，回报 SAGE Agent 或夏总确认后继续。
+### ❌ 最终审查发现业务逻辑 Bug
+
+**为什么错**：最终审查只允许样式/文案/性能微调。业务逻辑 Bug 必须在实现审查（轮 2）关闭。
