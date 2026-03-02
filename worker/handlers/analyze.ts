@@ -132,6 +132,10 @@ function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: 
       if (!nameOriginal) return null;
       const priceText = String(item?.priceText ?? item?.price ?? '').trim();
       const id = String(item?.id ?? randId(idx)).slice(0, 8).padEnd(8, '0');
+      // 提取 VL 阶段识别出的过敏原编号（如欧盟标注 "(1,6)" → [1,6]）
+      const rawCodes = Array.isArray(item?.allergenCodes) ? item.allergenCodes : [];
+      const allergenCodes = rawCodes.filter((c: unknown) => Number.isInteger(c) && (c as number) > 0) as number[];
+
       return {
         id,
         nameOriginal,
@@ -145,6 +149,7 @@ function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: 
         spiceLevel: 0,
         calories: null,
         __category: String(item?.category ?? item?.categoryName ?? '其他').trim() || '其他',
+        __allergenCodes: allergenCodes, // 临时字段：传递给 Enrich，不发往前端
       };
     })
     .filter(Boolean) as Array<any>;
@@ -297,8 +302,9 @@ async function runAnalyzePipeline(
       userText: buildMenuAnalysisUserMessage(context.language, images.length),
       images: images.map((img) => ({ mimeType: img.mimeType, data: img.data })),
       apiKey: env.GEMINI_API_KEY,
-      timeoutMs: 25_000,
+      timeoutMs: 35_000,
       requestId,
+      maxOutputTokens: 8192,
     });
     tVisionEnd = Date.now();
   } catch (err) {
@@ -353,6 +359,8 @@ async function runAnalyzePipeline(
         nameOriginal: i.nameOriginal,
         nameTranslated: i.nameTranslated,
         category: result.categories.find(c => c.itemIds.includes(i.id))?.nameOriginal,
+        // 将 VL 阶段提取的过敏原编号传递给 Enrich（临时字段，不在 schema 中）
+        allergenCodes: (i as Record<string, unknown>).__allergenCodes as number[] | undefined,
       }));
 
       const enrichRaw = await fetchGeminiComplete({
@@ -360,8 +368,9 @@ async function runAnalyzePipeline(
         systemPrompt: MENU_ENRICH_SYSTEM,
         userText: buildEnrichUserMessage(enrichInput, context.language),
         apiKey: env.GEMINI_API_KEY,
-        timeoutMs: 20_000,
+        timeoutMs: 25_000,
         requestId: `${requestId}-enrich`,
+        maxOutputTokens: 8192,
       });
 
       const enrichJson = extractJson(enrichRaw);
@@ -422,6 +431,11 @@ async function runAnalyzePipeline(
           if (typeof enriched.spiceLevel === 'number' && enriched.spiceLevel >= 0 && enriched.spiceLevel <= 5) {
             item.spiceLevel = enriched.spiceLevel;
           }
+        }
+
+        // 清理临时字段，避免发往前端
+        for (const item of result.items) {
+          delete (item as Record<string, unknown>).__allergenCodes;
         }
 
         logger.info('analyze: enrich success', { requestId, enrichedCount: enrichMap.size, totalItems: result.items.length });

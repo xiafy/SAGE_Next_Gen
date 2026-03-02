@@ -520,6 +520,22 @@
 
 ---
 
+### [DEC-050] Prompt v8：allergenCodes 提取 + EU 编号对照表 + max_tokens=8192
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 基准测试（v2）显示：加入 EU 过敏原编号对照表后，Gemini allergens 召回率从 75% 提升至 100%；max_tokens=4096 导致大菜单 JSON 截断。
+- **决策**:
+  1. `MENU_ANALYSIS_SYSTEM` 升级为 v8：VL 阶段额外提取 `allergenCodes`（图片上的括号数字）
+  2. `MENU_ENRICH_SYSTEM` 加入 EU 1-11 编号对照表，allergens 综合"编号转换"和"食品知识推理"双来源
+  3. `buildEnrichUserMessage` 将 allergenCodes 传入 Enrich 文本输入
+  4. `fetchGeminiComplete` 的 VL 和 Enrich 调用均改为 `maxOutputTokens=8192`
+  5. VL timeout 25s → 35s，Enrich timeout 20s → 25s
+- **测试依据**: `tests/vl-model-benchmark/raw-v2/` + `RESULTS-summary.md`
+- **影响**: `worker/prompts/menuAnalysis.ts`，`worker/handlers/analyze.ts`
+
+---
+
 ### [DEC-046] 两阶段 SSE 展示策略：通过 A/B Test 决策，不提前假设结论
 
 - **日期**: 2026-03-02
