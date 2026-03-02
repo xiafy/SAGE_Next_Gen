@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:backfill": "node ../tests/test-06-sprint2-backfill-regression.mjs"
+    "test:backfill": "node ../tests/test-06-sprint2-backfill-regression.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@fontsource/nunito": "^5.2.7",

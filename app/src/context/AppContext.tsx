@@ -281,6 +281,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'SET_WAITER_ALLERGY_CONFIRMED':
       return { ...state, waiterAllergyConfirmed: action.confirmed };
+    default:
+      return state;
   }
 }
 

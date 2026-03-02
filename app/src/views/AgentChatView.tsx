@@ -56,13 +56,13 @@ function buildSelectedDishesSystemMessage(payload: SelectedDishesPayload): strin
   if (payload.newlySelected.length > 0) {
     parts.push('用户刚从菜单中新选了以下菜品：');
     for (const d of payload.newlySelected) {
-      parts.push(`- ${d.name}（${d.nameOriginal}）${d.price ? ` ¥${d.price}` : ''} [${d.category}]`);
+      parts.push(`- ${d.name}（${d.nameOriginal}）${d.price != null ? ` ${d.price}` : ''} [${d.category}]`);
     }
   }
   if (payload.existingOrder.length > 0) {
     parts.push('用户点菜单中已有以下菜品：');
     for (const d of payload.existingOrder) {
-      parts.push(`- ${d.name}（${d.nameOriginal}）${d.price ? ` ¥${d.price}` : ''} [${d.category}]`);
+      parts.push(`- ${d.name}（${d.nameOriginal}）${d.price != null ? ` ${d.price}` : ''} [${d.category}]`);
     }
   }
   parts.push('请用事实摘要回复（数量、分类分布、预估总价），然后用开放式问题引导用户。不要主动分析搭配。');

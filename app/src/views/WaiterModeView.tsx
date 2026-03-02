@@ -163,8 +163,12 @@ export function WaiterModeView() {
         setToast(isZh ? `${dish.nameTranslated} +1` : `${dish.nameOriginal} +1`);
         break;
       case 'other':
-        // Navigate to Chat, no auto-message
-        dispatch({ type: 'NAV_TO', view: 'chat' });
+        // Navigate to Chat with dish context
+        goToChatWithMessage(
+          isZh
+            ? `我想问一下关于 ${dish.nameTranslated || dish.nameOriginal} 的问题`
+            : `I have a question about ${dish.nameOriginal}`
+        );
         break;
     }
     setSelectedDish(null);
