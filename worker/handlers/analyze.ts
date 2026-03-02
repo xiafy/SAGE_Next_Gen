@@ -317,7 +317,7 @@ async function runAnalyzePipeline(
       modelUsed = 'qwen3-vl-flash(fallback)';
       try {
         rawText = await fetchBailianComplete({
-          model: 'qwen3-vl-flash',
+          model: 'qwen-vl-plus',
           messages: [
             { role: 'system', content: MENU_ANALYSIS_SYSTEM },
             { role: 'user', content: [
@@ -328,7 +328,8 @@ async function runAnalyzePipeline(
               { type: 'text' as const, text: buildMenuAnalysisUserMessage(context.language, images.length) },
             ]},
           ],
-          apiKey: env.BAILIAN_API_KEY,
+          apiKey: env.BAILIAN_INTL_API_KEY,
+          baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
           timeoutMs: 40_000,
           requestId,
         });
@@ -406,7 +407,8 @@ async function runAnalyzePipeline(
               { role: 'system', content: MENU_ENRICH_SYSTEM },
               { role: 'user', content: buildEnrichUserMessage(enrichInput, context.language) },
             ],
-            apiKey: env.BAILIAN_API_KEY,
+            apiKey: env.BAILIAN_INTL_API_KEY,
+            baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
             timeoutMs: 30_000,
             requestId: `${requestId}-enrich`,
           })

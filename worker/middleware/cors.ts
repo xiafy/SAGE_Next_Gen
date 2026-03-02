@@ -2,7 +2,8 @@
 
 export interface Env {
   BAILIAN_API_KEY: string;
-  GEMINI_API_KEY: string;   // Gemini 2.0 Flash，用于 VL 识别（DEC-045）
+  BAILIAN_INTL_API_KEY: string; // 百炼新加坡国际站 Key（地理兜底路径使用）
+  GEMINI_API_KEY: string;       // Gemini 2.0 Flash，用于 VL 识别（DEC-045）
   ALLOWED_ORIGINS?: string;
 }
 

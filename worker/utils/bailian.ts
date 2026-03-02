@@ -36,6 +36,7 @@ export interface BailianCallOptions {
   apiKey: string;
   timeoutMs?: number;
   requestId?: string;
+  baseUrl?: string; // 覆盖默认端点，如国际站 https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 }
 
 /** SSE chunk delta */
@@ -66,9 +67,9 @@ function parseSSELine(line: string): StreamDelta | null {
  *   - 实测 stream=false 比 stream=true 快约 2 倍（~13s vs ~31s）
  */
 export async function fetchComplete(opts: BailianCallOptions): Promise<string> {
-  const { model, messages, apiKey, timeoutMs = DEFAULT_TIMEOUT_MS, requestId } = opts;
+  const { model, messages, apiKey, timeoutMs = DEFAULT_TIMEOUT_MS, requestId, baseUrl = BASE_URL } = opts;
 
-  const res = await fetch(`${BASE_URL}/chat/completions`, {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
