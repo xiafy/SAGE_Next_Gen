@@ -41,6 +41,11 @@
 - **When** 再次进入 Explore 选新菜后点「咨询 AI」
 - **Then** 新的 SelectedDishesCard 注入（基于新的 Order 快照差异），不覆盖旧卡片
 
+### TC-CI-005: AI 偏离事实摘要格式
+- **Given** system message 注入成功，AI 收到已选菜品信息
+- **When** AI 回复不符合事实摘要格式（如直接给搭配建议或闲聊）
+- **Then** 仍正常展示 AI 回复，不阻塞对话流（prompt 约束为 best-effort）
+
 ---
 
 ## 3. SelectedDishesCard 显示

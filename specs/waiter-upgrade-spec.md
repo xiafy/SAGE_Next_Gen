@@ -283,6 +283,40 @@ const COMM_PHRASES: Record<CommunicationAction, Record<string, string>> = {
 };
 ```
 
+
+### 6.2 翻译表维护策略
+
+**MVP 覆盖范围**：top 5 语言 — th（泰语）、ja（日语）、ko（韩语）、zh（中文）、en（英语）
+
+**维护流程**：
+1. AI 批量生成初始翻译（覆盖全部 19 项 × 5 语言 = 95 条目）
+2. 过敏原术语需人工校验（涉及安全，不能纯依赖 AI）
+3. 其余语言（fr/es/it/de 等）标注 TBD，降级为英文显示
+
+**完整翻译条目清单**（19 项 × 5 语言 = 95 条目）：
+
+| 类别 | 条目 | en | th | ja | ko | zh |
+|------|------|----|----|----|----|-----|
+| 过敏原 | peanut | Peanut allergy | ไม่ทานถั่ว | ピーナッツアレルギー | 땅콩 알레르기 | 花生过敏 |
+| 过敏原 | shellfish | Shellfish allergy | แพ้อาหารทะเลมีเปลือก | 甲殻類アレルギー | 갑각류 알레르기 | 甲壳类过敏 |
+| 过敏原 | dairy | Dairy allergy | แพ้นม | 乳製品アレルギー | 유제품 알레르기 | 乳制品过敏 |
+| 过敏原 | gluten | Gluten allergy | แพ้กลูเตน | グルテンアレルギー | 글루텐 알레르기 | 麸质过敏 |
+| 过敏原 | tree_nut | Tree nut allergy | แพ้ถั่วเปลือกแข็ง | ナッツアレルギー | 견과류 알레르기 | 坚果过敏 |
+| 过敏原 | egg | Egg allergy | แพ้ไข่ | 卵アレルギー | 달걀 알레르기 | 鸡蛋过敏 |
+| 过敏原 | soy | Soy allergy | แพ้ถั่วเหลือง | 大豆アレルギー | 대두 알레르기 | 大豆过敏 |
+| 过敏原 | fish | Fish allergy | แพ้ปลา | 魚アレルギー | 생선 알레르기 | 鱼类过敏 |
+| 禁忌 | vegetarian | Vegetarian | มังสวิรัติ | ベジタリアン | 채식주의 | 素食 |
+| 禁忌 | halal | Halal only | ฮาลาล | ハラール | 할랄 | 清真 |
+| 禁忌 | vegan | Vegan | วีแกน | ヴィーガン | 비건 | 纯素 |
+| 沟通短语 | sold_out | Sold out | ไม่มี | 売り切れ | 품절 | 没有了 |
+| 沟通短语 | change | Change this | เปลี่ยน | 変更 | 변경 | 换一道 |
+| 沟通短语 | add_more | One more | เพิ่ม | もう一つ | 추가 | 加一份 |
+| 沟通短语 | other | Other question | อื่นๆ | その他 | 기타 | 其他问题 |
+| 确认短语 | confirm_soldout | {dish} - Sold out | {dish} ไม่มี | {dish} 売り切れ | {dish} 품절 | {dish} 没有了 |
+| 确认短语 | confirm_change | Please recommend other | ช่วยแนะนำอย่างอื่น | 他のおすすめは？ | 다른 추천 부탁 | 请推荐其他菜 |
+| 确认短语 | confirm_addmore | One more {dish} | เพิ่ม {dish} | {dish} もう一つ | {dish} 추가 | 再来一份 {dish} |
+| 确认短语 | confirm_other | Question about {dish} | สอบถามเกี่ยวกับ {dish} | {dish}について質問 | {dish} 관련 질문 | 关于 {dish} 的问题 |
+
 ---
 
 ## 7. 集成点

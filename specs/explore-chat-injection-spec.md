@@ -93,10 +93,10 @@ interface SelectedDishesCardProps {
   ↓ 点「咨询 AI」
 
 [前端逻辑]
-  1. 快照当前新增菜品：
-     newlySelected = 本次 Explore 会话中新增到 Order 的菜品
-     existingOrder = 进入 Explore 前 Order 中已有的菜品
-     （通过对比进入 Explore 时的 Order 快照与当前 Order 差异计算）
+  1. 获取本次新增菜品：
+     newlySelected = Explore 本地维护的 newlySelected[] 列表（每次点 ➕ 同步追加到此列表）
+     existingOrder = 进入 Explore 前 Order 中已有的菜品（来自 orderSnapshotOnExploreEnter）
+     （不重新对比 Order 差异，直接使用 newlySelected 列表，避免竞态）
 
   2. 构造 SelectedDishesPayload
 
@@ -178,6 +178,7 @@ function buildSelectedDishesSystemMessage(payload: SelectedDishesPayload): strin
 - 区分"新选"和"已有"
 - 不主动分析搭配（等用户明确方向后再深入）
 - 使用用户语言
+- 末尾附带 QuickReplies 快捷按钮：「看看搭配建议」「聊聊某道菜」
 
 ---
 
@@ -219,5 +220,6 @@ function buildSelectedDishesSystemMessage(payload: SelectedDishesPayload): strin
 | existingOrder 为空 | 只展示 newlySelected 部分 |
 | 菜品无价格 | 总价计算跳过无价格项，显示"部分菜品价格未知" |
 | 进入 Explore 后又回 Chat 再回 Explore | 每次进入 Explore 重新记录 Order 快照 |
+| 退出 Explore | orderSnapshotOnExploreEnter 在退出 Explore 时清除（无论走哪个出口：咨询 AI / 展示给服务员 / 返回） |
 | AI 回复不符合事实摘要格式 | 正常展示（prompt 约束为 best-effort）|
 | menuData.items 为空 | 展示空状态引导页 |

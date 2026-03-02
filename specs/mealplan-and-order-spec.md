@@ -54,9 +54,13 @@ export type OrderActionType = 'add' | 'remove' | 'replace';
 export interface OrderAction {
   orderAction: OrderActionType;
   remove?: { dishId: string };
-  add?: { dishId: string; name: string; nameOriginal: string; price: number | null; qty: number };
+  add?: { dishId: string; qty: number };  // 前端从 menuData 补全 name/nameOriginal/price
 }
 ```
+
+> **qty 语义**：add.qty 为**目标数量**（不是增量）。例如用户说"要3份 Pad Thai"，则 qty=3，前端直接设置 Order 中该 dishId 的数量为 3。
+
+> **replace 边界**：replace 操作要求 add.dishId ≠ remove.dishId，相同时前端忽略该指令。
 
 ### 2.3 OrderItem（现有，无需修改）
 
@@ -96,17 +100,17 @@ interface MealPlanCardProps {
 - 非活跃态（`isActive=false`）：整卡灰化 opacity-50，按钮全部 disabled，顶部标注"已更新"
 - 替换中的菜品行：该行按钮变 loading spinner，其他所有「🔄」按钮同时 disabled
 
-### 3.3 生命周期（DEC-055A）
+### 3.3 生命周期（DEC-055A / DEC-061 追加模式）
 
 ```
-[创建] ──→ [活跃] ──→ [被替换(灰化)]
+[创建] ──→ [活跃] ──→ [被替换(灰化，保留历史)]
               │              ↑
               └── AI 回复新 MealPlan ──┘
 
 规则：
 1. AI 流式回复末尾 JSON 解析成功 → 创建新 MealPlanCard（活跃）
-2. 新 MealPlanCard 直接替换旧卡片在对话流中的位置（同一个 message slot）
-3. 旧卡片标记 isActive=false（灰化，不可操作）
+2. 新 MealPlanCard 作为新消息追加到对话流末尾（不替换旧卡片位置）
+3. 旧 MealPlanCard 标记 isActive=false（灰化，不可操作，保留历史可回看）
 4. 对话流中同一时刻只有一个活跃 MealPlanCard
 5. 「整套加入订单」后卡片仍保持活跃（可继续替换操作）
 ```
@@ -121,8 +125,8 @@ interface MealPlanCardProps {
 流程：
 1. 用户点「🔄」→ activeMealPlanVersion++ → replacingDishId = dishId
 2. 所有「🔄」按钮 disabled，当前行显示 spinner
-3. 发消息给 AI（携带 basedOnVersion）
-4. AI 回复新 MealPlan → 检查 version === activeMealPlanVersion
+3. 发消息给 AI
+4. AI 回复新 MealPlan → 前端比较响应到达时的 activeMealPlanVersion 与发送请求时记录的版本
    ├── 匹配 → 渲染新卡片，replacingDishId = null
    └── 不匹配 → 静默丢弃
 5. 超时 15s → 恢复按钮，toast 提示
@@ -218,7 +222,9 @@ AI 流式输出叙事文字（逐字显示）
   ↓ 流式结束
 提取 JSON → 分级 fallback → L1 成功 → MealPlanCard 替换占位
   ↓ 用户点「🍽 整套加入订单」
-dispatch BATCH_ADD_TO_ORDER → toast 确认
+dispatch BATCH_ADD_TO_ORDER → toast "已加入 N 道菜到点菜单"
+  ↓
+显示 QuickReplies 快捷按钮："去看点菜单" / "继续聊" / "展示给服务员"
 ```
 
 ### 6.2 替换流程（DEC-054）
@@ -230,7 +236,7 @@ dispatch BATCH_ADD_TO_ORDER → toast 确认
   ↓ （按钮 disabled，spinner）
 AI 流式回复：新的搭配说明 + 末尾新 MealPlan JSON
   ↓
-新 MealPlanCard 替换旧卡片位置，旧卡片灰化
+新 MealPlanCard 追加到对话流末尾，旧卡片灰化（isActive=false）
 ```
 
 ### 6.3 OrderAction 流程（DEC-058）
@@ -264,7 +270,7 @@ System message 指示 AI：
 - 当用户要修改点菜单时，在回复末尾附加 ```json 代码块
 - 格式：`{"orderAction": "add|remove|replace", "remove": {...}, "add": {...}}`
 - dishId 必须来自菜单实际 id
-- 不要同时输出 MealPlan 和 OrderAction
+- **禁止同时输出 MealPlan 和 OrderAction**（Prompt 层强约束，前端做防御性处理：若同时出现，优先 MealPlan）
 
 ---
 

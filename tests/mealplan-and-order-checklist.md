@@ -27,6 +27,11 @@
 - **When** AI 返回新 MealPlan（替换后）
 - **Then** 旧卡片 opacity-50，所有按钮 disabled，顶部标注"已更新"；新卡片活跃
 
+### TC-MP-005: 菜品不足5道纯文本推荐
+- **Given** 用户请求推荐，AI 判断适合推荐的菜品 < 5 道
+- **When** AI 回复
+- **Then** 不输出 JSON 代码块，纯自然语言推荐，不渲染 MealPlanCard
+
 ---
 
 ## 2. 替换交互
@@ -75,6 +80,11 @@
 - **When** 点「整套加入」
 - **Then** Order 变为 8 道菜，MealPlanCard 保持活跃可操作
 
+### TC-OA-004: 替换进行中点"整套加入"
+- **Given** MealPlanCard 处于替换中状态（某道菜 spinner），但前一个活跃卡片仍存在
+- **When** 用户点当前活跃卡片的「🍽 整套加入订单」
+- **Then** 使用当前活跃卡片的菜品列表加入 Order（不等待替换响应）
+
 ---
 
 ## 4. 流式 JSON 解析
@@ -109,6 +119,11 @@
 - **When** 流式结束，JSON 解析成功
 - **Then** 识别为 orderaction（非 mealplan），执行 EXECUTE_ORDER_ACTION
 
+### TC-JP-007: 流式中断（网络断开）
+- **Given** AI 流式输出进行中，已输出部分文字 + 检测到 ```json 标记
+- **When** 网络断开，流式中断
+- **Then** 保留已有文字显示 + 不渲染卡片 + toast "网络中断，请重试"
+
 ---
 
 ## 5. Chat 操作 Order
@@ -132,6 +147,11 @@
 - **Given** AI 返回的 dishId 不在 menuData 中
 - **When** 前端尝试执行
 - **Then** 忽略该指令，不报错，AI 文字正常显示
+
+### TC-CO-005: AI 同时返回 MealPlan + OrderAction
+- **Given** AI 回复的 JSON 同时包含 courses（MealPlan）和 orderAction 字段
+- **When** 前端解析分类
+- **Then** 优先识别为 MealPlan（渲染 MealPlanCard），忽略 OrderAction
 
 ---
 

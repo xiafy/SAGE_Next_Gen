@@ -996,3 +996,25 @@
   6. 选「❓ 其他」→ 进入 Chat（携带菜品上下文）
   7. 沟通面板的本地语言由 AI 识别菜单时的 `detectedLanguage` 决定
 - **影响**: `docs/prd.md` F08（Waiter Mode 新增交互）、`app/src/views/WaiterView.tsx`、`app/src/components/DishCommunicationPanel.tsx`（新组件）
+
+---
+
+### DEC-061 — MealPlanCard 替换策略：追加模式
+
+**日期**: 2026-03-02  
+**背景**: 第二轮三方评审（Opus/Codex/Qwen）发现 DEC-055 "替换旧卡片位置" 与 Spec "旧卡灰化保留" 逻辑矛盾，且 "同 slot 替换" 破坏 Chat 消息流的 append-only 模式  
+**决策**: 采用追加模式——新 MealPlanCard 作为新消息追加到对话流末尾，旧 MealPlanCard 标记 isActive=false 灰化（不可操作，保留历史脉络）  
+**理由**: 保留用户决策历史 + 符合 React immutable 数据范式 + 实现简单  
+**影响**: 更新 mealplan-and-order-spec.md §3.3 生命周期规则  
+**状态**: ✅ 夏总确认
+
+---
+
+### DEC-062 — Explore→Chat 首条回复加轻量 CTA
+
+**日期**: 2026-03-02  
+**背景**: 第二轮评审指出 DEC-053v2 "不主动分析搭配" 在用户主动咨询 AI 的场景下可能太保守  
+**决策**: AI 首条回复 = 事实摘要 + 开放引导 + 末尾快捷按钮（QuickReplies）如 "看看搭配建议" / "聊聊某道菜"  
+**理由**: 快捷按钮是引导不是强制，不违反 Scenario-Free 原则，降低用户思考成本  
+**影响**: 更新 explore-chat-injection-spec.md §5 AI 首条回复  
+**状态**: ✅ 夏总确认
