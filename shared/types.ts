@@ -267,10 +267,10 @@ export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 // 常量
 // ─────────────────────────────────────────────
 
-/** 各端点超时（毫秒）— 来源 API_DESIGN.md §1.5 */
+/** 各端点超时（毫秒）— 来源 API_DESIGN.md §1.5，更新于 DEC-050 */
 export const TIMEOUTS = {
-  ANALYZE_CLIENT: 70_000,   // flash 30s + plus 25s 降级链，客户端留余量含重试
-  ANALYZE_WORKER: 55_000,   // flash 30s + plus 25s
+  ANALYZE_CLIENT: 75_000,   // VL(35s) + Enrich(25s) = 60s，客户端留 15s 余量（DEC-050）
+  ANALYZE_WORKER: 62_000,   // VL(35s) + Enrich(25s) = 60s，额外 2s Worker 处理余量（DEC-050）
   CHAT_CLIENT: 15_000,
   CHAT_WORKER: 12_000,
   HEALTH: 5_000,

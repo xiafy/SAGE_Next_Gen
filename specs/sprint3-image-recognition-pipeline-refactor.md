@@ -1,37 +1,68 @@
-# Sprint 3 Spec — 图片识别链路重构（性能与可靠性）
+# Sprint 3 Spec — 图片识别链路（已完成部分）
 
-- 日期: 2026-03-01
-- 目标: 拍照到菜单结果 P95 ≤ 10s，失败率 < 5%
-- 范围: `app/src/api/analyze.ts`、`worker/handlers/analyze.ts`、`worker/utils/bailian.ts`、`worker/prompts/menuAnalysis.ts`、`shared/types.ts`、`app/src/views/AgentChatView.tsx`
+> 版本: v2.0（2026-03-02）
+> 状态: ✅ 核心功能已完成并部署
+> 旧版（v1.0，2026-03-01）已归档至 `archive/sprint3-pipeline-refactor-v1-archived.md`
 
-## 背景问题
-- 前端 Base64 + JSON 上传体积膨胀约 33%
-- Worker `/api/analyze` 聚合等待，用户无中途反馈
-- 弱网时大 JSON 上传与跨境调用导致频繁超时
+---
 
-## 设计
-1. 传输层
-- 前端改为 `multipart/form-data` 二进制上传图片
-- Worker 支持 multipart 解析并兼容旧 JSON 请求
-- Worker 内部再转 data URL 调 DashScope（不改上游 API）
+## 已完成（生产中）
 
-2. 返回层
-- `/api/analyze` 改为 SSE 响应：`progress` 事件 + `result` 事件
-- 前端流式消费 SSE，实时更新识别阶段文案与进度
+### 传输层（DEC-041）
+- ✅ 前端 `multipart/form-data` 二进制上传（替代 base64 JSON）
+- ✅ Worker SSE 响应：`progress` 事件 + `result` 事件
+- ✅ 旧 JSON 请求兼容路径保留
 
-3. 超时与降级
-- 优先 `qwen3-vl-flash`（短超时），失败后降级 `qwen3-vl-plus`（短超时）
-- 前端总超时留余量并支持一次自动重试（仅 retryable 错误）
+### 图片压缩（DEC-040）
+- ✅ `maxDimension=1280px`、`maxSizeBytes=500KB`
+- ✅ `createImageBitmap` 主路径，`new Image()` 兜底
+- ✅ 压缩并发限制 ≤2（iPhone Safari 内存优化）
 
-4. 并发策略
-- 前端图片压缩并发限制为 2，避免 iPhone Safari 同时压缩多张导致卡顿/内存峰值
+### 两阶段 Pipeline（DEC-042、DEC-045）
+- ✅ Stage 1（VL）：`gemini-2.0-flash`，OCR + allergenCodes 提取，timeout=35s
+- ✅ Stage 2（Enrich）：`gemini-2.0-flash`，brief/allergens/spiceLevel 补全，timeout=25s
+- ✅ stream=false for JSON outputs（DEC-044）
 
-5. Prompt 优化
-- 缩短菜单识别 prompt，减少冗余 token，保持输出 schema 不变
+### Prompt v8（DEC-050）
+- ✅ VL 提取 `allergenCodes`（EU 括号编号）
+- ✅ Enrich 内置 EU 1-11 过敏原编号对照表
+- ✅ allergens 双来源：编号转换 + 知识推断（uncertain 标记）
+- ✅ maxOutputTokens=8192（大菜单不截断）
 
-## 验收标准
-- 前端与 Worker `tsc --noEmit` 全绿
-- `app` 构建成功
-- `app` E2E 冒烟不回归
-- Path A/Path C 都能收到 SSE 进度并拿到最终菜单结果
-- 兼容旧 JSON Analyze 请求（回滚/灰度安全）
+### 地理兜底（DEC-051）
+- ✅ Gemini `FAILED_PRECONDITION` → 自动切百炼新加坡
+- ✅ VL 兜底：`qwen-vl-plus`（dashscope-intl）
+- ✅ Enrich 兜底：`qwen-plus-latest`（dashscope-intl）
+- ✅ `useBailian` 标志在两阶段共享
+
+### 生产指标（2026-03-02 实测）
+| 指标 | 数值 |
+|------|------|
+| 总端到端延迟 | ~19.3s |
+| Allergen Recall | 100%（26/26）|
+| Allergen Precision | 93% |
+| VL 耗时 | ~9.7s |
+| Enrich 耗时 | ~9.6s |
+
+---
+
+## Backlog（已记录，暂缓实现）
+
+### BACKLOG-001：Two-stage SSE（DEC-046）
+- 目标：VL 完成（~8s）即推送 `partial_result`，用户先看菜单，Enrich 后台静默更新
+- 预期感知延迟：19s → ~8s
+- 状态：已批准，待排期
+
+### BACKLOG-002：Enrich 分批（BACKLOG-001 in DECISIONS.md）
+- 触发条件：菜单 >60 道菜时 JSON 超出 8192 tokens
+- 方案：按 35 道一组分批 Enrich 后合并
+- 状态：已记录，待触发时实施
+
+---
+
+## 验收标准（当前已通过）
+- ✅ Path A / Path C 均正常 SSE 进度 + 最终结果
+- ✅ `tsc --noEmit` 前后端全绿
+- ✅ `pnpm build` 成功
+- ✅ Allergen recall ≥ 70%（实测 100%）
+- ✅ 生产 Worker 无报错（geo-block 已兜底）

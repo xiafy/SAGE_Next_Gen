@@ -738,3 +738,51 @@
   - `app/src/views/AgentChatView.tsx`（MealPlanCard 组件）
   - `app/src/views/ExploreView.tsx`（底部操作栏 + 双出口）
   - `docs/user-stories.md`（新增场景）
+
+---
+
+## 决策覆盖关系速查表
+
+> 追加于 2026-03-02。规则同样仅追加，不删改历史条目。
+> 当某决策被后续决策完全或部分覆盖时，在此表登记，避免歧义。
+
+| 被覆盖决策 | 覆盖决策 | 覆盖范围 | 覆盖日期 |
+|-----------|---------|---------|---------|
+| DEC-003（Gemini 全系列废弃） | DEC-045 | VL 识别和 Enrich 阶段改用 Gemini 2.0 Flash；Chat 阶段仍使用百炼 Qwen | 2026-03-02 |
+| DEC-026（Qwen3-VL 为识别主力） | DEC-045 | Qwen3-VL 降为地理兜底路径；正常路径改为 Gemini 2.0 Flash | 2026-03-02 |
+| DEC-028（"所有调用 stream=true"） | DEC-044 | JSON 输出场景（VL/Enrich）改为 stream=false；Chat 场景 stream=true 保持不变 | 2026-03-02 |
+| DEC-041（超时：flash 9s + plus 7s） | DEC-050 | VL timeout 25s→35s，Enrich timeout 20s→25s（Gemini 推理特性不同于 Qwen） | 2026-03-02 |
+| DEC-042（VL=qwen3-vl-flash，Enrich=qwen3.5-flash） | DEC-045 | VL 改为 gemini-2.0-flash；Enrich 改为 gemini-2.0-flash | 2026-03-02 |
+
+---
+
+### [DEC-051] Gemini 地理封锁兜底：自动切换百炼新加坡国际站
+
+- **日期**: 2026-03-02
+- **决策人**: SAGE Agent（线上问题驱动）
+- **背景**: Cloudflare Worker（东京节点）访问 Gemini API 时，部分情况下返回 `FAILED_PRECONDITION` 错误，原因为 Google 对部分地区节点的地理访问限制。纯 Gemini 架构在这种情况下会直接向用户报错 `AI_UNAVAILABLE`。
+- **选项**:
+  1. 无兜底，直接报错，等 CF 节点自然路由恢复
+  2. 兜底到百炼国内站（`dashscope.aliyuncs.com`）— Qwen3-VL-Flash
+  3. 兜底到百炼新加坡国际站（`dashscope-intl.aliyuncs.com`）— qwen-vl-plus + qwen-plus-latest
+- **决策**: 选项 3 — 百炼新加坡国际站
+- **理由**:
+  1. 百炼国内站（选项 2）从 CF 东京节点访问同样存在跨境链路不稳定问题
+  2. 新加坡国际站地理上与东京节点最近，链路更稳定
+  3. `qwen-vl-plus`（新加坡）支持多图输入，功能等价
+  4. `qwen-plus-latest` 用于 Enrich 阶段（纯文本，无需视觉）
+- **实现细节**:
+  - `gemini.ts`：捕获 `FAILED_PRECONDITION` → 抛出带 `geoBlocked: true` 标记的错误
+  - `analyze.ts`：VL 阶段捕获 `geoBlocked` → 调用 `fetchBailianComplete`（新加坡端点）
+  - `analyze.ts`：`useBailian` 标志在 VL 和 Enrich 阶段共享，保证两阶段供应商一致
+  - `bailian.ts`：`fetchComplete()` 新增 `baseUrl` 参数，支持覆盖默认端点
+  - `cors.ts`：`Env` 接口新增 `BAILIAN_INTL_API_KEY` 字段
+- **新增 Worker Secret**: `BAILIAN_INTL_API_KEY`（百炼新加坡国际站 Key）
+- **正常路径不受影响**: 该兜底仅在 Gemini 抛出 `geoBlocked` 时触发，正常情况全程走 Gemini
+- **影响**:
+  - `worker/handlers/analyze.ts`
+  - `worker/utils/gemini.ts`
+  - `worker/utils/bailian.ts`（`baseUrl` 参数）
+  - `worker/middleware/cors.ts`（`BAILIAN_INTL_API_KEY`）
+  - `docs/architecture.md`（降级路径更新）
+  - `docs/deployment.md`（新增 Secret 说明）

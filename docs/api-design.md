@@ -1,10 +1,11 @@
 # API_DESIGN.md — API 接口详细设计
 
-> 版本: v1.0
-> 日期: 2026-02-26
-> 状态: ✅ 完整版（含错误码/超时/重试/Payload 限制）
+> 版本: v2.0
+> 日期: 2026-03-02
+> 状态: ✅ 当前版本（已对齐 DEC-044/045/050/051）
+> 变更说明: v1.0→v2.0 — VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径（geo-block fallback）；Prompt v8 allergenCodes pipeline
 > 上游文档: `docs/architecture.md`、`docs/prd.md`、`DECISIONS.md`
-> 供应商: 阿里云百炼 DashScope（OpenAI 兼容模式）
+> 供应商: VL+Enrich = Google Gemini API；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 
 ---
 
@@ -31,27 +32,28 @@ POST /api/chat:
 
 > 无需前端传 Authorization，Key 仅在 Worker 环境变量中存储。
 
-### 1.3 ⚠️ Bailian API 调用策略（DEC-028 + DEC-044）
+### 1.3 AI API 调用策略（DEC-028、DEC-044、DEC-045）
 
-`enable_thinking: false` 对所有调用均为**必填**：
+**供应商与模型（当前生产）**:
 
+| 场景 | 供应商 | 模型 | stream | 函数 |
+|------|--------|------|--------|------|
+| VL 菜单识别（正常路径） | Google Gemini | `gemini-2.0-flash` | `false` | `fetchGeminiComplete()` |
+| Enrich 语义补全（正常路径） | Google Gemini | `gemini-2.0-flash` | `false` | `fetchGeminiComplete()` |
+| VL 菜单识别（地理兜底） | 百炼新加坡 | `qwen-vl-plus` | `false` | `fetchBailianComplete()` |
+| Enrich 语义补全（地理兜底） | 百炼新加坡 | `qwen-plus-latest` | `false` | `fetchBailianComplete()` |
+| AI 对话（/api/chat） | 百炼国内 | `qwen3.5-plus/flash` | `true` | `streamPassthrough()` |
+
+**百炼 Qwen3.x 必填参数（DEC-028）**:
 ```json
 { "enable_thinking": false }
 ```
+Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致 TTFT 高达 7-26s。关闭后 TTFT 降至 2-450ms（22x 提升）。Gemini API 无此参数，不需要设置。
 
-**背景（DEC-028）**：Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致文本模型 TTFT 高达 7-26s。关闭后 TTFT 降至 2-450ms（提升 22x）。
+**stream=false 原则（DEC-044）**:
+VL 和 Enrich 输出 JSON，前端必须等完整结果才能解析。stream=true 在此场景产生大量小 SSE 帧，HTTP 分块传输累计开销使总延迟增加约 2.4 倍。JSON 输出场景一律用 stream=false。
 
-**stream 参数按场景分策略（DEC-044）**：
-
-| 场景 | stream | 函数 | 原因 |
-|------|--------|------|------|
-| VL 菜单识别（/api/analyze） | `false` | `fetchComplete()` | 输出 JSON 必须等完整结果；实测 stream=false 比 stream=true 快约 **2 倍**（~13s vs ~31s） |
-| Enrich 语义补全（/api/analyze） | `false` | `fetchComplete()` | 同上，输出 JSON 数组 |
-| AI 对话（/api/chat） | `true` | `streamPassthrough()` | 用户可实时看到打字效果，TTFT 体验至关重要 |
-
-> **核心发现（2026-03-02 实测）**：stream=true 产生大量小 SSE 帧，HTTP 分块传输 + 每帧解析的累计开销在 VL 场景下使总延迟翻倍。JSON 输出场景一律用 stream=false。
-
-已在 `worker/utils/bailian.ts` 中通过 `fetchComplete` / `streamPassthrough` 封装强制执行，新增调用直接选用对应函数。
+> ⚠️ **覆盖说明**：DEC-028 原文的"stream=true"建议仅适用于文本对话场景（/api/chat），已被 DEC-044 明确在 VL/Enrich 场景覆盖为 stream=false。
 
 ### 1.4 通用响应格式
 
@@ -79,15 +81,16 @@ POST /api/chat:
 }
 ```
 
-### 1.5 超时策略
+### 1.5 超时策略（DEC-050）
 
 | 端点 | 前端超时 | Worker 超时（VL） | Worker 超时（Enrich） | 说明 |
 |------|---------|-----------|------|------|
-| `POST /api/analyze` | 40s | 30s | 20s | stream=false，等完整响应；VL ~13s，Enrich ~2s（DEC-044） |
+| `POST /api/analyze` | 65s | **35s** | **25s** | Gemini 2.0 Flash 推理特性；VL ~9.7s 实测，Enrich ~9.6s 实测（DEC-050） |
 | `POST /api/chat` | 15s | 12s | — | 对话要求低延迟，stream=true |
 | `GET /api/health` | 5s | — | — | 健康检查 |
 
 > Worker 超时比前端超时短 5s，确保 Worker 有时间返回友好错误而非超时断连。
+> 旧超时（VL=30s, Enrich=20s）对应 qwen3-vl-flash，已被 DEC-050 覆盖为 Gemini 参数。
 
 ### 1.6 错误码表
 
@@ -227,11 +230,21 @@ data: { ok: true; data: AnalyzeResponseData; requestId: string }
 data: { ok: false; error: ApiError; requestId: string }
 ```
 
-#### 2.3 降级模式
+#### 2.3 降级模式（DEC-051）
 
-当 `Qwen3-VL-Flash` 超时或报错：
-1. 自动切换到 `Qwen3-VL-Plus` 重试一次
-2. 如仍失败，返回 `AI_UNAVAILABLE` 错误
+**正常路径**：`gemini-2.0-flash`（VL + Enrich）
+
+**地理兜底路径**（自动，无需人工干预）：
+- 触发条件：Gemini 返回 `FAILED_PRECONDITION`（地理封锁信号）
+- 切换到：百炼新加坡国际站（`dashscope-intl.aliyuncs.com`）
+  - VL：`qwen-vl-plus`
+  - Enrich：`qwen-plus-latest`
+- 同次请求的 VL 和 Enrich 强制走同一供应商（`useBailian` 标志共享）
+
+**不可用路径**：
+- Gemini 超时（>35s）或其他网络异常 → `AI_TIMEOUT` / `AI_UNAVAILABLE`
+- 地理兜底后百炼新加坡仍失败 → 同上
+- 前端展示用户友好错误 + 重试引导
 
 #### 2.4 Icebreaker 机制（前端本地）
 
