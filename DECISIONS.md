@@ -891,3 +891,67 @@
 - 前端维护 `activeMealPlanVersion` 状态
 
 - **影响**: `docs/prd.md` F06/F08、`shared/types.ts`（MealPlan + Order 类型）、`app/src/stores/orderStore.ts`、`app/src/components/MealPlanCard.tsx`
+
+---
+
+### [DEC-056] 过敏原安全策略：AI 排除 + Waiter 入口确认
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 四方评审（Codex 标 🔴）指出高风险过敏原场景缺乏安全机制。讨论了 AI 推荐排除、加入时弹窗、Order 警告条、Waiter 入口确认等多种方案。
+- **决策**: 两条规则
+  1. **AI 推荐排除**：用户在 Pre-Chat 声明过敏原后，AI 生成方案时硬排除含已知过敏原的菜品（Prompt 层约束）
+  2. **Waiter 入口确认**：用户自行加入含过敏原菜品后，在点击「展示给服务员」时弹底部 sheet 提醒
+- **理由**:
+  1. 不在「➕ 加入」时弹窗——打断选菜流程，用户可能知情想尝试
+  2. 不在 Order 页面警告——过度提醒降低信任感，SAGE 不是医疗设备
+  3. 只在 Waiter 入口（最后关口）确认——用户注意力最集中，一次性列出所有风险
+- **实现规格**:
+  1. Prompt 硬约束：system message 含用户过敏原列表，要求方案不包含这些成分
+  2. Waiter 入口：点「展示给服务员」→ 检查 Order 中是否有菜品的 allergenCodes 命中用户过敏原 → 命中则弹底部 sheet："⚠️ 这些菜品可能含你的过敏原，建议向服务员确认：
+🥜 Pad Thai（花生）
+
+[确认并继续] [返回修改]"
+  3. 确认后正常进入 Waiter Mode，不再重复提醒
+  4. 底部 disclaimer（常驻）："过敏原信息仅供参考，请向餐厅确认"
+  5. **Waiter Mode 过敏/禁忌栏**：顶部醒目展示用户声明的过敏原和饮食禁忌，面向服务员
+     - 语言：图标 + 英文 + 菜单所在地本地语言（三重表达，确保服务员看懂）
+     - 位置：菜品列表上方，第一眼可见
+     - 仅在用户有声明过敏/禁忌时显示
+- **影响**: `docs/prd.md` F08、`worker/prompts/agentChat.ts`、`app/src/views/WaiterView.tsx`、`app/src/components/AllergenWarningSheet.tsx`（新组件）、`app/src/components/WaiterAllergyBanner.tsx`（新组件）
+
+---
+
+### [DEC-057] 导航状态机：Order 为唯一执行数据源
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 四方评审（Kimi 🔴）指出 Explore→Waiter / Explore→Chat→Order→Waiter 多路径交汇时数据源可能不一致。需要定义完整状态转换图。
+- **决策**: 6 条状态机规则
+  1. **Waiter 唯一数据源 = Order**，无例外
+  2. **Explore「展示给服务员」**= 已选菜品写入 Order + 跳转 Waiter
+  3. **Explore「咨询 AI」**= 已选菜品写入 Order + SelectedDishesCard 注入 Chat（DEC-053 v2）
+  4. **Waiter「继续点菜」**→ Order → 可继续回 Chat/Explore 加菜
+  5. **Waiter「结束用餐」**→ 二次确认 → 清空 Order + 清空会话 → Home
+  6. **过敏原检查**（DEC-056）在 Order→Waiter 跳转时触发，无论来源路径
+- **关键原则**: Explore 选菜无论走哪个出口都写入 Order。用户点「➕ 加入」= "我要这道菜"，意图不因出口不同而改变
+- **影响**: `docs/prd.md` F07/F08、`app/src/stores/orderStore.ts`、导航路由
+
+---
+
+### [DEC-058] Chat 可直接操作 Order（AI 驱动）
+
+- **日期**: 2026-03-02
+- **决策人**: Mr. Xia
+- **背景**: 用户在 Chat 中可能表达修改 Order 的意图（"把牛排换成龙虾"）。讨论了三种方案：A 只建议不操作、B 直接操作、C 操作+撤销确认。
+- **决策**: **方案 B（AI 直接操作 Order）**
+- **理由**:
+  1. 用户说"换成龙虾"是明确指令，二次确认或撤销按钮增加不必要的复杂度
+  2. Chat 是对话驱动产品的中枢，自然语言修改 Order 是核心能力
+  3. 如果 AI 理解错误，用户可以在 Chat 中继续纠正，或去 Order 页面手动调整
+- **实现规格**:
+  1. AI 回复末尾附带结构化指令，复用 DEC-052 v2 末尾 JSON 代码块模式
+  2. 指令 schema：`{"orderAction": "replace|add|remove", "remove": {"dishId": "..."}, "add": {"dishId": "...", "qty": N}}`
+  3. 前端检测到 `orderAction` 代码块 → 执行 Order 修改 → AI 文字部分正常展示（"好的，已帮你把牛排换成龙虾 🦞"）
+  4. Order 修改后 Chat 的 system message 自动更新（AI 始终感知最新 Order）
+- **影响**: `docs/prd.md` F06、`shared/types.ts`（OrderAction 类型）、`app/src/views/AgentChatView.tsx`、`app/src/stores/orderStore.ts`、`worker/prompts/agentChat.ts`
