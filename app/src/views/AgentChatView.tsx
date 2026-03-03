@@ -727,10 +727,11 @@ export function AgentChatView() {
         }
       } else {
         // Not mealPlan/orderAction — try parsing as regular chat response JSON
-        if (tryParseChatJson(jsonStr)) return;
-        // L3 fallback: strip JSON code blocks, show regenerate
-        displayText = stripJsonCodeBlocks(fullText) || fullText;
-        newQuickReplies = [isZh ? '🔄 重新生成方案' : '🔄 Regenerate'];
+        if (!tryParseChatJson(jsonStr)) {
+          // L3 fallback: strip JSON code blocks, show regenerate
+          displayText = stripJsonCodeBlocks(fullText) || fullText;
+          newQuickReplies = [isZh ? '🔄 重新生成方案' : '🔄 Regenerate'];
+        }
       }
     } else {
       // No JSON block — try existing JSON parse logic
