@@ -85,6 +85,7 @@ interface AgentChatSystemOptions {
   context: {
     language: 'zh' | 'en';
     timestamp: number;
+    utcOffsetMinutes?: number;
     location?: { lat: number; lng: number };
   };
   weather?: { temp: number; description: string } | null;

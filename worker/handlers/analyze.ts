@@ -150,6 +150,29 @@ function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: 
       const rawCodes = Array.isArray(item?.allergenCodes) ? item.allergenCodes : [];
       const allergenCodes = rawCodes.filter((c: unknown) => Number.isInteger(c) && (c as number) > 0) as number[];
 
+      // 从 VL 输出中提取语义字段（v9 合并 Prompt 直接返回）
+      const validAllergenTypes = new Set(['peanut','shellfish','fish','gluten','dairy','egg','soy','tree_nut','sesame']);
+      const rawAllergens = Array.isArray(item?.allergens) ? item.allergens : [];
+      const allergens = rawAllergens
+        .filter((a: unknown) => a && typeof a === 'object' && 'type' in (a as Record<string,unknown>) && validAllergenTypes.has(String((a as Record<string,unknown>).type).toLowerCase()))
+        .map((a: unknown) => {
+          const rec = a as Record<string, unknown>;
+          return { type: String(rec.type).toLowerCase(), uncertain: Boolean(rec.uncertain) };
+        });
+
+      const validDietaryFlags = new Set(['halal','vegetarian','vegan','raw','contains_alcohol']);
+      const rawFlags = Array.isArray(item?.dietaryFlags) ? item.dietaryFlags : [];
+      const dietaryFlags = rawFlags
+        .map((f: unknown) => typeof f === 'string' ? f.toLowerCase() : '')
+        .filter((f: string) => validDietaryFlags.has(f));
+
+      const spiceLevel = typeof item?.spiceLevel === 'number' && item.spiceLevel >= 0 && item.spiceLevel <= 5
+        ? item.spiceLevel : 0;
+
+      const brief = typeof item?.brief === 'string' && item.brief.length > 0
+        ? item.brief
+        : (language === 'zh' ? nameTranslated || nameOriginal : nameTranslated || nameOriginal);
+
       return {
         id,
         nameOriginal,
@@ -157,13 +180,13 @@ function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: 
         price: parsePrice(priceText),
         priceText: priceText || undefined,
         tags: [],
-        brief: language === 'zh' ? '菜单识别结果（待补充详情）' : 'Menu item recognized (details pending)',
-        allergens: [],
-        dietaryFlags: [],
-        spiceLevel: 0,
+        brief,
+        briefDetail: typeof item?.briefDetail === 'string' ? item.briefDetail : undefined,
+        allergens,
+        dietaryFlags,
+        spiceLevel,
         calories: null,
         __category: String(item?.category ?? item?.categoryName ?? '其他').trim() || '其他',
-        __allergenCodes: allergenCodes, // 临时字段：传递给 Enrich，不发往前端
       };
     })
     .filter(Boolean) as Array<any>;
@@ -443,125 +466,9 @@ async function runAnalyzePipeline(
   try {
     const result = await parseAndValidate(rawText);
 
-    // ── Step 2: 文本模型补全语义字段（brief/allergens/spiceLevel）──
-    onProgress?.({
-      stage: 'enriching',
-      progress: 90,
-      message: context.language === 'zh' ? '正在补充菜品详情…' : 'Enriching dish details…',
-    });
-
-    try {
-      const enrichInput = result.items.map(i => ({
-        nameOriginal: i.nameOriginal,
-        nameTranslated: i.nameTranslated,
-        category: result.categories.find(c => c.itemIds.includes(i.id))?.nameOriginal,
-        // 将 VL 阶段提取的过敏原编号传递给 Enrich（临时字段，不在 schema 中）
-        allergenCodes: (i as Record<string, unknown>).__allergenCodes as number[] | undefined,
-      }));
-
-      const enrichRaw = useBailian
-        // 地理封锁兜底：使用百炼文本模型（Enrich 不需要视觉）
-        ? await fetchBailianComplete({
-            model: 'qwen-plus-latest',
-            messages: [
-              { role: 'system', content: MENU_ENRICH_SYSTEM },
-              { role: 'user', content: buildEnrichUserMessage(enrichInput, context.language) },
-            ],
-            apiKey: env.BAILIAN_INTL_API_KEY,
-            baseUrl: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
-            timeoutMs: 30_000,
-            requestId: `${requestId}-enrich`,
-          })
-        : await fetchGeminiComplete({
-            model: 'gemini-2.0-flash',
-            systemPrompt: MENU_ENRICH_SYSTEM,
-            userText: buildEnrichUserMessage(enrichInput, context.language),
-            apiKey: env.GEMINI_API_KEY,
-            timeoutMs: 25_000,
-            requestId: `${requestId}-enrich`,
-            maxOutputTokens: 8192,
-          });
-
-      const enrichJson = extractJson(enrichRaw);
-      const enrichData: unknown[] = JSON.parse(enrichJson);
-
-      if (Array.isArray(enrichData)) {
-        // Build lookup by nameOriginal
-        const enrichMap = new Map<string, Record<string, unknown>>();
-        for (const e of enrichData) {
-          if (e && typeof e === 'object' && 'nameOriginal' in (e as Record<string, unknown>)) {
-            const rec = e as Record<string, unknown>;
-            enrichMap.set(String(rec.nameOriginal), rec);
-          }
-        }
-
-        // Merge enrich data into items (exact match, then fuzzy startsWith)
-        for (const item of result.items) {
-          let enriched = enrichMap.get(item.nameOriginal);
-          if (!enriched) {
-            // Fuzzy: find enrichMap key that starts with or contains the item nameOriginal
-            for (const [key, val] of enrichMap.entries()) {
-              if (key.startsWith(item.nameOriginal) || item.nameOriginal.startsWith(key)) {
-                enriched = val;
-                break;
-              }
-            }
-          }
-          if (!enriched) continue;
-
-          if (typeof enriched.brief === 'string' && enriched.brief.length > 0) {
-            item.brief = enriched.brief;
-          }
-          if (typeof enriched.briefDetail === 'string' && enriched.briefDetail.length > 0) {
-            (item as Record<string, unknown>).briefDetail = enriched.briefDetail;
-          }
-          if (Array.isArray(enriched.allergens) && enriched.allergens.length > 0) {
-            // Validate allergen format
-            const validTypes = new Set(['peanut','shellfish','fish','gluten','dairy','egg','soy','tree_nut','sesame']);
-            const validAllergens = enriched.allergens
-              .filter((a: unknown) => a && typeof a === 'object' && 'type' in (a as Record<string, unknown>) && validTypes.has(String((a as Record<string, unknown>).type).toLowerCase()))
-              .map((a: unknown) => {
-                const rec = a as Record<string, unknown>;
-                return { type: String(rec.type).toLowerCase(), uncertain: Boolean(rec.uncertain) };
-              });
-            if (validAllergens.length > 0) {
-              item.allergens = validAllergens as typeof item.allergens;
-            }
-          }
-          if (Array.isArray(enriched.dietaryFlags)) {
-            const validFlags = new Set(['halal','vegetarian','vegan','raw','contains_alcohol']);
-            const flags = enriched.dietaryFlags
-              .map((f: unknown) => typeof f === 'string' ? f.toLowerCase() : '')
-              .filter((f: string) => validFlags.has(f));
-            if (flags.length > 0) {
-              item.dietaryFlags = flags as typeof item.dietaryFlags;
-            }
-          }
-          if (typeof enriched.spiceLevel === 'number' && enriched.spiceLevel >= 0 && enriched.spiceLevel <= 5) {
-            item.spiceLevel = enriched.spiceLevel;
-          }
-        }
-
-        // 清理临时字段，避免发往前端
-        for (const item of result.items) {
-          delete (item as Record<string, unknown>).__allergenCodes;
-        }
-
-        logger.info('analyze: enrich success', { requestId, enrichedCount: enrichMap.size, totalItems: result.items.length });
-      }
-    } catch (enrichErr) {
-      // Enrich is best-effort — don't fail the whole pipeline
-      logger.warn('analyze: enrich failed (non-fatal)', { requestId, err: String(enrichErr).slice(0, 200) });
-      // Clean up temp fields even on failure
-      for (const item of result.items) {
-        delete (item as Record<string, unknown>).__allergenCodes;
-      }
-      // Push enrich_error event so frontend can show lightweight toast
-      onProgress?.({
-        stage: 'enrich_error',
-        progress: 92,
-        message: context.language === 'zh' ? '菜品详情加载失败，不影响基本功能' : 'Dish details failed to load, basic features unaffected',
-      });
+    // ── Step 2 已合并到 VL 阶段（v9 Prompt 单次调用返回完整语义字段）──
+    for (const item of result.items) {
+      delete (item as Record<string, unknown>).__allergenCodes;
     }
 
     const rawTextBytes = new TextEncoder().encode(rawText).length;
