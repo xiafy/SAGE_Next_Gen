@@ -153,6 +153,11 @@ body {
   -webkit-tap-highlight-color: transparent;
   background: transparent;
   color: var(--color-sage-text-secondary);
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 .chip-selected {
   background: var(--color-sage-primary-light);
