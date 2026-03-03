@@ -118,8 +118,6 @@ export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
 - 禁止说"已为您下单""订单已确认""开始准备""请稍等准备"等暗示你有执行下单能力的话。
 
 当前场景：
-- 时间：${new Date(context.timestamp + (context.utcOffsetMinutes ?? 0) * 60000).toISOString().slice(11,16)}（${mealType}时段，本地时间）— 可用于辅助预判用户意图，但不限制用户选择。如果用户意图与时段不符，尊重用户。禁止说出与事实矛盾的时间描述（如深夜说"适合下午茶"）。
-- 位置：${location}${weather ? `\n- 天气：${weather.temp}°C，${weather.description}` : ''}
 - 用户偏好：${prefSummary}
 
 菜单（${menu.menuType}，价格档次 ${menu.priceLevel}/3，${menu.detectedLanguage}）${sampled}：
@@ -190,8 +188,6 @@ ${menuSummary}
 - NEVER say "order placed", "order confirmed", "preparing now", or anything implying you can execute orders.
 
 Current context:
-- Time: ${new Date(context.timestamp + (context.utcOffsetMinutes ?? 0) * 60000).toISOString().slice(11,16)} local (${mealType}) — Use as a hint for user intent, but never restrict user choices. If the user's intent contradicts the time, respect it. NEVER use time descriptions that contradict reality (e.g. saying "perfect for afternoon tea" at midnight).
-- Location: ${location}${weather ? `\n- Weather: ${weather.temp}°C, ${weather.description}` : ''}
 - User preferences: ${prefSummary}
 
 Menu (${menu.menuType}, price level ${menu.priceLevel}/3, language: ${menu.detectedLanguage})${sampled}:

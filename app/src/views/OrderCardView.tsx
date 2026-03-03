@@ -42,10 +42,10 @@ export function OrderCardView() {
           state.orderItems.map((oi) => (
             <Card3D key={oi.menuItem.id} className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-[var(--color-sage-text)] truncate">
-                  {oi.menuItem.nameOriginal}
+                <p className="text-sm font-semibold text-[var(--color-sage-text)] truncate">
+                  {oi.menuItem.nameTranslated || oi.menuItem.nameOriginal}
                 </p>
-                <p className="text-xs text-[var(--color-sage-text-secondary)] truncate">{oi.menuItem.nameTranslated}</p>
+                <p className="text-xs text-[var(--color-sage-text-secondary)] truncate">{oi.menuItem.nameOriginal}</p>
               </div>
 
               {/* Price */}

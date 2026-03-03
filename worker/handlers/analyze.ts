@@ -114,13 +114,24 @@ function randId(index: number): string {
 
 function parsePrice(priceText?: string): number | undefined {
   if (!priceText) return undefined;
-  const cleaned = priceText.replace(/,/g, '');
-  const rangeMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*[-~～—–]\s*(\d+(?:\.\d+)?)/);
+
+  // 欧洲格式：逗号作小数点（如 10,00€ = 10.00），点作千位符（如 1.000 = 1000）
+  // 判断规则：若逗号后只有 1-2 位数字且在末尾 → 欧洲小数点，替换为 .
+  // 否则 → 千位分隔符，直接删除
+  let normalized = priceText;
+  if (/,\d{1,2}(?:[^\d]|$)/.test(priceText)) {
+    // 欧洲小数格式：先删千位点，再把小数逗号换成点
+    normalized = priceText.replace(/\.(\d{3})/g, '$1').replace(',', '.');
+  } else {
+    normalized = priceText.replace(/,/g, '');
+  }
+
+  const rangeMatch = normalized.match(/(\d+(?:\.\d+)?)\s*[-~～—–]\s*(\d+(?:\.\d+)?)/);
   if (rangeMatch?.[1]) {
     const low = Number(rangeMatch[1]);
     return Number.isFinite(low) ? low : undefined;
   }
-  const m = cleaned.match(/\d+(?:\.\d+)?/);
+  const m = normalized.match(/\d+(?:\.\d+)?/);
   if (!m) return undefined;
   const n = Number(m[0]);
   return Number.isFinite(n) ? n : undefined;

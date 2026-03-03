@@ -56,10 +56,8 @@ export async function handleChat(
       return errorResponse('INVALID_REQUEST', request, env, requestId, 'menuData schema invalid');
     }
 
-    // 获取天气信息（500ms 超时，失败不影响主流程）
-    const weather = context.location
-      ? await getWeather(context.location.lat, context.location.lng, context.language)
-      : null;
+    // 时间/天气/位置功能暂时屏蔽，Sprint 4 重新设计后启用
+    const weather = null;
 
     systemPrompt = buildAgentChatSystem({
       menu:        menuValidated.data,
