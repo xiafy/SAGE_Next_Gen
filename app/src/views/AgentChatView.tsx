@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type MutableRefObject } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { TopBar } from '../components/TopBar';
 import { ChatBubble } from '../components/ChatBubble';
@@ -28,7 +28,7 @@ interface Recommendation {
 interface MealPlanEntry {
   mealPlan: MealPlan;
   isActive: boolean;
-  messageIndex: number;
+  messageId: string;
 }
 
 // ── MediaRecorder voice support detection ────────────────────────────────────
@@ -87,7 +87,9 @@ export function AgentChatView() {
   const [analyzeStatusText, setAnalyzeStatusText] = useState('');
   const [mealPlans, setMealPlans] = useState<MealPlanEntry[]>([]);
   const [generatingMealPlan, setGeneratingMealPlan] = useState(false);
-  const [replacingState, setReplacingState] = useState<{ dishId: string; sentAtVersion: number; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
+  const [replacingState, setReplacingStateRaw] = useState<{ dishId: string; sentAtVersion: number; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
+  const replacingStateRef = useRef(replacingState) as MutableRefObject<typeof replacingState>;
+  const setReplacingState = useCallback((v: typeof replacingState) => { replacingStateRef.current = v; setReplacingStateRaw(v); }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [debugError, setDebugError] = useState<string>('');
@@ -257,7 +259,7 @@ export function AgentChatView() {
     return () => {
       chatAbortRef.current?.abort();
       clearTimeout(toastTimerRef.current);
-      if (replacingState) clearTimeout(replacingState.timeoutId);
+      if (replacingStateRef.current) clearTimeout(replacingStateRef.current.timeoutId);
       clearInterval(recordTimerRef.current);
       clearTimeout(recordMaxTimerRef.current);
       if (recorderRef.current?.state === 'recording') {
@@ -641,13 +643,15 @@ export function AgentChatView() {
 
           // BUG-003 fix: 替换响应时，清除 replacingState 并确保版本递增
           // AI 始终返回 version:1，客户端负责维护正确的版本号
-          if (replacingState) {
-            clearTimeout(replacingState.timeoutId);
-            mp.version = replacingState.sentAtVersion + 1;
+          // 使用 ref 读取以避免 stale closure
+          const curReplacingState = replacingStateRef.current;
+          if (curReplacingState) {
+            clearTimeout(curReplacingState.timeoutId);
+            mp.version = curReplacingState.sentAtVersion + 1;
             setReplacingState(null);
           }
 
-          const msgIndex = state.messages.length;
+          const mpMsgId = `mp_${Date.now()}`;
 
           if (displayText) {
             dispatch({
@@ -664,7 +668,7 @@ export function AgentChatView() {
           dispatch({
             type: 'ADD_MESSAGE',
             message: {
-              id: `mp_${Date.now()}`,
+              id: mpMsgId,
               role: 'assistant',
               content: '',
               cardType: 'mealPlan',
@@ -675,7 +679,7 @@ export function AgentChatView() {
 
           setMealPlans(prev => [
             ...prev.map(e => ({ ...e, isActive: false })),
-            { mealPlan: mp, isActive: true, messageIndex: msgIndex },
+            { mealPlan: mp, isActive: true, messageId: mpMsgId },
           ]);
 
           setStreamingText('');
@@ -880,15 +884,11 @@ export function AgentChatView() {
 
   const mealPlanByMsgId = useMemo(() => {
     const map = new Map<string, MealPlanEntry>();
-    for (const msg of state.messages) {
-      if (msg.cardType === 'mealPlan' && msg.cardData) {
-        const mp = msg.cardData as MealPlan;
-        const entry = mealPlans.find(e => e.mealPlan.version === mp.version);
-        if (entry) map.set(msg.id, entry);
-      }
+    for (const entry of mealPlans) {
+      map.set(entry.messageId, entry);
     }
     return map;
-  }, [state.messages, mealPlans]);
+  }, [mealPlans]);
 
   return (
     <div className="flex flex-col h-dvh bg-[var(--color-sage-bg)]">
