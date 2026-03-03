@@ -166,22 +166,28 @@ function normalizeLooseResult(aiResult: any, language: 'zh' | 'en', imageCount: 
   }
 
   const rawCategories = Array.isArray(aiResult?.categories) ? aiResult.categories : [];
-  const categoryNames = new Set<string>();
+  // Map: nameOriginal → nameTranslated (preserve AI-generated translations)
+  const categoryTranslations = new Map<string, string>();
   for (const c of rawCategories) {
-    if (typeof c === 'string') categoryNames.add(c.trim());
-    else if (c && typeof c === 'object') {
+    if (typeof c === 'string') {
+      const name = c.trim();
+      if (name && !categoryTranslations.has(name)) categoryTranslations.set(name, name);
+    } else if (c && typeof c === 'object') {
       const name = String(c.nameOriginal ?? c.name ?? '').trim();
-      if (name) categoryNames.add(name);
+      const translated = String(c.nameTranslated ?? c.nameZh ?? '').trim();
+      if (name && !categoryTranslations.has(name)) categoryTranslations.set(name, translated || name);
     }
   }
-  for (const key of itemIdsByCategory.keys()) categoryNames.add(key);
+  for (const key of itemIdsByCategory.keys()) {
+    if (!categoryTranslations.has(key)) categoryTranslations.set(key, key);
+  }
 
-  const categories = Array.from(categoryNames)
-    .filter(Boolean)
-    .map((name, idx) => ({
+  const categories = Array.from(categoryTranslations.entries())
+    .filter(([name]) => Boolean(name))
+    .map(([name, translated], idx) => ({
       id: `cat${String(idx + 1).padStart(2, '0')}`,
       nameOriginal: name,
-      nameTranslated: name,
+      nameTranslated: translated,
       itemIds: itemIdsByCategory.get(name) ?? [],
     }))
     .filter((c) => c.itemIds.length > 0);
