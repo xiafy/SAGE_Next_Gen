@@ -3,7 +3,9 @@
 > 版本: v2.0
 > 日期: 2026-03-02
 > 状态: ✅ 当前版本（已对齐 DEC-044/045/050/051）
-> 变更说明: v1.0→v2.0 — VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径（geo-block fallback）；Prompt v8 allergenCodes pipeline
+> 变更说明: v1.0→v2.0→v3.0
+> - v2.0: VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径；Prompt v8 allergenCodes pipeline
+> - **v3.0 (DEC-068, 2026-03-03)**: VL+Enrich 合并为单次 Gemini 调用（Prompt v9）。移除独立 Enrich 阶段，消除 429 限流和跨境延迟问题。Worker `analyze.ts` 只保留 Step 1。总延迟 ~18s，成功率大幅提升
 > 上游文档: `docs/architecture.md`、`docs/prd.md`、`DECISIONS.md`
 > 供应商: VL+Enrich = Google Gemini API；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 

@@ -91,3 +91,20 @@ Sprint 3 验收 Round 4 修复报告
 | `shared/types.ts` | BUG-F (AnalyzeProgressStage + enrich_error) |
 | `app/src/utils/__tests__/processAIResponse.test.ts` | NEW — BUG-H tests (7 cases) |
 | `app/src/context/__tests__/appReducer.test.ts` | OPEN-001 tests (3 cases) |
+
+---
+
+## Round 5: SAGE Agent 浏览器 UI 验收（2026-03-03 22:00-22:55）
+
+### BUG-K: Handoff 后主 Chat 回复不渲染（P0, 已修复）
+
+- **现象**: 菜单识别完成，stream done (464字符)，但 UI 卡在"菜单识别完成！正在为你分析..."，chatPhase 停在 `handing_off`
+- **根因**: `AgentChatView.tsx` L730 — `processAIResponse()` 中 `tryParseChatJson(jsonStr)` 返回 true 后直接 `return`，跳过 `ADD_MESSAGE` dispatch 和 `SET_CHAT_PHASE('chatting')`
+- **修复**: `if (tryParseChatJson(jsonStr)) return;` → `if (!tryParseChatJson(jsonStr)) { fallback }`
+- **验证**: 线上完整流程跑通，AI 回复正常渲染，MealPlanCard 出现
+- **commit**: 5208e90
+
+### BUG-J: MealPlanCard 不出现（P0, 连带修复）
+
+- **根因**: 同 BUG-K。chatPhase 卡在 `handing_off`，后续回复无法正常处理
+- **验证**: MealPlanCard 出现，"整套加入订单"按钮可用，Order badge 正确更新

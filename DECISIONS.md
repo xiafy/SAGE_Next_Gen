@@ -1104,3 +1104,33 @@
   - 面向产品：用户行为数据是迭代依据（覆盖不到的场景、做得不好的环节）
 - **理由**: "了解主人"是从工具到伙伴的本质升级，也是产品壁垒
 - **状态**: ✅ 夏总确认，明天进入 Spec 阶段
+
+---
+
+### [DEC-068] VL+Enrich 合并为单次 Gemini 调用 (Prompt v9)
+
+- **日期**: 2026-03-03
+- **决策人**: SAGE
+- **背景**: Enrich 阶段频繁失败（百炼 429 限流 + Cloudflare 东京→百炼跨境延迟），导致菜品 brief/allergen 全部为空
+- **变更**:
+  1. `worker/prompts/menuAnalysis.ts` 重写为 Prompt v9：单次 Gemini 2.0 Flash 调用同时完成 OCR + 语义补全
+  2. `worker/handlers/analyze.ts` 移除 Step 2 Enrich 阶段，只保留 Step 1 VL
+  3. 原来的两阶段（VL→Enrich）合并为一阶段，响应结构不变（前端无需改动）
+- **影响**: 
+  - 总延迟: ~18s（原两阶段 ~19s，略快）
+  - 成功率: 大幅提升（消除 Enrich 失败点）
+  - Prompt token: 增加（单次 prompt 更长），但省去了一次 API 调用
+- **关联**: DEC-044(stream=false), DEC-045(Gemini for VL+Enrich)
+- **状态**: ✅ 已部署 (commit 08017a5)
+
+---
+
+### [DEC-069] BUG-K processAIResponse 提前 return 修复
+
+- **日期**: 2026-03-03
+- **决策人**: SAGE
+- **背景**: Handoff 后主 Chat AI 回复流式完成（464 字符），但 UI 不渲染新消息，chatPhase 卡在 `handing_off`
+- **根因**: `AgentChatView.tsx` L730 `processAIResponse()` 中，当 JSON 代码块被 `parseJsonBlock` 判定为非 mealPlan/orderAction 时，进入 else 分支调用 `tryParseChatJson(jsonStr)`。该函数成功解析后返回 `true`，随即 `return` 退出整个 `processAIResponse`——跳过了后续的 `dispatch({ type: 'ADD_MESSAGE' })` 和 `dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' })`
+- **修复**: `if (tryParseChatJson(jsonStr)) return;` → `if (!tryParseChatJson(jsonStr)) { /* L3 fallback */ }`
+- **附带修复**: BUG-J（MealPlanCard 不出现）— 同一根因，因为 chatPhase 卡在 handing_off 导致后续 mealPlan 回复也无法正常处理
+- **状态**: ✅ 已部署 (commit 5208e90)

@@ -569,8 +569,14 @@ https://sage-next-gen.pages.dev
 - [x] Round 4 夏总真机验收：发现 BUG-D~J + OPEN-001 + ISSUE-008
 - [x] Round 4 全量修复并部署（commit 60ded59）
 - [x] Round 4 自动化验收通过：货币/Badge/语言层级/过敏源/JSON解析
-- [ ] **待夏总最终确认**：BUG-J（MealPlanCard 必须出现）+ BUG-G（iOS 输入框放大）
-- [ ] Sprint 3 收尾 Checklist（DEC-065）进行中
+- [x] Round 5 SAGE Agent 浏览器完整 UI 验收（8 条路径）：
+  - BUG-K 发现并修复（processAIResponse 提前 return，DEC-069）
+  - BUG-J 连带修复（MealPlanCard 出现）
+  - BUG-G 确认（输入框 16px）
+  - 7 个 View 全部验证通过（Home/Scanner/Chat/Explore/Order/Waiter/Settings）
+  - 已部署线上 sage-next-gen.pages.dev (commit 5208e90)
+- [ ] **待夏总真机最终确认**
+- [ ] Sprint 3 收尾 Checklist（DEC-065）
 
 ### Sprint 4 规划（DEC-067，2026-03-04 启动）
 - T1: 历史记录（扫描/对话/点餐完整可回溯）
