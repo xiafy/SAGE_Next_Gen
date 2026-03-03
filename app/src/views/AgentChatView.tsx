@@ -207,7 +207,17 @@ export function AgentChatView() {
         dlog('chat', '⏳ waiting for user to reply to current AI question (max 8s)...');
         const timer = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
-            dlog('chat', '⏰ pre-chat timeout, proceeding with handoff');
+            dlog('chat', '⏰ pre-chat timeout, injecting default intent and handoff');
+            // 超时 handoff 时注入默认用户意图，避免 AI 收到空上下文无法回复
+            dispatch({
+              type: 'ADD_MESSAGE',
+              message: {
+                id: `user_default_${Date.now()}`,
+                role: 'user',
+                content: isZh ? '帮我推荐几道菜吧' : 'Recommend some dishes for me',
+                timestamp: Date.now(),
+              },
+            });
             doHandoff();
           }
         }, 8000);
