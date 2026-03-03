@@ -1071,3 +1071,36 @@
   1. 即使只有 2 道菜，结构化卡片（含价格、替换、一键加入订单）也比纯文字推荐更有操作价值
   2. "课程"在中文里是教育用语，餐饮语境下 course = 一道/一轮上菜，中性表达用"分组"
 - **影响**: `DECISIONS.md`、`docs/prd.md`、`worker/prompts/agentChat.ts`、`shared/types.ts`（注释）
+
+---
+
+### [DEC-066] Sprint 3 Round 4 Bug 修复决策
+
+- **日期**: 2026-03-03
+- **决策人**: Mr. Xia + SAGE
+- **变更**:
+  1. **OPEN-001**: Badge 显示总份数（非种类数）— `orderItems.reduce(sum + qty)`
+  2. **ISSUE-008**: Explore 菜品卡语言顺序 — 用户语言大字(font-semibold)，菜单原文小字(text-sm)
+  3. **BUG-D/E/I**: 货币符号统一 — 全视图使用 `formatPrice(price, currency)`，currency 从 menuData 传入
+  4. **BUG-G**: iOS Safari 输入框 font-size >= 16px 防自动缩放
+  5. **BUG-H**: AI JSON 解析兜底 — tryParseChatJson() fallback
+  6. **BUG-F**: Enrich 失败推送 enrich_error 事件，不静默吞错
+  7. **BUG-J**: Prompt 强制 ≥2 道菜必须输出 MealPlan JSON（不允许纯文本推荐）
+- **状态**: ✅ 已部署
+
+---
+
+### [DEC-067] Sprint 4 重新规划 — 个性化记忆系统
+
+- **日期**: 2026-03-03
+- **决策人**: Mr. Xia
+- **变更**: 原 Sprint 4（Beta 功能：邀请码/埋点/欢迎屏/反馈）推迟到 Sprint 5
+- **新 Sprint 4 内容**:
+  1. **T1 历史记录**: 扫描/对话/点餐完整历史，可回溯
+  2. **T2 记忆机制**: 从历史提取持久化用户画像（口味、过敏原、饮食习惯等）
+  3. **T3 自我进化**: 基于历史+记忆，AI 越用越懂用户
+- **双重目标**:
+  - 面向用户：个性化服务
+  - 面向产品：用户行为数据是迭代依据（覆盖不到的场景、做得不好的环节）
+- **理由**: "了解主人"是从工具到伙伴的本质升级，也是产品壁垒
+- **状态**: ✅ 夏总确认，明天进入 Spec 阶段

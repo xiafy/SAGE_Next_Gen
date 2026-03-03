@@ -564,5 +564,17 @@ https://sage-next-gen.pages.dev
 - 夏总主观认可可以邀请他人测试
 
 ### 验收结果
-- [ ] 通过 → Sprint 3 正式关闭，启动 Sprint 4
-- [ ] 发现问题 → 快速修复后重测
+- [x] Round 1 自动化验收：发现 4×P0 + 3×P1（2026-03-03）
+- [x] Round 2-3：BUG-001~004, BUG-A/B/C 全部修复验证通过
+- [x] Round 4 夏总真机验收：发现 BUG-D~J + OPEN-001 + ISSUE-008
+- [x] Round 4 全量修复并部署（commit 60ded59）
+- [x] Round 4 自动化验收通过：货币/Badge/语言层级/过敏源/JSON解析
+- [ ] **待夏总最终确认**：BUG-J（MealPlanCard 必须出现）+ BUG-G（iOS 输入框放大）
+- [ ] Sprint 3 收尾 Checklist（DEC-065）进行中
+
+### Sprint 4 规划（DEC-067，2026-03-04 启动）
+- T1: 历史记录（扫描/对话/点餐完整可回溯）
+- T2: 记忆机制（持久化用户画像）
+- T3: 自我进化（AI 越用越懂用户）
+- 核心目标：让 SAGE 越来越了解它的主人
+- 双重价值：个性化服务 + 产品迭代数据
