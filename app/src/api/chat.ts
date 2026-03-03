@@ -89,10 +89,20 @@ export function streamChat(
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let lastChunkAt = Date.now();
+      const STREAM_TIMEOUT_MS = 30_000; // 30s 无 chunk 则超时
 
       while (true) {
-        const { done, value } = await reader.read();
+        // 超时检查：用 Promise.race 包装 read
+        const readPromise = reader.read();
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          const remaining = STREAM_TIMEOUT_MS - (Date.now() - lastChunkAt);
+          setTimeout(() => reject(new Error('Stream timeout: no data for 30s')), Math.max(remaining, 1000));
+        });
+
+        const { done, value } = await Promise.race([readPromise, timeoutPromise]);
         if (done) break;
+        lastChunkAt = Date.now();
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
