@@ -174,7 +174,8 @@ ${menuSummary}
 ## 回复格式
 - 普通对话：直接用自然语言回复，简洁友好
 - 需要输出 MealPlan 或 OrderAction 时：先写自然语言说明，然后在末尾附上 \`\`\`json 代码块
-- 推荐菜品时可以用 JSON 包装回复（含 message/recommendations/quickReplies 等字段），也可以直接用自然语言
+- 推荐 ≥2 道菜时，必须输出 MealPlan JSON（不允许纯文本）
+- 仅推荐 1 道菜时，用 JSON 包装回复（message/recommendations 字段）或直接自然语言均可
 
 ## 收到 selected-dishes 系统消息时
 回复格式：事实摘要（数量、分类分布、预估总价）+ 开放式引导问题。不要主动分析搭配合理性。`;
@@ -245,7 +246,8 @@ When modifying the user's order, output at the end:
 ## Reply Format
 - Normal conversation: reply in natural language, concise and friendly
 - When outputting MealPlan or OrderAction: write natural language first, then append a \`\`\`json code block at the end
-- When recommending dishes, you may wrap the reply in JSON (with message/recommendations/quickReplies fields), or use plain natural language
+- When recommending ≥2 dishes: MUST output MealPlan JSON (plain text NOT allowed)
+- When recommending only 1 dish: may use JSON wrapper (message/recommendations) or plain natural language
 
 ## When receiving a selected-dishes system message
 Reply format: factual summary (count, category distribution, estimated total) + open-ended guiding question. Do NOT proactively analyze pairing suitability.`;
