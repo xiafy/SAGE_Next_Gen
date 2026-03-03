@@ -1,25 +1,13 @@
-import { useMemo } from 'react';
 import { useAppState } from '../hooks/useAppState';
 import { TopBar } from '../components/TopBar';
 import { Card3D } from '../components/Card3D';
 import { Button3D } from '../components/Button3D';
 import { MascotImage } from '../components/MascotImage';
-
-function usePriceFormatter(currency?: string, language?: string) {
-  return useMemo(() => {
-    const code = currency?.toUpperCase() && /^[A-Z]{3}$/.test(currency?.toUpperCase() ?? '') ? currency!.toUpperCase() : 'CNY';
-    const locale = language === 'zh' ? 'zh-CN' : 'en-US';
-    try {
-      return new Intl.NumberFormat(locale, { style: 'currency', currency: code, maximumFractionDigits: 0 });
-    } catch {
-      return new Intl.NumberFormat(locale, { style: 'decimal', maximumFractionDigits: 0 });
-    }
-  }, [currency, language]);
-}
+import { formatPrice } from '../utils/formatPrice';
 
 export function OrderCardView() {
   const { state, dispatch } = useAppState();
-  const fmt = usePriceFormatter(state.menuData?.currency, state.preferences.language);
+  const currency = state.menuData?.currency;
   const isZh = state.preferences.language === 'zh';
 
   const totalQty = state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
@@ -62,7 +50,7 @@ export function OrderCardView() {
 
               {/* Price */}
               <p className="text-sm font-bold text-[var(--color-sage-text)] shrink-0">
-                {fmt.format((oi.menuItem.price ?? 0) * oi.quantity)}
+                {formatPrice((oi.menuItem.price ?? 0) * oi.quantity, currency)}
               </p>
 
               {/* Quantity controls */}
@@ -109,7 +97,7 @@ export function OrderCardView() {
             <span className="text-base font-bold text-[var(--color-sage-text-secondary)]">
               {isZh ? `共 ${totalQty} 道菜` : `${totalQty} items`}
             </span>
-            <span className="text-2xl font-extrabold text-[var(--color-sage-primary)]">{fmt.format(totalPrice)}</span>
+            <span className="text-2xl font-extrabold text-[var(--color-sage-primary)]">{formatPrice(totalPrice, currency)}</span>
           </div>
           <Button3D
             size="lg"

@@ -18,6 +18,7 @@ import type { MenuItem } from '../../../shared/types';
 import { toUserFacingError } from '../utils/errorMessage';
 import { dlog } from '../utils/debugLog';
 import { mapDietaryToAllergens } from '../utils/allergenMapping';
+import { formatPrice } from '../utils/formatPrice';
 
 interface Recommendation {
   itemId: string;
@@ -113,16 +114,7 @@ export function AgentChatView() {
     return mapDietaryToAllergens(state.preferences.dietary);
   }, [state.preferences.dietary]);
 
-  const priceFmt = useMemo(() => {
-    const code = state.menuData?.currency?.toUpperCase();
-    const validCode = code && /^[A-Z]{3}$/.test(code) ? code : 'CNY';
-    const locale = isZh ? 'zh-CN' : 'en-US';
-    try {
-      return new Intl.NumberFormat(locale, { style: 'currency', currency: validCode, maximumFractionDigits: 0 });
-    } catch {
-      return new Intl.NumberFormat(locale, { style: 'decimal', maximumFractionDigits: 0 });
-    }
-  }, [state.menuData?.currency, isZh]);
+  const menuCurrency = state.menuData?.currency;
 
   // ---------- T7.3: SelectedDishes injection from Explore ----------
   useEffect(() => {
@@ -200,12 +192,17 @@ export function AgentChatView() {
       !isStreaming
     ) {
       const userMsgCount = state.messages.filter(m => m.role === 'user').length;
-      dlog('chat', 'handoff ready: userMsgs=', userMsgCount);
+      // ISSUE-005 fix: 最后一条非 system 消息的角色
+      const lastVisibleMsg = [...state.messages].reverse().find(m => m.role !== 'system');
+      const lastMsgIsFromUser = lastVisibleMsg?.role === 'user';
+      dlog('chat', 'handoff ready: userMsgs=', userMsgCount, 'lastMsgIsFromUser=', lastMsgIsFromUser);
 
-      if (userMsgCount > 0) {
+      // 只有当用户已回复（最后一条是用户消息）时才立即 handoff
+      // 否则等待用户回答当前 AI 问题（最多 8s 超时）
+      if (userMsgCount > 0 && lastMsgIsFromUser) {
         doHandoff();
       } else {
-        dlog('chat', '⏳ waiting for pre-chat interaction (max 8s)...');
+        dlog('chat', '⏳ waiting for user to reply to current AI question (max 8s)...');
         const timer = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
             dlog('chat', '⏰ pre-chat timeout, proceeding with handoff');
@@ -641,6 +638,15 @@ export function AgentChatView() {
         if (parsed.type === 'mealPlan') {
           // T7.2: MealPlan handling
           const mp = parsed.data as MealPlan;
+
+          // BUG-003 fix: 替换响应时，清除 replacingState 并确保版本递增
+          // AI 始终返回 version:1，客户端负责维护正确的版本号
+          if (replacingState) {
+            clearTimeout(replacingState.timeoutId);
+            mp.version = replacingState.sentAtVersion + 1;
+            setReplacingState(null);
+          }
+
           const msgIndex = state.messages.length;
 
           if (displayText) {
@@ -666,20 +672,6 @@ export function AgentChatView() {
               timestamp: Date.now(),
             },
           });
-
-          // 🔴-4: Version check for concurrent replacement
-          if (replacingState) {
-            if (mp.version > replacingState.sentAtVersion) {
-              clearTimeout(replacingState.timeoutId);
-              setReplacingState(null);
-            } else {
-              // Stale version, discard
-              setStreamingText('');
-              setQuickReplies([]);
-              setRecommendations([]);
-              return;
-            }
-          }
 
           setMealPlans(prev => [
             ...prev.map(e => ({ ...e, isActive: false })),
@@ -805,8 +797,8 @@ export function AgentChatView() {
   const handleReplaceDish = useCallback((dishId: string, dishName: string) => {
     if (replacingState) return; // already replacing
     const msg = isZh
-      ? `请帮我把 ${dishName} 换成别的`
-      : `Please replace ${dishName} with something else`;
+      ? `请帮我把「${dishName}」换成别的，保持整体搭配合理，输出完整的新用餐方案`
+      : `Please replace "${dishName}" with a different dish, keeping the overall pairing balanced. Output the complete updated meal plan.`;
 
     const activePlan = mealPlans.find(e => e.isActive);
     const sentAtVersion = activePlan?.mealPlan.version ?? 0;
@@ -1112,6 +1104,7 @@ export function AgentChatView() {
                     item={item}
                     isZh={isZh}
                     userAllergens={userAllergens}
+                    currency={menuCurrency}
                     orderItem={orderItem}
                     onAdd={() => handleAddToOrder(rec)}
                     onUpdateQty={(qty) => dispatch({ type: 'UPDATE_ORDER_QTY', itemId: rec.itemId, quantity: qty })}
@@ -1144,7 +1137,7 @@ export function AgentChatView() {
             {isZh ? `已点 ${totalOrderQuantity} 道菜` : `${totalOrderQuantity} items`}
           </span>
           <span className="text-sm text-[var(--color-sage-primary)] font-extrabold">
-            {priceFmt.format(state.orderItems.reduce((sum, oi) => sum + (oi.menuItem.price ?? 0) * oi.quantity, 0))}
+            {formatPrice(state.orderItems.reduce((sum, oi) => sum + (oi.menuItem.price ?? 0) * oi.quantity, 0), menuCurrency)}
           </span>
         </button>
       )}

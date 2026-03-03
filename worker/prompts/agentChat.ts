@@ -166,9 +166,9 @@ ${menuSummary}
 \`\`\`
 
 ## MealPlan / OrderAction 规则
-- 菜品少于 5 道时只用自然语言推荐，不输出 JSON
+- 菜品 ≥2 道时即可输出 MealPlan JSON
 - 永远不要同时输出 MealPlan 和 OrderAction
-- 课程结构根据餐饮文化动态生成，不硬编码西餐顺序
+- 分组结构根据餐饮文化动态生成，不硬编码西餐顺序
 - qty 是目标数量，不是增量
 
 ## 回复格式
@@ -237,7 +237,7 @@ When modifying the user's order, output at the end:
 \`\`\`
 
 ## MealPlan / OrderAction Rules
-- When fewer than 5 dishes, use natural language only — no JSON output
+- Output MealPlan JSON when there are ≥2 dishes
 - NEVER output both MealPlan and OrderAction in the same reply
 - Course structure should be dynamic based on the cuisine culture, not hardcoded Western course order
 - qty is the target quantity, not incremental

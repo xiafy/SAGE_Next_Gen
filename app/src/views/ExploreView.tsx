@@ -19,6 +19,16 @@ export function ExploreView() {
   const [newlySelected, setNewlySelected] = useState<SelectedDishSummary[]>([]);
   const [orderSnapshotOnEnter] = useState<OrderItem[]>(() => [...state.orderItems]);
 
+  // BUG-004: Track local explore quantities (decoupled from global order)
+  const [exploreQty, setExploreQty] = useState<Record<string, number>>({});
+  const baseQtyMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const oi of orderSnapshotOnEnter) {
+      map[oi.menuItem.id] = oi.quantity;
+    }
+    return map;
+  }, [orderSnapshotOnEnter]);
+
   const userAllergens = useMemo(() => {
     return mapDietaryToAllergens(state.preferences.dietary);
   }, [state.preferences.dietary]);
@@ -45,23 +55,30 @@ export function ExploreView() {
     };
   }, [state.menuData, isZh]);
 
-  // T8.2: Add dish handler
+  // T8.2: Add dish handler (BUG-004: also track local explore qty)
   const handleAddDish = useCallback((item: MenuItem) => {
     dispatch({ type: 'ADD_TO_ORDER', item });
-    // Add to newlySelected if not already there
+    setExploreQty(prev => ({ ...prev, [item.id]: (prev[item.id] ?? 0) + 1 }));
     setNewlySelected(prev => {
       if (prev.some(d => d.dishId === item.id)) return prev;
       return [...prev, toSummary(item)];
     });
   }, [dispatch, toSummary]);
 
-  // T8.2: Update qty handler
-  const handleUpdateQty = useCallback((itemId: string, qty: number) => {
-    dispatch({ type: 'UPDATE_ORDER_QTY', itemId, quantity: qty });
-    if (qty <= 0) {
+  // T8.2: Update qty handler (BUG-004: translate local qty to global)
+  const handleUpdateQty = useCallback((itemId: string, newLocalQty: number) => {
+    const base = baseQtyMap[itemId] ?? 0;
+    dispatch({ type: 'UPDATE_ORDER_QTY', itemId, quantity: base + newLocalQty });
+    if (newLocalQty <= 0) {
+      setExploreQty(prev => {
+        const { [itemId]: _, ...rest } = prev;
+        return rest;
+      });
       setNewlySelected(prev => prev.filter(d => d.dishId !== itemId));
+    } else {
+      setExploreQty(prev => ({ ...prev, [itemId]: newLocalQty }));
     }
-  }, [dispatch]);
+  }, [dispatch, baseQtyMap]);
 
   // T8.3: Navigate to AI chat with payload
   const handleConsultAI = useCallback(() => {
@@ -253,14 +270,16 @@ export function ExploreView() {
                   </h3>
                   <div className="flex flex-col gap-3">
                     {group.items.map((item) => {
-                      const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
+                      const localQty = exploreQty[item.id] ?? 0;
+                      const virtualOrderItem = localQty > 0 ? { menuItem: item, quantity: localQty } as OrderItem : undefined;
                       return (
                         <DishCard
                           key={item.id}
                           item={item}
                           isZh={isZh}
                           userAllergens={userAllergens}
-                          orderItem={orderItem}
+                          currency={state.menuData?.currency}
+                          orderItem={virtualOrderItem}
                           onAdd={() => handleAddDish(item)}
                           onUpdateQty={(qty) => handleUpdateQty(item.id, qty)}
                         />
@@ -279,14 +298,15 @@ export function ExploreView() {
           ) : (
             <div className="flex flex-col gap-3">
               {dedupedItems.map((item) => {
-                const orderItem = state.orderItems.find(oi => oi.menuItem.id === item.id);
+                const localQty = exploreQty[item.id] ?? 0;
+                const virtualOrderItem = localQty > 0 ? { menuItem: item, quantity: localQty } as OrderItem : undefined;
                 return (
                   <DishCard
                     key={item.id}
                     item={item}
                     isZh={isZh}
                     userAllergens={userAllergens}
-                    orderItem={orderItem}
+                    orderItem={virtualOrderItem}
                     onAdd={() => handleAddDish(item)}
                     onUpdateQty={(qty) => handleUpdateQty(item.id, qty)}
                   />

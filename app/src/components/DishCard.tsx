@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card3D } from './Card3D';
 import { Button3D } from './Button3D';
+import { formatPrice } from '../utils/formatPrice';
 import type { MenuItem, AllergenType, DietaryFlag } from '../../../shared/types';
 import type { OrderItem } from '../types';
 
@@ -34,6 +35,7 @@ export interface DishCardProps {
   item: MenuItem;
   isZh: boolean;
   userAllergens: string[];
+  currency?: string;
   orderItem?: OrderItem;
   onAdd: () => void;
   onUpdateQty: (qty: number) => void;
@@ -41,7 +43,7 @@ export interface DishCardProps {
 
 // ─── Component ─────────────────────────────────
 
-export function DishCard({ item, isZh, userAllergens, orderItem, onAdd, onUpdateQty }: DishCardProps) {
+export function DishCard({ item, isZh, userAllergens, currency, orderItem, onAdd, onUpdateQty }: DishCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   // Safe access for new fields (backward compat with cached old data)
@@ -167,9 +169,9 @@ export function DishCard({ item, isZh, userAllergens, orderItem, onAdd, onUpdate
 
         {/* Right side: price + order controls */}
         <div className="flex flex-col items-end gap-2 shrink-0 ml-3">
-          {item.priceText && (
+          {(item.price != null || item.priceText) && (
             <span className="text-sm font-bold text-[var(--color-sage-primary)]">
-              {item.priceText}
+              {item.price != null ? formatPrice(item.price, currency) : item.priceText}
             </span>
           )}
           {orderItem ? (

@@ -106,8 +106,10 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 function randId(index: number): string {
-  const seed = `${Date.now().toString(36)}${index.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-  return seed.slice(0, 8).padEnd(8, '0');
+  // 使用 index 作为前缀确保唯一性（Date.now() 在同一批次中相同，不能用作主差异化因子）
+  const idxPart = index.toString(36).padStart(3, '0');
+  const randPart = Math.random().toString(36).slice(2, 7);
+  return `${idxPart}${randPart}`.slice(0, 8).padEnd(8, '0');
 }
 
 function parsePrice(priceText?: string): number | undefined {
@@ -358,13 +360,54 @@ async function runAnalyzePipeline(
     message: context.language === 'zh' ? '解析识别结果…' : 'Validating result…',
   });
 
+  /**
+   * 确保所有 item.id 唯一。
+   * 将每个 item 的 ID 替换为基于其 index 的确定唯一值，
+   * 同时更新 categories.itemIds 中的映射（按原来顺序位置重建）。
+   *
+   * 只在检测到有重复时才执行，避免改动已经正确的 ID。
+   */
+  function ensureUniqueItemIds<T extends { items: Array<{ id: string }>; categories: Array<{ itemIds: string[] }> }>(result: T): T {
+    // 只处理重复情况
+    const ids = result.items.map(it => it.id);
+    if (ids.length === new Set(ids).size) return result; // 已全部唯一
+
+    // 为每个 item 分配新的基于 index 的唯一 ID
+    const oldToNew = new Map<string, string>(); // 仅适用于第一次出现的旧→新
+    const itemNewIds: string[] = [];
+    const usedIds = new Set<string>();
+
+    for (let i = 0; i < result.items.length; i++) {
+      let newId = `i${i.toString(36).padStart(3, '0')}${Math.random().toString(36).slice(2, 5)}`;
+      while (usedIds.has(newId)) newId += Math.random().toString(36).slice(2, 4);
+      const oldId = result.items[i]!.id;
+      if (!oldToNew.has(oldId)) oldToNew.set(oldId, newId); // 记录第一次出现
+      itemNewIds.push(newId);
+      usedIds.add(newId);
+      (result.items[i] as Record<string, unknown>).id = newId;
+    }
+
+    // 重建 category.itemIds：原 ID 按 oldToNew 映射（仅第一次出现的映射有效）
+    // 对于第二次及以后出现的重复 ID，它们现在有各自的新 ID，但 category 原本只记录了一次该旧 ID
+    // 策略：直接重建 itemIds 为 result.items 中属于该 category 的条目
+    // 由于没有额外的分类元数据，退回到：仅保留 oldToNew 的映射
+    for (const cat of result.categories) {
+      cat.itemIds = cat.itemIds
+        .map(oldId => oldToNew.get(oldId))
+        .filter((id): id is string => id !== undefined);
+    }
+
+    return result;
+  }
+
   async function parseAndValidate(text: string) {
     const jsonStr = extractJson(text);
     const aiResult = JSON.parse(jsonStr);
 
     const strict = MenuAnalyzeResultSchema.safeParse(aiResult);
     if (strict.success && strict.data.items.length > 0) {
-      return { ...strict.data, processingMs: Date.now() - startMs };
+      const fixed = ensureUniqueItemIds(strict.data);
+      return { ...fixed, processingMs: Date.now() - startMs };
     }
 
     const looseNormalized = normalizeLooseResult(aiResult, context.language, images.length);
