@@ -176,6 +176,7 @@ export interface ChatPreferences {
 export interface ChatContext {
   language: Language;
   timestamp: number;
+  utcOffsetMinutes?: number; // 本地时区偏移（分钟），东八区=+480，用于 Worker 端本地时间判断
   location?: GeoLocation;
   weather?: {
     condition: string;

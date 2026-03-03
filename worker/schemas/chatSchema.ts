@@ -51,9 +51,10 @@ export const ChatRequestSchema = z.object({
     history:      z.array(z.unknown()).default([]),
   }).default({}),
   context: z.object({
-    language:  z.enum(['zh', 'en']),
-    timestamp: z.number(),
-    location:  LocationSchema.optional(),
+    language:         z.enum(['zh', 'en']),
+    timestamp:        z.number(),
+    utcOffsetMinutes: z.number().default(0),
+    location:         LocationSchema.optional(),
   }),
 });
 

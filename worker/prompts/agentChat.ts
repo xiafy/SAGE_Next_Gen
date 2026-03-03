@@ -64,9 +64,10 @@ function buildMenuSummary(menu: MenuAnalyzeResult): string {
   return lines.join('\n');
 }
 
-/** 根据时间戳推断用餐时段 */
-function getMealType(timestamp: number, language: 'zh' | 'en'): string {
-  const h = new Date(timestamp).getHours();
+/** 根据时间戳推断用餐时段（使用本地时区偏移） */
+function getMealType(timestamp: number, language: 'zh' | 'en', utcOffsetMinutes = 0): string {
+  const localTs = timestamp + utcOffsetMinutes * 60000;
+  const h = new Date(localTs).getUTCHours();
   if (h < 10) return language === 'zh' ? '早餐' : 'breakfast';
   if (h < 14) return language === 'zh' ? '午餐' : 'lunch';
   if (h < 17) return language === 'zh' ? '下午茶' : 'afternoon tea';
@@ -92,7 +93,7 @@ interface AgentChatSystemOptions {
 export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
   const { menu, preferences, context, weather } = opts;
   const lang = context.language;
-  const mealType = getMealType(context.timestamp, lang);
+  const mealType = getMealType(context.timestamp, lang, context.utcOffsetMinutes ?? 0);
   const location = context.location
     ? `(${context.location.lat.toFixed(3)}, ${context.location.lng.toFixed(3)})`
     : (lang === 'zh' ? '未知位置' : 'unknown location');
@@ -117,7 +118,7 @@ export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
 - 禁止说"已为您下单""订单已确认""开始准备""请稍等准备"等暗示你有执行下单能力的话。
 
 当前场景：
-- 时间：${new Date(context.timestamp).toLocaleTimeString('zh-CN')}（${mealType}时段）— 可用于辅助预判用户意图，但不限制用户选择。如果用户意图与时段不符，尊重用户。禁止说出与事实矛盾的时间描述（如深夜说"适合下午茶"）。
+- 时间：${new Date(context.timestamp + (context.utcOffsetMinutes ?? 0) * 60000).toISOString().slice(11,16)}（${mealType}时段，本地时间）— 可用于辅助预判用户意图，但不限制用户选择。如果用户意图与时段不符，尊重用户。禁止说出与事实矛盾的时间描述（如深夜说"适合下午茶"）。
 - 位置：${location}${weather ? `\n- 天气：${weather.temp}°C，${weather.description}` : ''}
 - 用户偏好：${prefSummary}
 
@@ -126,7 +127,7 @@ ${menuSummary}
 
 回复规则：
 - 使用中文
-- 每次回复**严格不超过 2 句话**
+- message 文字**严格不超过 2 句话**（JSON 代码块不计入）
 - 提供具体可操作建议，必须带原文菜名和翻译
 - 生成 2-4 个 quickReplies
 - quickReplies 必须是用户视角（用户可能想说的话），不是 AI 视角
@@ -189,7 +190,7 @@ ${menuSummary}
 - NEVER say "order placed", "order confirmed", "preparing now", or anything implying you can execute orders.
 
 Current context:
-- Time: ${new Date(context.timestamp).toLocaleTimeString('en-US')} (${mealType}) — Use as a hint for user intent, but never restrict user choices. If the user's intent contradicts the time, respect it. NEVER use time descriptions that contradict reality (e.g. saying "perfect for afternoon tea" at midnight).
+- Time: ${new Date(context.timestamp + (context.utcOffsetMinutes ?? 0) * 60000).toISOString().slice(11,16)} local (${mealType}) — Use as a hint for user intent, but never restrict user choices. If the user's intent contradicts the time, respect it. NEVER use time descriptions that contradict reality (e.g. saying "perfect for afternoon tea" at midnight).
 - Location: ${location}${weather ? `\n- Weather: ${weather.temp}°C, ${weather.description}` : ''}
 - User preferences: ${prefSummary}
 
@@ -198,7 +199,7 @@ ${menuSummary}
 
 Reply rules:
 - Use English
-- Max 2 sentences per reply (strictly enforced)
+- Max 2 sentences in message text (strictly enforced; JSON code blocks do NOT count)
 - Give specific, actionable suggestions with both original and translated dish names
 - Generate 2-4 quickReplies
 - quickReplies must be from the user's perspective (what the user might say), not the AI's

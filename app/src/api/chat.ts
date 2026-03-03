@@ -49,6 +49,7 @@ export function buildChatParams(
     context: {
       language: preferences.language,
       timestamp: Date.now(),
+      utcOffsetMinutes: -new Date().getTimezoneOffset(), // 本地时区偏移（分钟），东八区=+480
       ...(location ? { location } : {}),
     },
   };
