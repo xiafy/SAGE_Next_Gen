@@ -478,6 +478,10 @@ export function AgentChatView() {
         (progressEvent) => {
           setAnalyzeProgress(progressEvent.progress);
           setAnalyzeStatusText(progressEvent.message);
+          // BUG-F: Show toast when enrich fails (dish details not loaded)
+          if (progressEvent.stage === 'enrich_error') {
+            showToast(progressEvent.message);
+          }
         },
       );
       dlog('chat', '✅ performAnalyze: success, items=', result.items?.length, 'supplementing=', state.isSupplementing);
@@ -712,22 +716,30 @@ export function AgentChatView() {
           }
         }
       } else {
-        // L3 fallback
+        // Not mealPlan/orderAction — try parsing as regular chat response JSON
+        if (tryParseChatJson(jsonStr)) return;
+        // L3 fallback: strip JSON code blocks, show regenerate
         displayText = stripJsonCodeBlocks(fullText) || fullText;
         newQuickReplies = [isZh ? '🔄 重新生成方案' : '🔄 Regenerate'];
       }
     } else {
       // No JSON block — try existing JSON parse logic
+      tryParseChatJson(fullText);
+    }
+
+    /** Try to parse text as a chat response JSON (message/quickReplies/recommendations).
+     *  Returns true if successfully extracted message field. */
+    function tryParseChatJson(text: string): boolean {
       try {
-        let jsonContent = fullText;
+        let jsonContent = text;
         try {
           JSON.parse(jsonContent);
         } catch {
-          const codeBlockMatch = fullText.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
           if (codeBlockMatch?.[1]) {
             jsonContent = codeBlockMatch[1];
           } else {
-            const braceMatch = fullText.match(/(\{[\s\S]*"message"[\s\S]*\})\s*$/);
+            const braceMatch = text.match(/(\{[\s\S]*"message"[\s\S]*\})\s*$/);
             if (braceMatch?.[1]) {
               jsonContent = braceMatch[1];
             } else {
@@ -753,8 +765,10 @@ export function AgentChatView() {
         if (Array.isArray(obj['preferenceUpdates']) && (obj['preferenceUpdates'] as PreferenceUpdate[]).length > 0) {
           dispatch({ type: 'UPDATE_PREFERENCES', updates: obj['preferenceUpdates'] as PreferenceUpdate[] });
         }
+        return typeof obj['message'] === 'string';
       } catch {
         // Not JSON — use raw text
+        return false;
       }
     }
 
@@ -1233,7 +1247,7 @@ export function AgentChatView() {
                 onKeyDown={handleKeyDown}
                 placeholder={isZh ? '输入消息…' : 'Type a message…'}
                 disabled={isStreaming}
-                className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
+                className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-base font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
               />
               <button
                 onClick={handleSend}

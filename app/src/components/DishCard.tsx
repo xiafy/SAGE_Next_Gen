@@ -74,11 +74,11 @@ export function DishCard({ item, isZh, userAllergens, currency, orderItem, onAdd
 
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          {/* Name */}
-          <p className="text-sm font-bold text-[var(--color-sage-text)]">
+          {/* Name: translated (user language) big + original (menu) small */}
+          <p className="text-base font-semibold text-[var(--color-sage-text)]">
             {item.nameTranslated}
           </p>
-          <p className="text-xs text-[var(--color-sage-text-secondary)]">{item.nameOriginal}</p>
+          <p className="text-sm text-[var(--color-sage-text-secondary)]">{item.nameOriginal}</p>
 
           {/* F11: Brief */}
           {item.brief && (

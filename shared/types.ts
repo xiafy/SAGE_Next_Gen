@@ -128,6 +128,7 @@ export type AnalyzeProgressStage =
   | 'vision_flash'
   | 'vision_plus_fallback'
   | 'validating'
+  | 'enrich_error'
   | 'completed';
 
 export interface AnalyzeProgressEvent {

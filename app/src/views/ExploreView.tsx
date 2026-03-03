@@ -216,7 +216,7 @@ export function ExploreView() {
             >
               🍽
               <span className="absolute -top-1 -right-2 bg-[var(--color-sage-primary)] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                {state.orderItems.length}
+                {state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0)}
               </span>
             </button>
           ) : undefined
@@ -306,6 +306,7 @@ export function ExploreView() {
                     item={item}
                     isZh={isZh}
                     userAllergens={userAllergens}
+                    currency={state.menuData?.currency}
                     orderItem={virtualOrderItem}
                     onAdd={() => handleAddDish(item)}
                     onUpdateQty={(qty) => handleUpdateQty(item.id, qty)}

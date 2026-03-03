@@ -218,7 +218,7 @@ export function SettingsView() {
                 }
               }}
               placeholder={isZh ? '输入偏好…' : 'Type preference…'}
-              className="flex-1 rounded-2xl border-2 border-[var(--color-sage-border)] bg-white px-4 py-2 text-sm text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors"
+              className="flex-1 rounded-2xl border-2 border-[var(--color-sage-border)] bg-white px-4 py-2 text-base text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors"
               maxLength={30}
             />
             <Button3D

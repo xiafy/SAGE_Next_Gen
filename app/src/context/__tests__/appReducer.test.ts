@@ -113,6 +113,43 @@ describe('appReducer — RESET_SESSION', () => {
   });
 });
 
+describe('OPEN-001: badge should show total quantity, not item count', () => {
+  const d1 = makeMenuItem('d1', 'Tom Yum');
+  const d2 = makeMenuItem('d2', 'Pad Thai');
+
+  it('total quantity = sum of all item quantities', () => {
+    const state = makeState({
+      orderItems: [
+        { menuItem: d1, quantity: 3 },
+        { menuItem: d2, quantity: 2 },
+      ],
+    });
+    const totalQty = state.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
+    expect(totalQty).toBe(5);
+    expect(state.orderItems.length).toBe(2); // item count != total qty
+  });
+
+  it('ADD_TO_ORDER increments qty for existing item', () => {
+    const state = makeState({ orderItems: [{ menuItem: d1, quantity: 2 }] });
+    const r = appReducer(state, { type: 'ADD_TO_ORDER', item: d1 });
+    const totalQty = r.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
+    expect(totalQty).toBe(3);
+    expect(r.orderItems.length).toBe(1);
+  });
+
+  it('UPDATE_ORDER_QTY changes qty correctly', () => {
+    const state = makeState({
+      orderItems: [
+        { menuItem: d1, quantity: 1 },
+        { menuItem: d2, quantity: 1 },
+      ],
+    });
+    const r = appReducer(state, { type: 'UPDATE_ORDER_QTY', itemId: 'd1', quantity: 5 });
+    const totalQty = r.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
+    expect(totalQty).toBe(6);
+  });
+});
+
 describe('appReducer — SET_NAV_PAYLOAD / SET_WAITER_ALLERGY_CONFIRMED', () => {
   it('SET_NAV_PAYLOAD sets and clears', () => {
     const p = { newlySelected: [], existingOrder: [] };

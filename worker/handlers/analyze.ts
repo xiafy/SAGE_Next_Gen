@@ -541,6 +541,16 @@ async function runAnalyzePipeline(
     } catch (enrichErr) {
       // Enrich is best-effort — don't fail the whole pipeline
       logger.warn('analyze: enrich failed (non-fatal)', { requestId, err: String(enrichErr).slice(0, 200) });
+      // Clean up temp fields even on failure
+      for (const item of result.items) {
+        delete (item as Record<string, unknown>).__allergenCodes;
+      }
+      // Push enrich_error event so frontend can show lightweight toast
+      onProgress?.({
+        stage: 'enrich_error',
+        progress: 92,
+        message: context.language === 'zh' ? '菜品详情加载失败，不影响基本功能' : 'Dish details failed to load, basic features unaffected',
+      });
     }
 
     const rawTextBytes = new TextEncoder().encode(rawText).length;
