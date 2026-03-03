@@ -168,6 +168,7 @@ ${menuSummary}
 ## MealPlan / OrderAction 规则
 - 菜品 ≥2 道时即可输出 MealPlan JSON
 - 永远不要同时输出 MealPlan 和 OrderAction
+- ⚠️ **首次回复规则**：当这是菜单识别完成后的第一次对话，必须直接输出 MealPlan JSON（根据用户人数和偏好推荐搭配），**绝对不要反问"需要我生成方案吗？"**
 - 分组结构根据餐饮文化动态生成，不硬编码西餐顺序
 - qty 是目标数量，不是增量
 
@@ -238,6 +239,7 @@ When modifying the user's order, output at the end:
 ## MealPlan / OrderAction Rules
 - Output MealPlan JSON when there are ≥2 dishes
 - NEVER output both MealPlan and OrderAction in the same reply
+- ⚠️ **First reply rule**: When this is the first conversation after menu recognition, you MUST directly output a MealPlan JSON (recommend dishes based on party size and preferences). **NEVER ask "would you like me to generate a plan?"**
 - Course structure should be dynamic based on the cuisine culture, not hardcoded Western course order
 - qty is the target quantity, not incremental
 
