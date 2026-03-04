@@ -328,7 +328,7 @@ const COMM_PHRASES: Record<CommunicationAction, Record<string, string>> = {
 | `app/src/components/WaiterAllergyBanner.tsx` | **新建** |
 | `app/src/components/AllergenWarningSheet.tsx` | **新建** |
 | `app/src/components/DishCommunicationPanel.tsx` | **新建** |
-| `app/src/utils/allergenCheck.ts` | **新建**：检查 Order 菜品 vs 用户过敏原的匹配逻辑 |
+| `app/src/utils/allergenMapping.ts` | **新建**：检查 Order 菜品 vs 用户过敏原的匹配逻辑 |
 | `app/src/utils/localLanguage.ts` | **新建**：过敏原/沟通短语的多语言翻译表 |
 | `app/src/context/AppContext.tsx` | Order→Waiter 导航时增加过敏检查拦截（或在 WaiterModeView mount 时检查）|
 | `app/src/views/ExploreView.tsx` | 「展示给服务员」按钮路径也需触发过敏检查 |

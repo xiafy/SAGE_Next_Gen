@@ -16,7 +16,7 @@
 - `02_product/PRD.md` 的 [F编号] 章节 — 验收标准
 - `04_technical/API_DESIGN.md` 的 [§编号] — API 契约
 - `05_implementation/shared/types.ts` — 权威类型定义
-- `docs/engineering-guardrails.md` — Hotfix/UI 研发门禁
+- `docs/engineering/engineering-guardrails.md` — Hotfix/UI 研发门禁
 - [其他相关文件，如 worker handler 或现有 view 代码]
 
 ## 硬门禁（必须按顺序执行）

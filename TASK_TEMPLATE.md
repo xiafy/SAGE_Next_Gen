@@ -24,11 +24,11 @@
 
 ## 1. 必读文件（开始编码前先完整读取）
 
-- `docs/vision.md` — 产品愿景（顶层权威）
-- `docs/prd.md` 的 [F编号] 章节 — 验收标准
+- `docs/product/vision.md` — 产品愿景（顶层权威）
+- `docs/product/prd.md` 的 [F编号] 章节 — 验收标准
 - `specs/[spec文件].md` — 功能 Spec（执行细则）
 - `shared/types.ts` — 权威类型定义
-- `docs/api-design.md` §[编号] — API 契约（如涉及）
+- `docs/technical/api-design.md` §[编号] — API 契约（如涉及）
 - [其他相关文件，如现有 view 代码、worker handler]
 
 ## 2. 关键决策上下文（MUST READ）

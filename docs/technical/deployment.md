@@ -3,7 +3,7 @@
 > 版本: v1.0
 > 日期: 2026-02-26
 > 状态: ✅ 完整版（含 CI/CD、环境管理、Secret 管理、回滚策略）
-> 上游文档: `docs/architecture.md`、`docs/tech-stack.md`
+> 上游文档: `docs/technical/architecture.md`、`docs/technical/tech-stack.md`
 
 ---
 

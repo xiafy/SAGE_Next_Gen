@@ -516,7 +516,6 @@ sizes = {
 |------|---------|------|
 | `app/src/index.css` | 重写 | Tailwind v4 @theme 全新 token |
 | `app/src/App.tsx` | 修改 | 新增底部导航栏组件 |
-| `app/src/components/BottomNav.tsx` | 新增 | 底部 Tab 导航 |
 | `app/src/components/MascotImage.tsx` | 新增 | 吉祥物图片组件（按状态显示不同表情） |
 | `app/src/components/Button3D.tsx` | 新增 | 多邻国式 3D 按钮通用组件 |
 | `app/src/components/Card3D.tsx` | 新增 | 多邻国式 3D 卡片通用组件 |
@@ -537,7 +536,7 @@ sizes = {
 
 **Phase 1（本次）**：设计系统 + 全页面视觉重构
 - 新配色/字体/圆角/阴影 token
-- 通用组件（Button3D / Card3D / Chip / BottomNav / MascotImage）
+- 通用组件（Button3D / Card3D / Chip / MascotImage）
 - 全部 7 个 View 重构
 - CSS 基础动效
 - 吉祥物占位图（等 Mr. Xia 用 AI 生成后替换）

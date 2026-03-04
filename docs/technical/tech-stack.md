@@ -96,7 +96,7 @@ export default defineConfig({
    }
 ```
 
-**完整 `@theme` 配置见** `docs/visual-design.md`
+**完整 `@theme` 配置见** `docs/product/visual-design.md`
 
 **使用方式**:
 ```html

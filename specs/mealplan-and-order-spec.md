@@ -283,7 +283,7 @@ System message 指示 AI：
 | `app/src/context/AppContext.tsx` | 新增两个 reducer case + activeMealPlanVersion 状态 |
 | `app/src/views/AgentChatView.tsx` | 流式 JSON 检测 + MealPlanCard 渲染 + OrderAction 执行 + processAIResponse 重构 |
 | `app/src/components/MealPlanCard.tsx` | **新建** |
-| `app/src/utils/jsonBlockParser.ts` | **新建**：提取 + 分级 fallback + 分类 |
+| `app/src/utils/streamJsonParser.ts` | **新建**：提取 + 分级 fallback + 分类 |
 | `worker/prompts/agentChat.ts` | 方案型 + OrderAction prompt 模板 |
 
 ---

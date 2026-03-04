@@ -494,7 +494,7 @@
   3. `streamAggregate` 保留但标记为"仅供 Chat 流式场景使用"
   4. **注意**：此决策覆盖 DEC-028 中"同时启用 stream:true"的说明——DEC-028 的 stream:true 建议基于文本对话场景，不适用于 JSON 输出场景
 - **预期效果**: VL 阶段 ~25s → ~13s，总链路 ~25s → ~15s（含 enrich ~2s）
-- **影响**: `worker/utils/bailian.ts`、`worker/handlers/analyze.ts`、`docs/api-design.md`
+- **影响**: `worker/utils/bailian.ts`、`worker/handlers/analyze.ts`、`docs/technical/api-design.md`
 
 ---
 
@@ -516,7 +516,7 @@
   4. Enrich 阶段继续使用 qwen3.5-flash（纯文本，无需视觉，~2s 够快）
   5. 预期总链路：~8s（VL）+ ~2s（Enrich）≈ **~10s**
 - **API Key 存放**: `GEMINI_API_KEY` 存于 Cloudflare Worker wrangler secret，不出现在代码中
-- **影响**: `worker/utils/gemini.ts`（新建）、`worker/handlers/analyze.ts`、`worker/middleware/cors.ts`、`docs/api-design.md`
+- **影响**: `worker/utils/gemini.ts`（新建）、`worker/handlers/analyze.ts`、`worker/middleware/cors.ts`、`docs/technical/api-design.md`
 
 ---
 
@@ -685,7 +685,7 @@
   2. 有效像素从 0.69MP 升至 1.23MP（+78%），对小字菜单收益显著
   3. 传输差异仅约 150KB，4G 网络 <0.1s，用户无感
   4. quality ladder 最高档从 0.6 升至 0.75，减少文字边缘 JPEG artifact
-- **影响**: `app/src/api/analyze.ts`（`compressImage` 默认参数）、`docs/api-design.md`（客户端预处理规范）
+- **影响**: `app/src/api/analyze.ts`（`compressImage` 默认参数）、`docs/technical/api-design.md`（客户端预处理规范）
 
 ---
 
@@ -705,7 +705,7 @@
   - `app/src/views/AgentChatView.tsx`
   - `worker/handlers/analyze.ts`
   - `shared/types.ts`（Analyze 超时常量）
-  - `docs/api-design.md`
+  - `docs/technical/api-design.md`
 
 ---
 
@@ -733,7 +733,7 @@
      - 带已选菜品咨询 AI（→AgentChat，AI 给出搭配建议）
   3. **新增 MealPlanCard 组件**：方案型回复使用结构化方案卡片，支持逐道替换和一键加入订单
 - **影响**:
-  - `docs/prd.md` v1.8（F06/F07/旅程D/§3.1 更新）
+  - `docs/product/prd.md` v1.8（F06/F07/旅程D/§3.1 更新）
   - `worker/prompts/agentChat.ts`（方案生成 Prompt）
   - `app/src/views/AgentChatView.tsx`（MealPlanCard 组件）
   - `app/src/views/ExploreView.tsx`（底部操作栏 + 双出口）
@@ -784,8 +784,8 @@
   - `worker/utils/gemini.ts`
   - `worker/utils/bailian.ts`（`baseUrl` 参数）
   - `worker/middleware/cors.ts`（`BAILIAN_INTL_API_KEY`）
-  - `docs/architecture.md`（降级路径更新）
-  - `docs/deployment.md`（新增 Secret 说明）
+  - `docs/technical/architecture.md`（降级路径更新）
+  - `docs/technical/deployment.md`（新增 Secret 说明）
 
 ---
 
@@ -810,7 +810,7 @@
   3. 流式结束后提取最后一个 json 代码块 → parse → 渲染 MealPlanCard
   4. 分级 fallback：L1 完整→卡片 / L2 jsonrepair→简化卡片 / L3 无法解析→纯文字+「重新生成方案」按钮
   5. MealPlanCard JSON schema 定义于 `shared/types.ts`
-- **影响**: `docs/prd.md` F06、`worker/prompts/agentChat.ts`、`app/src/views/AgentChatView.tsx`、`shared/types.ts`
+- **影响**: `docs/product/prd.md` F06、`worker/prompts/agentChat.ts`、`app/src/views/AgentChatView.tsx`、`shared/types.ts`
 
 ---
 
@@ -835,7 +835,7 @@
      - 纯新选："收到你选的 3 道菜——2 道主菜、1 道饮品，预估 ¥180。有什么想调整的吗？"
      - 新选+已有："收到你新选的 3 道菜（2 道主菜、1 道饮品），加上点菜单里已有的 5 道，一共 8 道，预估 ¥420。想聊这几道新的，还是看看整桌搭配？"
   4. AI 不主动分析搭配，等用户明确方向后再深入
-- **影响**: `docs/prd.md` F07 AC7、`app/src/views/AgentChatView.tsx`、`app/src/components/SelectedDishesCard.tsx`、`worker/prompts/agentChat.ts`
+- **影响**: `docs/product/prd.md` F07 AC7、`app/src/views/AgentChatView.tsx`、`app/src/components/SelectedDishesCard.tsx`、`worker/prompts/agentChat.ts`
 
 ---
 
@@ -858,7 +858,7 @@
   2. 点击后自动发送消息给 AI："帮我把 {菜名} 换成别的，保持整体搭配"
   3. AI 回复包含新 MealPlanCard 的完整方案（替换后的版本）
   4. 旧 MealPlanCard 标记为"已更新"（灰化，不可操作）
-- **影响**: `docs/prd.md` F06 AC9、`app/src/components/MealPlanCard.tsx`、`worker/prompts/agentChat.ts`
+- **影响**: `docs/product/prd.md` F06 AC9、`app/src/components/MealPlanCard.tsx`、`worker/prompts/agentChat.ts`
 
 ---
 
@@ -890,7 +890,7 @@
 - 只有 `version === activeMealPlanId + 1` 的响应落地，旧响应丢弃
 - 前端维护 `activeMealPlanVersion` 状态
 
-- **影响**: `docs/prd.md` F06/F08、`shared/types.ts`（MealPlan + Order 类型）、`app/src/stores/orderStore.ts`、`app/src/components/MealPlanCard.tsx`
+- **影响**: `docs/product/prd.md` F06/F08、`shared/types.ts`（MealPlan + Order 类型）、`app/src/stores/orderStore.ts`、`app/src/components/MealPlanCard.tsx`
 
 ---
 
@@ -918,7 +918,7 @@
      - 语言：图标 + 英文 + 菜单所在地本地语言（三重表达，确保服务员看懂）
      - 位置：菜品列表上方，第一眼可见
      - 仅在用户有声明过敏/禁忌时显示
-- **影响**: `docs/prd.md` F08、`worker/prompts/agentChat.ts`、`app/src/views/WaiterView.tsx`、`app/src/components/AllergenWarningSheet.tsx`（新组件）、`app/src/components/WaiterAllergyBanner.tsx`（新组件）
+- **影响**: `docs/product/prd.md` F08、`worker/prompts/agentChat.ts`、`app/src/views/WaiterView.tsx`、`app/src/components/AllergenWarningSheet.tsx`（新组件）、`app/src/components/WaiterAllergyBanner.tsx`（新组件）
 
 ---
 
@@ -935,7 +935,7 @@
   5. **Waiter「结束用餐」**→ 二次确认 → 清空 Order + 清空会话 → Home
   6. **过敏原检查**（DEC-056）在 Order→Waiter 跳转时触发，无论来源路径
 - **关键原则**: Explore 选菜无论走哪个出口都写入 Order。用户点「➕ 加入」= "我要这道菜"，意图不因出口不同而改变
-- **影响**: `docs/prd.md` F07/F08、`app/src/stores/orderStore.ts`、导航路由
+- **影响**: `docs/product/prd.md` F07/F08、`app/src/stores/orderStore.ts`、导航路由
 
 ---
 
@@ -954,7 +954,7 @@
   2. 指令 schema：`{"orderAction": "replace|add|remove", "remove": {"dishId": "..."}, "add": {"dishId": "...", "qty": N}}`
   3. 前端检测到 `orderAction` 代码块 → 执行 Order 修改 → AI 文字部分正常展示（"好的，已帮你把牛排换成龙虾 🦞"）
   4. Order 修改后 Chat 的 system message 自动更新（AI 始终感知最新 Order）
-- **影响**: `docs/prd.md` F06、`shared/types.ts`（OrderAction 类型）、`app/src/views/AgentChatView.tsx`、`app/src/stores/orderStore.ts`、`worker/prompts/agentChat.ts`
+- **影响**: `docs/product/prd.md` F06、`shared/types.ts`（OrderAction 类型）、`app/src/views/AgentChatView.tsx`、`app/src/stores/orderStore.ts`、`worker/prompts/agentChat.ts`
 
 ---
 
@@ -968,7 +968,7 @@
   1. MealPlan JSON 的 `courses` 为有序数组，每个 course 有 `name`（如"凉菜"/"刺身"/"Starter"）和 `items`
   2. Prompt 指示 AI 根据 `detectedCuisineType` 和菜单内容决定课程结构
   3. 菜品 <5 道时不输出 MealPlanCard，改为自然语言推荐
-- **影响**: `shared/types.ts`（MealPlan.courses 结构）、`worker/prompts/agentChat.ts`、`docs/prd.md` F06
+- **影响**: `shared/types.ts`（MealPlan.courses 结构）、`worker/prompts/agentChat.ts`、`docs/product/prd.md` F06
 
 ---
 
@@ -995,7 +995,7 @@
   5. 选「➕ 加一份」→ Order 数量 +1
   6. 选「❓ 其他」→ 进入 Chat（携带菜品上下文）
   7. 沟通面板的本地语言由 AI 识别菜单时的 `detectedLanguage` 决定
-- **影响**: `docs/prd.md` F08（Waiter Mode 新增交互）、`app/src/views/WaiterView.tsx`、`app/src/components/DishCommunicationPanel.tsx`（新组件）
+- **影响**: `docs/product/prd.md` F08（Waiter Mode 新增交互）、`app/src/views/WaiterView.tsx`、`app/src/components/DishCommunicationPanel.tsx`（新组件）
 
 ---
 
@@ -1070,7 +1070,7 @@
 - **理由**: 
   1. 即使只有 2 道菜，结构化卡片（含价格、替换、一键加入订单）也比纯文字推荐更有操作价值
   2. "课程"在中文里是教育用语，餐饮语境下 course = 一道/一轮上菜，中性表达用"分组"
-- **影响**: `DECISIONS.md`、`docs/prd.md`、`worker/prompts/agentChat.ts`、`shared/types.ts`（注释）
+- **影响**: `DECISIONS.md`、`docs/product/prd.md`、`worker/prompts/agentChat.ts`、`shared/types.ts`（注释）
 
 ---
 
@@ -1193,7 +1193,7 @@
   - 知识索引表（指向 docs/ 下已有文档）
   - 项目结构速查
   - 当前 Sprint 状态
-- **迁移**: 研发方法论 → `docs/engineering/spec-driven-workflow.md`；Hook 信息 → `docs/engineering-guardrails.md`
+- **迁移**: 研发方法论 → `docs/engineering/spec-driven-workflow.md`；Hook 信息 → `docs/engineering/engineering-guardrails.md`
 - **状态**: ✅ 已上线 (commit 119074b)
 
 ---

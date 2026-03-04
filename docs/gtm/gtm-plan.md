@@ -3,7 +3,7 @@
 > 版本: v0.1 (草案)
 > 日期: 2026-03-03
 > 状态: 🟡 草案，待夏总拍板
-> 上游文档: `docs/vision.md` §十一、`docs/competitive-analysis.md`
+> 上游文档: `docs/product/vision.md` §十一、`docs/product/competitive-analysis.md`
 
 ---
 

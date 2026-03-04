@@ -3,7 +3,7 @@
 > 日期: 2026-03-01
 > 审查人: SAGE Agent
 > 状态: ⏳ 待 Mr. Xia 确认
-> 方法论: `docs/quality-review-methodology.md`
+> 方法论: `docs/engineering/quality-review-methodology.md`
 
 ---
 
@@ -11,10 +11,10 @@
 
 | 文档 | 行数 |
 |------|------|
-| `docs/vision.md` | 210 |
-| `docs/prd.md` | 568 |
+| `docs/product/vision.md` | 210 |
+| `docs/product/prd.md` | 568 |
 | `docs/user-stories.md` | 286 |
-| `docs/competitive-analysis.md` | 220 |
+| `docs/product/competitive-analysis.md` | 220 |
 
 ---
 

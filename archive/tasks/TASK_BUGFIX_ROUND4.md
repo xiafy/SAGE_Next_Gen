@@ -3,7 +3,7 @@
 ## 必读文件（按顺序）
 
 1. `CLAUDE.md` — Agent 工作手册
-2. `docs/prd.md` — PRD（AC 验收标准）
+2. `docs/product/prd.md` — PRD（AC 验收标准）
 3. `shared/types.ts` — 前后端共享类型
 4. `app/src/views/ExploreView.tsx`
 5. `app/src/views/AgentChatView.tsx`

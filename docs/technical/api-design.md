@@ -6,7 +6,7 @@
 > 变更说明: v1.0→v2.0→v3.0
 > - v2.0: VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径；Prompt v8 allergenCodes pipeline
 > - **v3.0 (DEC-068, 2026-03-03)**: VL+Enrich 合并为单次 Gemini 调用（Prompt v9）。移除独立 Enrich 阶段，消除 429 限流和跨境延迟问题。Worker `analyze.ts` 只保留 Step 1。总延迟 ~18s，成功率大幅提升
-> 上游文档: `docs/architecture.md`、`docs/prd.md`、`DECISIONS.md`
+> 上游文档: `docs/technical/architecture.md`、`docs/product/prd.md`、`DECISIONS.md`
 > 供应商: VL+Enrich = Google Gemini API；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 
 ---
@@ -429,7 +429,7 @@ Waiter Mode 下点击菜品触发的沟通面板不涉及新 API 端点，所有
 - ➕ 加份 → Order 数量 +1（前端状态）
 - ❓ 其他 → 跳转 Chat（携带菜品上下文作为 system message）
 
-导航状态机（DEC-057）：Order 是 Waiter 唯一数据源，详见 `docs/navigation-spec.md` v2.0。
+导航状态机（DEC-057）：Order 是 Waiter 唯一数据源，详见 `docs/product/navigation-spec.md` v2.0。
 
 ---
 

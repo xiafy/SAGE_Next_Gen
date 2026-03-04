@@ -3,7 +3,7 @@
 > 版本: v2.0
 > 日期: 2026-03-02
 > 状态: 🟢 F01-F13 对齐；v1.7 两阶段识别架构；v1.8 用户场景重定义（DEC-043）；v1.9 方案型输出格式 + Explore→Chat 注入 + 替换交互细化；v2.0 四方评审修订（DEC-052~060）
-> 上游文档: `docs/vision.md`
+> 上游文档: `docs/product/vision.md`
 
 ---
 
@@ -584,7 +584,7 @@ Settings    │          ↑           ├→ 继续点菜 → Order
 | Waiter | — | 双出口：继续点菜→Order / 结束用餐→Home |
 | Settings | Home | — |
 
-**详细 Spec**：见 `docs/navigation-spec.md`
+**详细 Spec**：见 `docs/product/navigation-spec.md`
 
 ---
 

@@ -4,7 +4,7 @@
 - `DECISIONS.md`（特别是 DEC-052v2, DEC-054, DEC-057, DEC-058, DEC-059, DEC-059v2）
 - `shared/types.ts`（MealPlan, OrderItem 类型定义）
 - `docs/acceptance-test-report-20260303.md`（完整 bug 描述）
-- `docs/prd.md`（F06 AgentChat, F07 Explore, F08 Order）
+- `docs/product/prd.md`（F06 AgentChat, F07 Explore, F08 Order）
 
 ## Bug 清单（按优先级）
 
