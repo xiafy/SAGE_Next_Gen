@@ -187,3 +187,7 @@ REF_ISSUES=$(echo "$REF_OUTPUT" | grep -c "⚠" 2>/dev/null) || REF_ISSUES=0
 
 echo ""
 echo "  一致性问题: $((CONSISTENCY_ISSUES + REF_ISSUES))"
+
+# 8. 业务一致性检查（调用独立脚本）
+echo -e "\n${YELLOW}▶ 业务一致性检查${NC}"
+bash "$REPO_ROOT/scripts/check-consistency.sh" 2>&1 | grep -v "^═══" | sed 's/^/  /'
