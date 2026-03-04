@@ -5,11 +5,12 @@
 
 ---
 
-## 当前阶段：Sprint 3 完成 ✅
+## 当前阶段：Sprint 4b 进行中
 
-**进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅
+**进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅
 
-**下一阶段**: Sprint 4 — Paywall + Beta
+**当前**: Sprint 4b — Memory System (DEC-067)  
+**下一阶段**: Sprint 5 — Beta 内测
 
 ---
 
@@ -130,7 +131,7 @@
 
 ---
 
-## Sprint 4 — Beta 内测（计划中）
+## Sprint 5 — Beta 内测（计划中，原 Sprint 4，DEC-067 推迟）
 
 **前置条件**: Sprint 3 ✅ 已部署上线  
 **目标**: 3-5 个内部用户通过邀请码进入，验证功能可用 + 识别最高频场景  
@@ -172,6 +173,53 @@
 - Paywall / 付费墙
 - 新 AI 功能
 - UI 大改
+
+---
+
+---
+
+## Sprint 4b — Memory System (DEC-067)
+
+**前置条件**: Sprint 4a 工程治理完成 ✅  
+**目标**: 跨会话记忆能力，从"工具"升级为"伙伴"  
+**Spec**: `specs/sprint-4b-memory.md` (Draft v1.0)  
+**状态**: 未开始（Spec 需审查确认后启动）
+
+### 任务清单
+
+- [ ] **Step 0: Spec 审查 + 一致性闸门 (DEC-063)**
+  - [ ] sprint-4b-memory.md 从 Draft 升为 Approved
+  - [ ] shared/types.ts 新增类型设计
+  - [ ] 一致性矩阵自查通过
+  - 门禁: 夏总确认 Spec
+
+- [ ] **Step 1: 数据层设计 + 实现**
+  - [ ] SAGE_Memory schema v1 (localStorage)
+  - [ ] SessionSummary 结构
+  - [ ] 版本化 + migration 机制
+
+- [ ] **Step 2: 会话摘要生成**
+  - [ ] 会话结束时 AI 驱动摘要
+  - [ ] Worker POST /api/memory 接口
+
+- [ ] **Step 3: 跨会话记忆注入**
+  - [ ] 新会话 Prompt 注入历史记忆
+  - [ ] 偏好 + 历史综合注入
+
+- [ ] **Step 4: 验收 + 部署**
+  - [ ] 测试覆盖（DEC-064 配比）
+  - [ ] 交叉审查（DEC-074）
+  - [ ] 部署上线
+
+### 优先级
+- P0: 偏好持久化 schema v1 + 版本化
+- P1: 会话摘要生成
+- P2: 跨会话检索 + Prompt 注入
+
+### 不做
+- 云端同步（需后端数据库）
+- 多设备共享
+- 用户账户系统
 
 ---
 
