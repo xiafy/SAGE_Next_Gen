@@ -576,7 +576,7 @@ https://sage-next-gen.pages.dev
   - 7 个 View 全部验证通过（Home/Scanner/Chat/Explore/Order/Waiter/Settings）
   - 已部署线上 sage-next-gen.pages.dev (commit 5208e90)
 - [ ] **待夏总真机最终确认**
-- [ ] Sprint 3 收尾 Checklist（DEC-065）
+- [x] Sprint 3 收尾 Checklist（DEC-065）— 2026-03-04 完成
 
 ### Sprint 4 规划（DEC-067，2026-03-04 启动）
 - T1: 历史记录（扫描/对话/点餐完整可回溯）
@@ -584,3 +584,34 @@ https://sage-next-gen.pages.dev
 - T3: 自我进化（AI 越用越懂用户）
 - 核心目标：让 SAGE 越来越了解它的主人
 - 双重价值：个性化服务 + 产品迭代数据
+
+---
+
+## Sprint 3 收尾 Checklist（DEC-065）— 2026-03-04
+
+| # | 项目 | 状态 | 备注 |
+|---|------|------|------|
+| 1 | docs/ 版本号与代码对齐 | ✅ | api-design.md v2.0→v3.0 修正，prd v2.0 / vision v1.3 已对齐 |
+| 2 | DECISIONS.md 补齐 Sprint 3 DEC | ✅ | DEC-059v2, 061-069 全部在册 |
+| 3 | 测试覆盖率报告 | ✅ | 12 文件 / 116 用例 / 全绿。覆盖率: Stmts 73.8%, Branch 61.3%, Funcs 74.2%, Lines 75.3%。AppContext 46% 为最低模块 |
+| 4 | PROGRESS.md 更新 | ✅ | 本表 |
+| 5 | PLANNING.md 更新 | ✅ | Sprint 4 方向待定（见下） |
+| 6 | RETRO_2026-03-03.md | ✅ | 四方审计完成，总分 2.2/5 |
+| 7 | 下一 Sprint 前置依赖 | ⚠️ 待夏总确认 | Sprint 4 方向二选一（见下） |
+
+### 下一 Sprint 前置依赖确认
+
+**Sprint 4 方向待定，两个选项：**
+
+- **选项 A（质量 Sprint）**: 工程治理改革（硬门控 + 核心函数提取 + AGENTS.md 重构 + Prompt 工程化），来自四方审计 2.2/5 的结论
+- **选项 B（DEC-067 记忆系统）**: 历史记录 + 记忆机制 + 自我进化
+
+**当前执行方向**: 选项 A 已启动（夏总 2026-03-04 13:31 确认），完成后再进入选项 B
+
+### Sprint 3 最终状态
+
+- **代码**: 已部署 sage-next-gen.pages.dev (commit f358dea)
+- **测试**: 116/116 通过
+- **文档**: 全部对齐
+- **真机验收**: 待夏总最终确认
+- **质量评估**: 四方审计 2.2/5（详见 RETRO_2026-03-03.md）

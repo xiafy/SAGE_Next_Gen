@@ -172,3 +172,30 @@
 - Paywall / 付费墙
 - 新 AI 功能
 - UI 大改
+
+---
+
+## Sprint 4a: 工程治理改革（2026-03-04 启动）
+
+> 来源：四方审计 2.2/5 + OpenAI Harness Engineering 学习
+> 目标：规则执行率从 19% → 100%（通过工具强制，而非文档自觉）
+
+### Phase 1: 硬门控
+- [ ] pre-commit hook（tsc + vitest + Prompt I/O diff + fix 关联测试）
+- [ ] deploy 门控脚本（编译→单测→冒烟→部署）
+
+### Phase 2: 核心函数提取 + 测试加固
+- [ ] processAIResponse 从组件闭包提取为纯函数
+- [ ] BUG-K/J 回归测试
+- [ ] E2E 主路径冒烟扩展
+
+### Phase 3: AGENTS.md 重构
+- [ ] 331行→80行目录 + docs/engineering/ 结构化知识库
+
+### Phase 4: Prompt 工程化 + 日常质量扫描
+- [ ] Prompt 测试夹具 + 验证脚本
+- [ ] 每日质量 cron
+
+### 预估
+- 总工作量: ~14h
+- 完成后进入 Sprint 4b（DEC-067 记忆系统）

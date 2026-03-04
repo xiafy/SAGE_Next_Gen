@@ -5,3 +5,4 @@ dist/
 *.log
 app/playwright-browsers/
 app/test-results/
+app/coverage/
