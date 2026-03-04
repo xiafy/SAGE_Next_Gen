@@ -15,10 +15,10 @@
 |---|------|------|------|---------|
 | 0.1 | 竞品 GTM 调研（SAGE 类产品如何冷启动） | `research/competitor-gtm.md` | ⏳ | |
 | 0.2 | 种子用户邀请文案（中文+英文） | `assets/invite-copy.md` | ⏳ | |
-| 0.3 | Beta 使用指南（一页式，含截图） | `assets/user-guide.md` | ⏳ | |
+| 0.3 | Beta 使用指南（一页式，含截图） | `assets/user-guide.md` (TODO: 待创建) | ⏳ | |
 | 0.4 | 产品 Demo 脚本（30s 视频分镜） | `assets/demo-script.md` | ⏳ | |
-| 0.5 | Landing Page 文案 & 设计稿 | `assets/landing-page.md` | ⏳ | |
-| 0.6 | 小红书/PH 发布文案预备 | `assets/launch-copy.md` | ⏳ | |
+| 0.5 | Landing Page 文案 & 设计稿 | `assets/landing-page.md` (TODO: 待创建) | ⏳ | |
+| 0.6 | 小红书/PH 发布文案预备 | `assets/launch-copy.md` (TODO: 待创建) | ⏳ | |
 | 0.7 | 埋点→指标→决策映射表 | `metrics-framework.md` | ⏳ | |
 
 ### Phase 1: S0 Dog-fooding（需夏总配合）
@@ -68,6 +68,6 @@ TBD — S1 结束后根据数据细化
 
 ## 复盘规则
 
-1. 每个 Phase 完成后写复盘（`logs/retro-phase-X.md`）
+1. 每个 Phase 完成后写复盘（`logs/retro-phase-X.md`，TODO: 待创建）
 2. 复盘内容：做对了什么 / 做错了什么 / 下次怎么改
 3. 关键经验沉淀到 MEMORY.md

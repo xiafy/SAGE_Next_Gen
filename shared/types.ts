@@ -365,6 +365,30 @@ export interface SelectedDishesPayload {
 }
 
 // ─────────────────────────────────────────────
+// /api/analyze 响应别名（对齐 api-design.md）
+// ─────────────────────────────────────────────
+
+/** api-design.md 中的 AnalyzeResponseData 即 MenuData */
+export type AnalyzeResponseData = MenuData;
+
+// ─────────────────────────────────────────────
+// /api/chat 响应联合类型（对齐 api-design.md）
+// ─────────────────────────────────────────────
+
+/** api-design.md 中的 ChatResponse = PreChatResponse | AgentChatResponse */
+export type ChatResponse = PreChatResponse | AgentChatResponse;
+
+// ─────────────────────────────────────────────
+// /api/transcribe 请求（对齐 api-design.md + worker/handlers/transcribe.ts）
+// ─────────────────────────────────────────────
+
+export interface TranscribeRequest {
+  audio: string;       // base64 编码的音频数据
+  mimeType: string;    // 音频 MIME 类型（audio/webm, audio/mp4, audio/wav 等）
+  language?: string;   // "zh" | "en"
+}
+
+// ─────────────────────────────────────────────
 // Waiter 过敏栏（DEC-056）
 // ─────────────────────────────────────────────
 

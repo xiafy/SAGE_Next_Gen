@@ -722,11 +722,12 @@ export type ChatResponseData = z.infer<typeof ChatResponseSchema>;
 // services/analyzeMenu.ts
 import { AnalyzeResponseSchema, type AnalyzeResponseData } from '../schemas/menuSchema';
 
-interface AnalyzeMenuOptions {
+// 文档示例 — 前端调用选项，非 shared/types.ts 正式类型
+type AnalyzeMenuOptions = {
   images: { data: string; mimeType: string }[];
   language: 'zh' | 'en';
   location?: { lat: number; lng: number };
-}
+};
 
 export async function analyzeMenu(options: AnalyzeMenuOptions): Promise<AnalyzeResponseData> {
   const controller = new AbortController();
@@ -813,7 +814,8 @@ export async function sendChatMessage(payload: ChatRequest): Promise<ChatRespons
 每次请求结束，Worker 输出一条日志（`console.log` JSON，CF Logpush 收集）：
 
 ```typescript
-interface WorkerLog {
+// 文档示例 — 日志结构参考，非 shared/types.ts 正式类型
+type WorkerLog = {
   requestId: string;
   endpoint: string;           // "/api/analyze"
   method: string;
@@ -825,7 +827,7 @@ interface WorkerLog {
   imageCount?: number;        // 仅 /api/analyze
   ip: string;                 // CF-Connecting-IP（脱敏：仅保留 /24 段）
   timestamp: string;          // ISO 8601
-}
+};
 ```
 
 ### 7.2 关键指标（告警阈值）
