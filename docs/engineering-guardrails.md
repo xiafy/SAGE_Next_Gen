@@ -62,3 +62,15 @@
 - 对齐 **DEC-029**：复杂改动后需做 Codex 审计再提交
 
 该文档用于补足“快速修复场景”的执行细则，不替代 DEC 文档。
+---
+
+## 6) Hook 与 Deploy 硬门控（2026-03-04）
+
+新增规则通过 Git hooks 与部署脚本强制执行，不依赖人工自觉。
+
+1. **pre-commit 门控**：`.githooks/pre-commit` 必须通过 TypeScript 与测试检查（`tsc` + `vitest`）。
+2. **commit-msg 门控（Prompt）**：若改动 `worker/prompts/`，提交信息必须包含 `Before:` 与 `After:`。
+3. **commit-msg 门控（fix）**：`fix:` 提交必须关联测试文件，防止无回归保护修复。
+4. **deploy 门控**：`scripts/deploy.sh` 执行固定流水线：编译 → 测试 → 构建 → 部署。
+
+结论：不满足门控条件的改动无法提交或上线。
