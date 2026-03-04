@@ -105,5 +105,13 @@ if [ "$WORKER_CHANGED" -eq 1 ] || [ "$SHARED_CHANGED" -eq 1 ]; then
   fi
 fi
 
+# Rule 3: Architecture lint
+echo -e "${YELLOW}[pre-commit] Running architecture checks...${NC}"
+if ! bash "$REPO_ROOT/scripts/lint-architecture.sh"; then
+  echo -e "${RED}[pre-commit] Architecture check FAILED.${NC}"
+  exit 1
+fi
+echo -e "${GREEN}[pre-commit] Architecture checks passed.${NC}"
+
 echo -e "${GREEN}[pre-commit] All checks passed.${NC}"
 exit 0

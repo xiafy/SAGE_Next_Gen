@@ -1,0 +1,6 @@
+# 已知技术债：临时豁免文件行数阻断
+# 每条须注明原因和计划解决的 Sprint
+# 格式: 文件路径（相对于仓库根）
+
+app/src/views/AgentChatView.tsx    # 1165行 God Component — Sprint 5 拆分
+worker/handlers/analyze.ts          # 597行 VL pipeline — Sprint 5 拆分

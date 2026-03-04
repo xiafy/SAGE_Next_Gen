@@ -57,3 +57,43 @@ SCORE=0
 [ "$UNPUSHED" -eq 0 ] && SCORE=$((SCORE+1))
 echo "  质量评分: $SCORE/4"
 [ "$SCORE" -eq 4 ] && echo -e "${GREEN}  ✅ 全绿${NC}" || echo -e "${YELLOW}  ⚠️  有待修复项${NC}"
+
+
+# 6. 深层卫生扫描
+echo -e "\n${YELLOW}▶ 深层卫生扫描${NC}"
+
+# 6a. God Component 检测
+echo "  --- God Components (>500 行) ---"
+GOD_COUNT=0
+for f in $(find app/src worker/handlers worker/prompts worker/utils worker/schemas shared -name '*.ts' -o -name '*.tsx' 2>/dev/null | grep -v node_modules | grep -v '__tests__' | grep -v '.test.'); do
+  [ -f "$f" ] || continue
+  LINES=$(wc -l < "$f" | tr -d ' ')
+  if [ "$LINES" -gt 500 ]; then
+    echo "    ⚠ $f: $LINES 行"
+    GOD_COUNT=$((GOD_COUNT + 1))
+  fi
+done
+[ "$GOD_COUNT" -eq 0 ] && echo "    ✓ 无 God Component"
+
+# 6b. Stale 文档引用检测 (python3)
+echo "  --- Stale 文档引用 ---"
+STALE_OUTPUT=$(python3 -c "
+import re, os, glob
+stale = 0
+for doc in glob.glob('docs/**/*.md', recursive=True) + glob.glob('specs/*.md'):
+    if not os.path.isfile(doc): continue
+    with open(doc) as f:
+        content = f.read()
+    refs = re.findall(r'\x60([a-zA-Z][a-zA-Z0-9_/.-]+\.(?:ts|tsx|md|sh))\x60', content)
+    for ref in refs[:20]:
+        if '/' in ref and not os.path.exists(ref) and not ref.startswith('http'):
+            print(f'    ⚠ {doc} → {ref}')
+            stale += 1
+if stale == 0:
+    print('    ✓ 无 stale 引用')
+" 2>/dev/null || echo "    ⚠ python3 不可用，跳过")
+echo "$STALE_OUTPUT"
+STALE_COUNT=$(echo "$STALE_OUTPUT" | grep -c "⚠" || echo 0)
+
+echo ""
+echo "  God Components: $GOD_COUNT | Stale 文档引用: $STALE_COUNT"
