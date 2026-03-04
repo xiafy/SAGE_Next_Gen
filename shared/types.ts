@@ -125,10 +125,8 @@ export interface AnalyzeRequest {
 export type AnalyzeProgressStage =
   | 'uploading'
   | 'preparing'
-  | 'vision_flash'
-  | 'vision_plus_fallback'
+  | 'analyzing'
   | 'validating'
-  | 'enrich_error'
   | 'completed';
 
 export interface AnalyzeProgressEvent {

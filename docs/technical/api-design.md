@@ -8,7 +8,7 @@
 > - **v3.0 (DEC-068, 2026-03-03)**: VL+Enrich 合并为单次 Gemini 调用（Prompt v9）。移除独立 Enrich 阶段，消除 429 限流和跨境延迟问题。Worker `analyze.ts` 只保留 Step 1。总延迟 ~18s，成功率大幅提升
 > - **v3.1 (2026-03-04)**: 补充 `POST /api/transcribe` 文档（Sprint 3 已实现）；标记 `GET /api/weather` 为未实现占位
 > 上游文档: `docs/technical/architecture.md`、`docs/product/prd.md`、`DECISIONS.md`
-> 供应商: VL+Enrich = Google Gemini API；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
+> 供应商: 菜单识别 = Google Gemini API（单次调用，DEC-068）；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 
 ---
 
@@ -41,10 +41,8 @@ POST /api/chat:
 
 | 场景 | 供应商 | 模型 | stream | 函数 |
 |------|--------|------|--------|------|
-| VL 菜单识别（正常路径） | Google Gemini | `gemini-2.0-flash` | `false` | `fetchGeminiComplete()` |
-| Enrich 语义补全（正常路径） | Google Gemini | `gemini-2.0-flash` | `false` | `fetchGeminiComplete()` |
-| VL 菜单识别（地理兜底） | 百炼新加坡 | `qwen-vl-plus` | `false` | `fetchBailianComplete()` |
-| Enrich 语义补全（地理兜底） | 百炼新加坡 | `qwen-plus-latest` | `false` | `fetchBailianComplete()` |
+| 菜单识别（VL+语义，DEC-068） | Google Gemini | `gemini-2.0-flash` | `false` | `fetchGeminiComplete()` |
+| 菜单识别（地理兜底） | 百炼新加坡 | `qwen-vl-plus` | `false` | `fetchBailianComplete()` |
 | AI 对话（/api/chat） | 百炼国内 | `qwen3.5-plus/flash` | `true` | `streamPassthrough()` |
 
 **百炼 Qwen3.x 必填参数（DEC-028）**:
@@ -54,7 +52,7 @@ POST /api/chat:
 Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致 TTFT 高达 7-26s。关闭后 TTFT 降至 2-450ms（22x 提升）。Gemini API 无此参数，不需要设置。
 
 **stream=false 原则（DEC-044）**:
-VL 和 Enrich 输出 JSON，前端必须等完整结果才能解析。stream=true 在此场景产生大量小 SSE 帧，HTTP 分块传输累计开销使总延迟增加约 2.4 倍。JSON 输出场景一律用 stream=false。
+菜单识别输出 JSON，前端必须等完整结果才能解析。stream=true 在此场景产生大量小 SSE 帧，HTTP 分块传输累计开销使总延迟增加约 2.4 倍。JSON 输出场景一律用 stream=false。
 
 > ⚠️ **覆盖说明**：DEC-028 原文的"stream=true"建议仅适用于文本对话场景（/api/chat），已被 DEC-044 明确在 VL/Enrich 场景覆盖为 stream=false。
 
@@ -88,7 +86,7 @@ VL 和 Enrich 输出 JSON，前端必须等完整结果才能解析。stream=tru
 
 | 端点 | 前端超时 | Worker 超时（VL） | Worker 超时（Enrich） | 说明 |
 |------|---------|-----------|------|------|
-| `POST /api/analyze` | 65s | **35s** | **25s** | Gemini 2.0 Flash 推理特性；VL ~9.7s 实测，Enrich ~9.6s 实测（DEC-050） |
+| `POST /api/analyze` | 65s | **35s** | — | Gemini 2.0 Flash 单次调用（DEC-068）；~18s 实测 |
 | `POST /api/chat` | 15s | 12s | — | 对话要求低延迟，stream=true |
 | `POST /api/transcribe` | 25s | **20s** | — | 语音转写，qwen-omni-turbo |
 | `GET /api/health` | 5s | — | — | 健康检查 |
@@ -180,7 +178,7 @@ const ALLOWED_ORIGINS = [
 
 ```typescript
 interface AnalyzeProgressEvent {
-  stage: 'uploading' | 'preparing' | 'vision_flash' | 'vision_plus_fallback' | 'validating' | 'completed';
+  stage: 'uploading' | 'preparing' | 'analyzing' | 'validating' | 'completed';
   progress: number; // 0-100
   message: string;
 }
@@ -234,16 +232,14 @@ data: { ok: true; data: AnalyzeResponseData; requestId: string }
 data: { ok: false; error: ApiError; requestId: string }
 ```
 
-#### 2.3 降级模式（DEC-051）
+#### 2.3 降级模式（DEC-051、DEC-068）
 
-**正常路径**：`gemini-2.0-flash`（VL + Enrich）
+**正常路径**：`gemini-2.0-flash` 单次调用完成 OCR + 语义补全（DEC-068）
 
 **地理兜底路径**（自动，无需人工干预）：
 - 触发条件：Gemini 返回 `FAILED_PRECONDITION`（地理封锁信号）
 - 切换到：百炼新加坡国际站（`dashscope-intl.aliyuncs.com`）
-  - VL：`qwen-vl-plus`
-  - Enrich：`qwen-plus-latest`
-- 同次请求的 VL 和 Enrich 强制走同一供应商（`useBailian` 标志共享）
+  - 菜单识别：`qwen-vl-plus`
 
 **不可用路径**：
 - Gemini 超时（>35s）或其他网络异常 → `AI_TIMEOUT` / `AI_UNAVAILABLE`
@@ -397,7 +393,10 @@ interface MealPlan {
     items: {
       dishId: string;
       name: string;
+      nameOriginal: string;  // 原文菜名（对齐 shared/types.ts MealPlanItem）
+      price: number | null;  // 菜品价格
       reason: string;        // 推荐理由
+      quantity: number;      // 数量
     }[];
   }[];
   totalEstimate?: number;    // 预估总价
@@ -537,7 +536,7 @@ interface TranscribeRequest {
 
 ## 三、Worker 内部处理流程
 
-### 3.1 `/api/analyze` 处理流
+### 3.1 `/api/analyze` 处理流（DEC-068 单阶段）
 
 ```
 1. 校验 CORS Origin
@@ -546,11 +545,11 @@ interface TranscribeRequest {
    └─ 校验失败 → 400 + 对应错误码
 3. 速率限制检查（基于 CF-Connecting-IP）
    └─ 超限 → 429 + Retry-After
-4. 构建 Qwen3-VL Prompt
-   └─ 系统提示 + 5 张图片 content array + 上下文
-5. 调用百炼 API（Qwen3-VL-Plus，超时 25s）
-   └─ 超时/报错 → 降级到 Qwen3-VL-Flash 重试
-   └─ 仍失败 → 503 AI_UNAVAILABLE
+4. 构建 Gemini Prompt（v9 单阶段，OCR + 语义补全合一）
+   └─ 系统提示 + 图片 content array + 上下文
+5. 调用 Gemini API（gemini-2.0-flash，超时 35s）
+   └─ 地理封锁 → 百炼新加坡兜底（DEC-051）
+   └─ 超时/报错 → 503 AI_UNAVAILABLE
 6. 解析 AI 返回 JSON（Zod schema 校验）
    └─ 校验失败 → 502 AI_INVALID_RESPONSE
 7. 补充 item.id（UUID v4 生成，稳定性保障）
@@ -576,7 +575,9 @@ interface TranscribeRequest {
 
 ## 四、Prompt 设计（Worker 侧）
 
-### 4.1 菜单识别 System Prompt
+### 4.1 菜单识别 System Prompt（v9 单阶段，DEC-068）
+
+> Prompt v9：单次 Gemini 2.0 Flash 调用同时完成 OCR + 语义补全，不再有独立 Enrich 阶段。完整 Prompt 见 `worker/prompts/menuAnalysis.ts`。
 
 ```
 你是 SAGE，一个专业的全球餐饮智能体，擅长识别世界各地餐厅菜单。

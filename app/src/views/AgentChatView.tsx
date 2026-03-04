@@ -484,10 +484,6 @@ export function AgentChatView() {
         (progressEvent) => {
           setAnalyzeProgress(progressEvent.progress);
           setAnalyzeStatusText(progressEvent.message);
-          // BUG-F: Show toast when enrich fails (dish details not loaded)
-          if (progressEvent.stage === 'enrich_error') {
-            showToast(progressEvent.message);
-          }
         },
       );
       dlog('chat', '✅ performAnalyze: success, items=', result.items?.length, 'supplementing=', state.isSupplementing);

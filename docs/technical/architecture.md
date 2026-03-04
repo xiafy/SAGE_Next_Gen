@@ -1,9 +1,9 @@
 # ARCHITECTURE.md — 系统技术架构
 
-> 版本: v2.0
-> 日期: 2026-03-02
-> 状态: ✅ 当前基准版本（已对齐 DEC-044/045/050/051）
-> 变更说明: v1.1→v2.0 重大更新——AI 供应商从纯百炼切换为 Gemini 主路径 + 百炼兜底；更新两阶段 pipeline、stream 策略、地理兜底机制
+> 版本: v2.1
+> 日期: 2026-03-04
+> 状态: ✅ 当前基准版本（已对齐 DEC-044/045/050/051/068）
+> 变更说明: v1.1→v2.0 重大更新——AI 供应商从纯百炼切换为 Gemini 主路径 + 百炼兜底；v2.1 (DEC-068) VL+Enrich 合并为单阶段 Gemini 调用
 > 上游文档: `docs/product/prd.md`、`DECISIONS.md`
 
 ---
@@ -31,7 +31,7 @@
 │           Cloudflare Workers（东京 asia-northeast1）          │
 │              API 代理层 + 安全层 + 路由层                       │
 │                                                             │
-│  POST /api/analyze  → 菜单识别（两阶段 VL+Enrich，SSE 返回）  │
+│  POST /api/analyze  → 菜单识别（单次 Gemini 调用，SSE 返回）   │
 │  POST /api/chat     → AI 对话（SSE 流式透传）                  │
 │  GET  /api/weather  → 天气 API（Open-Meteo 代理）             │
 │  GET  /api/health   → 健康检查                                │
@@ -45,8 +45,8 @@
 │  Google Gemini API           │  │  阿里云百炼 DashScope（国内站）   │
 │  (gemini-2.0-flash)          │  │  dashscope.aliyuncs.com          │
 │                              │  │                                  │
-│  VL 识别（主路径）            │  │  Chat: qwen3.5-plus/flash        │
-│  Enrich 语义补全（主路径）    │  │  （对话推荐，全程流式 SSE）         │
+│  菜单识别 OCR+语义（主路径）  │  │  Chat: qwen3.5-plus/flash        │
+│  （DEC-068 单次调用）         │  │  （对话推荐，全程流式 SSE）         │
 │                              │  │                                  │
 │  DEC-045: ~8-10s 总耗时      │  │                                  │
 └──────┬──────────────────────┘  └──────────────────────────────────┘
@@ -56,8 +56,7 @@
 │  阿里云百炼国际站 DashScope（新加坡）                            │
 │  dashscope-intl.aliyuncs.com                                │
 │                                                             │
-│  VL 兜底: qwen-vl-plus                                      │
-│  Enrich 兜底: qwen-plus-latest                              │
+│  菜单识别兜底: qwen-vl-plus                                  │
 │  （仅 Gemini 地理封锁时触发，正常流量不经此路径）                  │
 └─────────────────────────────────────────────────────────────┘
 
@@ -110,7 +109,7 @@ shared/
 
 worker/
 ├── handlers/
-│   ├── analyze.ts        # /api/analyze 处理器（两阶段 VL+Enrich）
+│   ├── analyze.ts        # /api/analyze 处理器（单阶段 Gemini，DEC-068）
 │   ├── chat.ts           # /api/chat 处理器（SSE 透传）
 │   ├── health.ts         # /api/health
 │   └── transcribe.ts     # /api/transcribe（语音）
@@ -118,7 +117,7 @@ worker/
 │   └── cors.ts           # CORS + Env 类型（持有所有 Secret 引用）
 ├── prompts/
 │   ├── agentChat.ts      # 主 Chat Prompt + menuSummary 构建
-│   ├── menuAnalysis.ts   # VL Prompt v8 + Enrich Prompt v8
+│   ├── menuAnalysis.ts   # 菜单识别 Prompt v9（单阶段 OCR+语义，DEC-068）
 │   └── preChat.ts        # Pre-Chat Icebreaker Prompt
 ├── schemas/
 │   ├── chatSchema.ts     # Zod：/api/chat 请求校验
@@ -180,7 +179,7 @@ interface StoredPreferences {
 
 | 端点 | 方法 | 返回格式 | 功能 |
 |------|------|---------|------|
-| `/api/analyze` | POST | SSE（progress + result） | 菜单图片识别（两阶段） |
+| `/api/analyze` | POST | SSE（progress + result） | 菜单图片识别（单阶段，DEC-068） |
 | `/api/chat` | POST | SSE（流式文本） | AI 对话推荐 |
 | `/api/weather` | GET | JSON | 天气查询（Open-Meteo 代理） |
 | `/api/health` | GET | JSON | 健康检查 |
@@ -193,8 +192,8 @@ interface StoredPreferences {
 
 ← event: progress  { stage: 'uploading',   percent: 10 }
 ← event: progress  { stage: 'preparing',   percent: 20 }
-← event: progress  { stage: 'analyzing',   percent: 40 }   ← VL 推理中（~8-10s）
-← event: progress  { stage: 'validating',  percent: 80 }   ← Enrich 中（~10s）
+← event: progress  { stage: 'analyzing',   percent: 40 }   ← Gemini 推理中（OCR+语义，~18s）
+← event: progress  { stage: 'validating',  percent: 80 }   ← 结果校验
 ← event: progress  { stage: 'completed',   percent: 100 }
 ← event: result    { ok: true, data: MenuData, requestId }
 ```
@@ -224,52 +223,39 @@ http://localhost:5173
 
 | 场景 | 正常路径 | 兜底路径 | 决策 |
 |------|---------|---------|------|
-| VL 菜单识别 | `gemini-2.0-flash`（Gemini API） | `qwen-vl-plus`（百炼新加坡） | DEC-045、DEC-051 |
-| Enrich 语义补全 | `gemini-2.0-flash`（Gemini API） | `qwen-plus-latest`（百炼新加坡） | DEC-045、DEC-051 |
+| 菜单识别（OCR+语义） | `gemini-2.0-flash`（Gemini API） | `qwen-vl-plus`（百炼新加坡） | DEC-045、DEC-051、DEC-068 |
 | AI 对话 | `qwen3.5-plus`（百炼国内） | `qwen3.5-flash`（百炼国内） | DEC-026 |
 | Pre-Chat | `qwen3.5-flash`（百炼国内） | — | DEC-027 |
 
-> ⚠️ **注意**：DEC-003（"Gemini 废弃"）已被 DEC-045 覆盖。Gemini 2.0 Flash 现为 VL+Enrich 主力模型，Chat 路径仍使用百炼。详见 DECISIONS.md 覆盖关系表。
+> ⚠️ **注意**：DEC-003（"Gemini 废弃"）已被 DEC-045 覆盖。Gemini 2.0 Flash 现为菜单识别主力模型，Chat 路径仍使用百炼。详见 DECISIONS.md 覆盖关系表。
 
-### 4.2 /api/analyze 两阶段 Pipeline
+### 4.2 /api/analyze 单阶段 Vision Pipeline（DEC-068）
 
 ```
 图片输入（multipart，最多 5 张，≤500KB/张）
     │
-    ▼ Stage 1: VL 识别（DEC-045）
+    ▼ 单次 Gemini 2.0 Flash 调用（Prompt v9，DEC-068）
     │   模型: gemini-2.0-flash
     │   超时: 35s（maxOutputTokens=8192）
-    │   任务: OCR + 结构化提取（itemId/nameOriginal/nameTranslated/price/allergenCodes）
-    │   输出: 含 __allergenCodes 的原始 JSON
+    │   任务: OCR + 结构化提取 + 语义补全（一次完成）
+    │   输出: 完整 MenuData JSON
     │
     ▼ normalizeLooseResult()  ← 容错解析，修复 AI 不规范 JSON
-    │   提取 __allergenCodes 存入 enrichInput
     │
-    ▼ Stage 2: Enrich 语义补全（DEC-042、DEC-045）
-    │   模型: gemini-2.0-flash
-    │   超时: 25s（maxOutputTokens=8192）
-    │   输入: 菜品列表 + allergenCodes（EU 编号，来自 VL）
-    │   任务: brief / allergens / dietaryFlags / spiceLevel / categories
-    │   输出: 完整 MenuData（allergenCodes 字段在返回前剥离）
+    ▼ Zod schema 校验
     │
     ▼ SSE result 事件 → 前端
 ```
 
-### 4.3 Prompt 版本（当前：v8）
+> **DEC-068 变更说明**：原两阶段 Pipeline（VL→Enrich）已合并为单次调用。Enrich 阶段的 429 限流和跨境延迟问题不再存在。总延迟 ~18s（原 ~19s），成功率大幅提升。
 
-**VL Prompt（MENU_ANALYSIS_SYSTEM v8）**
-- 提取字段：`allergenCodes`（括号数字，如 `[1,5,7]`，对应 EU 过敏原编号）
+### 4.3 Prompt 版本（当前：v9，DEC-068）
+
+**菜单识别 Prompt（MENU_ANALYSIS_SYSTEM v9）**
+- 单次调用同时完成 OCR + 语义补全（DEC-068）
 - 每道菜拆分为独立卡片（蛋白质变体/规格变体/销售方式变体均拆分，DEC-049）
 - 输出 JSON Only，无 markdown
-
-**Enrich Prompt（MENU_ENRICH_SYSTEM v8）**
-- 内置 EU 1-11 过敏原编号对照表：
-  ```
-  1=gluten  2=shellfish  3=fish  5=peanut
-  6=dairy   7=egg        8=sesame 9=tree_nut  10=peanut  11=soy
-  ```
-- allergens 综合两个来源：① allergenCodes 编号转换 ② 食品知识推理（不确定时 uncertain=true）
-- 推理来源标记：`uncertain: false`=图片编号确认；`uncertain: true`=知识推断
+- 完整 Prompt 见 `worker/prompts/menuAnalysis.ts`
 
 **质量基准（2026-03-02 v2 Benchmark，COENTRO 菜单）**
 - Recall：**100%**（26/26）✅
@@ -280,11 +266,10 @@ http://localhost:5173
 
 | 场景 | stream | 工具函数 |
 |------|--------|---------|
-| VL 识别 | `false` | `fetchGeminiComplete()` |
-| Enrich 补全 | `false` | `fetchGeminiComplete()` |
+| 菜单识别（OCR+语义） | `false` | `fetchGeminiComplete()` |
 | AI 对话 | `true` | `streamPassthrough()` |
 
-> 核心结论：VL/Enrich 输出 JSON，前端必须等完整结果才能解析；stream=true 在此场景额外增加约 2.4× 开销。
+> 核心结论：菜单识别输出 JSON，前端必须等完整结果才能解析；stream=true 在此场景额外增加约 2.4× 开销。
 
 ### 4.5 降级机制
 
@@ -295,8 +280,7 @@ http://localhost:5173
 兜底路径 A（地理封锁，DEC-051）:
   Gemini 返回 FAILED_PRECONDITION
   → Worker 捕获 geoBlocked 标记
-  → 切换 qwen-vl-plus（百炼新加坡）做 VL
-  → 同次请求 Enrich 也使用 qwen-plus-latest（百炼新加坡）
+  → 切换 qwen-vl-plus（百炼新加坡）做菜单识别
   → 用户无感知，同样返回完整 MenuData
 
 兜底路径 B（Gemini 超时/不可用）:
@@ -327,9 +311,8 @@ Chat 降级:
    └─ Pre-Chat 主动多轮（DEC-027）: qwen3.5-flash 引导用户说出需求
    └─ 后台 multipart 上传 → /api/analyze（SSE）
 
-4. /api/analyze 两阶段执行（~19s 总计）
-   └─ VL（gemini-2.0-flash）：~9.7s → 提取菜品 + allergenCodes
-   └─ Enrich（gemini-2.0-flash）：~9.6s → 补全 brief/allergens/spiceLevel
+4. /api/analyze 单阶段执行（~18s，DEC-068）
+   └─ Gemini 2.0 Flash 单次调用：OCR + 语义补全一次完成
    └─ SSE result → 前端 dispatch SET_MENU_DATA
 
 5. 对话循环（AgentChatView）
@@ -422,9 +405,7 @@ Waiter Mode 下点击菜品弹出双语沟通面板（用户语言 + `detectedLa
 
 | 指标 | 数值 | 备注 |
 |------|------|------|
-| VL 耗时（Gemini） | ~9.7s | 正常路径 |
-| Enrich 耗时（Gemini） | ~9.6s | 正常路径 |
-| 总端到端延迟 | ~19.3s | 用户当前感知 |
+| 菜单识别耗时（Gemini） | ~18s | 单次调用，DEC-068 |
 | Allergen Recall | 100%（26/26）| COENTRO 菜单 ground truth |
 | Allergen Precision | 93% | |
 | Worker RTT | ~349ms | CF 东京节点往返 |

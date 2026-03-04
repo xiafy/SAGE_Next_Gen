@@ -1,8 +1,8 @@
 # PRD — 产品需求文档
 
-> 版本: v2.0
-> 日期: 2026-03-02
-> 状态: 🟢 F01-F13 对齐；v1.7 两阶段识别架构；v1.8 用户场景重定义（DEC-043）；v1.9 方案型输出格式 + Explore→Chat 注入 + 替换交互细化；v2.0 四方评审修订（DEC-052~060）
+> 版本: v2.1
+> 日期: 2026-03-04
+> 状态: 🟢 F01-F13 对齐；v2.1 DEC-068 单阶段识别架构；v1.8 用户场景重定义（DEC-043）；v1.9 方案型输出格式 + Explore→Chat 注入 + 替换交互细化；v2.0 四方评审修订（DEC-052~060）
 > 上游文档: `docs/product/vision.md`
 
 ---
@@ -191,9 +191,9 @@ Chat 界面支持两种用户意图，由 AI 根据上下文自然涌现（Scena
 **用户目标**：AI 准确理解菜单内容，为对话和推荐提供基础。
 
 **功能描述**：
-- **两阶段架构**（DEC-042）：
-  - **Step 1 — OCR**：qwen3-vl-flash 提取菜品名称（原文+翻译）、价格、分类，超时 20s
-  - **Step 2 — 语义补全**：qwen3.5-flash（文本模型）为每道菜补充 brief、briefDetail、allergens、dietaryFlags、spiceLevel，超时 15s，best-effort（失败不阻塞）
+- **单次 AI Vision 调用**完成 OCR + 语义补全（DEC-068）：
+  - 模型：`gemini-2.0-flash`，单次调用同时提取菜品名称（原文+翻译）、价格、分类并完成语义补全
+  - 超时：35s
 - 多张图片合并识别，按类别整合，重复菜品去重
 - 同时输出：`menuType`、`detectedLanguage`、`priceLevel`（1-3 档）、`currency`
 - 识别过程中 AgentChat 不阻塞，显示 Icebreaker 对话
