@@ -54,7 +54,7 @@ Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致 TTFT 高达 7-
 **stream=false 原则（DEC-044）**:
 菜单识别输出 JSON，前端必须等完整结果才能解析。stream=true 在此场景产生大量小 SSE 帧，HTTP 分块传输累计开销使总延迟增加约 2.4 倍。JSON 输出场景一律用 stream=false。
 
-> ⚠️ **覆盖说明**：DEC-028 原文的"stream=true"建议仅适用于文本对话场景（/api/chat），已被 DEC-044 明确在 VL/Enrich 场景覆盖为 stream=false。
+> ⚠️ **覆盖说明**：DEC-028 原文的"stream=true"建议仅适用于文本对话场景（/api/chat），已被 DEC-044 明确在菜单识别场景覆盖为 stream=false。
 
 ### 1.4 通用响应格式
 
@@ -84,12 +84,12 @@ Qwen3.x 系列默认开启 Chain-of-Thought 思考模式，导致 TTFT 高达 7-
 
 ### 1.5 超时策略（DEC-050）
 
-| 端点 | 前端超时 | Worker 超时（VL） | Worker 超时（Enrich） | 说明 |
-|------|---------|-----------|------|------|
-| `POST /api/analyze` | 65s | **35s** | — | Gemini 2.0 Flash 单次调用（DEC-068）；~18s 实测 |
-| `POST /api/chat` | 15s | 12s | — | 对话要求低延迟，stream=true |
-| `POST /api/transcribe` | 25s | **20s** | — | 语音转写，qwen-omni-turbo |
-| `GET /api/health` | 5s | — | — | 健康检查 |
+| 端点 | 前端超时 | Worker 超时 | 说明 |
+|------|---------|------------|------|
+| `POST /api/analyze` | 65s | **35s** | Gemini 2.0 Flash 单次调用（DEC-068）；~18s 实测 |
+| `POST /api/chat` | 15s | 12s | 对话要求低延迟，stream=true |
+| `POST /api/transcribe` | 25s | **20s** | 语音转写，qwen-omni-turbo |
+| `GET /api/health` | 5s | — | 健康检查 |
 
 > Worker 超时比前端超时短 5s，确保 Worker 有时间返回友好错误而非超时断连。
 > 旧超时（VL=30s, Enrich=20s）对应 qwen3-vl-flash，已被 DEC-050 覆盖为 Gemini 参数。

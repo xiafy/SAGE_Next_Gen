@@ -3,7 +3,7 @@
 > 版本: v2.1
 > 日期: 2026-03-04
 > 状态: ✅ 当前基准版本（已对齐 DEC-044/045/050/051/068）
-> 变更说明: v1.1→v2.0 重大更新——AI 供应商从纯百炼切换为 Gemini 主路径 + 百炼兜底；v2.1 (DEC-068) VL+Enrich 合并为单阶段 Gemini 调用
+> 变更说明: v1.1→v2.0 重大更新——AI 供应商从纯百炼切换为 Gemini 主路径 + 百炼兜底；v2.1 (DEC-068) 单阶段 Gemini 调用（OCR+语义合一）
 > 上游文档: `docs/product/prd.md`、`DECISIONS.md`
 
 ---
@@ -202,9 +202,9 @@ interface StoredPreferences {
 
 ```typescript
 // Worker Secrets（前端零接触）
-GEMINI_API_KEY       // Gemini 2.0 Flash（VL+Enrich 正常路径）
+GEMINI_API_KEY       // Gemini 2.0 Flash（菜单识别正常路径，DEC-068）
 BAILIAN_API_KEY      // 百炼国内站（/api/chat）
-BAILIAN_INTL_API_KEY // 百炼新加坡国际站（VL+Enrich 地理兜底）
+BAILIAN_INTL_API_KEY // 百炼新加坡国际站（菜单识别地理兜底，DEC-051）
 
 // 速率限制（基于 CF IP）
 analyze: 20 次/小时
@@ -247,7 +247,7 @@ http://localhost:5173
     ▼ SSE result 事件 → 前端
 ```
 
-> **DEC-068 变更说明**：原两阶段 Pipeline（VL→Enrich）已合并为单次调用。Enrich 阶段的 429 限流和跨境延迟问题不再存在。总延迟 ~18s（原 ~19s），成功率大幅提升。
+> **DEC-068**：单次 Gemini 2.0 Flash 调用同时完成 OCR + 语义补全。总延迟 ~18s，成功率大幅提升。
 
 ### 4.3 Prompt 版本（当前：v9，DEC-068）
 
@@ -410,4 +410,4 @@ Waiter Mode 下点击菜品弹出双语沟通面板（用户语言 + `detectedLa
 | Allergen Precision | 93% | |
 | Worker RTT | ~349ms | CF 东京节点往返 |
 
-> **下一步优化**: Two-stage SSE（VL 完成即推送 partial_result，Enrich 后台静默更新），预期感知时间 ~8s。详见 DEC-046，状态：已批准，待实现。
+> **下一步优化**: DEC-068 已将 Pipeline 合并为单次调用（~18s）。进一步优化方向：流式 JSON 解析（partial result 提前推送），预期感知时间 ~8s。
