@@ -1,11 +1,12 @@
 # API_DESIGN.md — API 接口详细设计
 
-> 版本: v3.0
-> 日期: 2026-03-03
+> 版本: v3.1
+> 日期: 2026-03-04
 > 状态: ✅ 当前版本（已对齐 DEC-044/045/050/051/068）
-> 变更说明: v1.0→v2.0→v3.0
+> 变更说明: v1.0→v2.0→v3.0→v3.1
 > - v2.0: VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径；Prompt v8 allergenCodes pipeline
 > - **v3.0 (DEC-068, 2026-03-03)**: VL+Enrich 合并为单次 Gemini 调用（Prompt v9）。移除独立 Enrich 阶段，消除 429 限流和跨境延迟问题。Worker `analyze.ts` 只保留 Step 1。总延迟 ~18s，成功率大幅提升
+> - **v3.1 (2026-03-04)**: 补充 `POST /api/transcribe` 文档（Sprint 3 已实现）；标记 `GET /api/weather` 为未实现占位
 > 上游文档: `docs/technical/architecture.md`、`docs/product/prd.md`、`DECISIONS.md`
 > 供应商: VL+Enrich = Google Gemini API；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 
@@ -89,6 +90,7 @@ VL 和 Enrich 输出 JSON，前端必须等完整结果才能解析。stream=tru
 |------|---------|-----------|------|------|
 | `POST /api/analyze` | 65s | **35s** | **25s** | Gemini 2.0 Flash 推理特性；VL ~9.7s 实测，Enrich ~9.6s 实测（DEC-050） |
 | `POST /api/chat` | 15s | 12s | — | 对话要求低延迟，stream=true |
+| `POST /api/transcribe` | 25s | **20s** | — | 语音转写，qwen-omni-turbo |
 | `GET /api/health` | 5s | — | — | 健康检查 |
 
 > Worker 超时比前端超时短 5s，确保 Worker 有时间返回友好错误而非超时断连。
@@ -454,13 +456,73 @@ Waiter Mode 下点击菜品触发的沟通面板不涉及新 API 端点，所有
 
 ---
 
-### `GET /api/weather` `[Sprint 2]`
+### `POST /api/transcribe` `[Sprint 3]`
+
+**功能**: 音频转文字（语音转写），使用 DashScope qwen-omni-turbo 的 input_audio 能力
+
+#### 请求 Payload
+
+```http
+POST /api/transcribe
+Content-Type: application/json
+```
+
+```typescript
+interface TranscribeRequest {
+  audio: string;       // base64 编码的音频数据
+  mimeType: string;    // 音频 MIME 类型（audio/webm, audio/mp4, audio/wav 等）
+  language?: string;   // "zh" | "en"，决定转写 System Prompt 语言
+}
+```
+
+**限制**:
+- 音频大小上限: **500 KB**（base64 解码后估算）
+- 速率限制: 10 次/60s
+- 支持格式: wav, mp3, mp4/m4a/aac, webm, ogg, flac
+
+#### 成功响应
+
+```typescript
+// 200 OK
+{
+  ok: true;
+  text: string;       // 转写结果文本
+}
+```
+
+#### 失败响应
+
+```typescript
+// 400 / 429 / 502 / 504
+{
+  ok: false;
+  error: {
+    code: 'INVALID_REQUEST' | 'RATE_LIMITED' | 'ASR_FAILED' | 'ASR_TIMEOUT';
+    message: string;
+  };
+}
+```
+
+#### 技术参数
+
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| 模型 | `qwen-omni-turbo` | DashScope 多模态模型 |
+| ASR 超时 | **20s** | `AbortSignal.timeout(20_000)` |
+| 音频上限 | **500 KB** | `MAX_AUDIO_BYTES = 500 * 1024` |
+| API 端点 | DashScope compatible-mode | `dashscope.aliyuncs.com/compatible-mode/v1/chat/completions` |
+
+---
+
+### `GET /api/weather` `[Sprint 2]` ⏳ 未实现
 
 **功能**: 获取当前位置天气
 
+> ⏳ **未实现**：此端点为 Sprint 2 设计占位，代码中尚未注册路由，Worker 不会响应此请求。
+
 **参数**: `?lat={lat}&lng={lng}`
 
-**响应** (Sprint 2 设计，此处占位):
+**响应** (Sprint 2 设计占位，尚未实现):
 ```typescript
 {
   condition: 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'hot' | 'cold';
