@@ -88,12 +88,26 @@ else
 
   # ── L2: Unit tests ──
   echo -e "\n${GREEN}▶ [2/4] Unit tests${NC}"
-  echo "  → app/ vitest run..."
-  if ! ( cd "$REPO_ROOT/app" && npx vitest run ); then
-    echo -e "${RED}✗ Tests FAILED. Fix failing tests before deploying.${NC}"
-    exit 1
+  if [ "$TARGET" = "app" ] || [ "$TARGET" = "all" ]; then
+    echo "  → app/ vitest run..."
+    if ! ( cd "$REPO_ROOT/app" && npx vitest run ); then
+      echo -e "${RED}✗ App tests FAILED. Fix failing tests before deploying.${NC}"
+      exit 1
+    fi
+    echo -e "${GREEN}  ✓ App tests passed${NC}"
   fi
-  echo -e "${GREEN}  ✓ Tests passed${NC}"
+  if [ "$TARGET" = "worker" ] || [ "$TARGET" = "all" ]; then
+    if [ -f "$REPO_ROOT/worker/package.json" ] && grep -q test "$REPO_ROOT/worker/package.json" 2>/dev/null; then
+      echo "  → worker/ vitest run..."
+      if ! ( cd "$REPO_ROOT/worker" && npx vitest run ); then
+        echo -e "${RED}✗ Worker tests FAILED.${NC}"
+        exit 1
+      fi
+      echo -e "${GREEN}  ✓ Worker tests passed${NC}"
+    else
+      echo -e "${YELLOW}  ⚠ Worker has no test script, skipping${NC}"
+    fi
+  fi
 
   # ── L3: Build (app only) ──
   if [ "$TARGET" = "app" ] || [ "$TARGET" = "all" ]; then
