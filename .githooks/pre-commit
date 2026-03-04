@@ -94,5 +94,16 @@ if [ "$APP_CHANGED" -eq 1 ] || [ "$SHARED_CHANGED" -eq 1 ]; then
   echo -e "${GREEN}[pre-commit] App tests passed.${NC}"
 fi
 
+if [ "$WORKER_CHANGED" -eq 1 ] || [ "$SHARED_CHANGED" -eq 1 ]; then
+  if [ -f "$REPO_ROOT/worker/package.json" ] && grep -q '"test"' "$REPO_ROOT/worker/package.json" 2>/dev/null; then
+    echo -e "${YELLOW}[pre-commit] Running worker tests...${NC}"
+    if ! ( cd "$REPO_ROOT/worker" && npx vitest run ); then
+      echo -e "${RED}[pre-commit] Worker tests FAILED.${NC}"
+      exit 1
+    fi
+    echo -e "${GREEN}[pre-commit] Worker tests passed.${NC}"
+  fi
+fi
+
 echo -e "${GREEN}[pre-commit] All checks passed.${NC}"
 exit 0

@@ -3,7 +3,7 @@
 ## 目录结构
 
 ```
-__fixtures__/
+tests/fixtures/
 ├── README.md               # 本文件
 ├── test-menu-thai.jpg       # 测试菜单图片（泰餐）
 └── expected/

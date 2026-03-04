@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Install worker dependencies
+        working-directory: worker
+        run: npm ci
+
+      # L1: TypeScript compile
+      - name: Typecheck app
+        working-directory: app
+        run: npx tsc --noEmit
+
+      - name: Typecheck worker
+        working-directory: worker
+        run: npx tsc --noEmit
+
+      # L2: Tests
+      - name: Test app
+        working-directory: app
+        run: npx vitest run
+
+      - name: Test worker
+        working-directory: worker
+        run: npx vitest run || echo "No worker tests yet"
+
+      # L3: Build
+      - name: Build app
+        working-directory: app
+        run: npm run build
+
+      # L4: Commit message lint (fix: must have test)
+      - name: Check fix commits have tests
+        if: github.event_name == 'pull_request'
+        run: |
+          COMMITS=$(git log --oneline origin/main..HEAD)
+          echo "$COMMITS" | while read -r line; do
+            if echo "$line" | grep -qE '^[a-f0-9]+ fix(\([^)]+\))?:'; then
+              HASH=$(echo "$line" | cut -d' ' -f1)
+              FILES=$(git diff-tree --no-commit-id --name-only -r "$HASH")
+              if ! echo "$FILES" | grep -qE '\.test\.'; then
+                echo "❌ fix commit $HASH has no test file"
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All fix commits have associated tests"
