@@ -1134,3 +1134,79 @@
 - **修复**: `if (tryParseChatJson(jsonStr)) return;` → `if (!tryParseChatJson(jsonStr)) { /* L3 fallback */ }`
 - **附带修复**: BUG-J（MealPlanCard 不出现）— 同一根因，因为 chatPhase 卡在 handing_off 导致后续 mealPlan 回复也无法正常处理
 - **状态**: ✅ 已部署 (commit 5208e90)
+
+---
+
+### [DEC-070] Git Hooks 硬门控
+
+- **日期**: 2026-03-04
+- **决策人**: SAGE
+- **背景**: Sprint 3 四方审计得分 2.2/5，AGENTS.md 8 条规则执行率仅 19%。根因是规则靠自觉不靠工具。
+- **决策**: 创建 `.githooks/pre-commit` + `.githooks/commit-msg`，工具化强制：
+  1. pre-commit: tsc --noEmit + vitest run（scope-aware，docs-only 跳过）
+  2. commit-msg: `fix:` 必须关联 .test. 文件；`worker/prompts/` 变更必须有 Before:/After: 行
+- **效果**: 规则执行率 19% → 100%（机械化强制）
+- **安装**: `bash setup-hooks.sh`（设置 `git config core.hooksPath .githooks`）
+- **状态**: ✅ 已上线 (commit 3f0751d)
+
+---
+
+### [DEC-071] Deploy 门控脚本
+
+- **日期**: 2026-03-04
+- **决策人**: SAGE
+- **背景**: 裸 `wrangler deploy` 无任何质量检查，可能部署编译不过的代码
+- **决策**: `scripts/deploy.sh` 4 层门控：
+  1. L1: TypeScript 编译（scope-aware）
+  2. L2: vitest 测试（scope-aware）
+  3. L3: Build（仅 app）
+  4. L4: Git 状态检查（警告不阻断）
+- **旁路**: `--force` 跳过质量门（保留环境变量检查 + app build）
+- **其他**: `--dry-run` 仅跑门控不部署
+- **状态**: ✅ 已上线 (commit 70caf88, bugfix 62730ff)
+
+---
+
+### [DEC-072] processAIResponse 纯函数提取
+
+- **日期**: 2026-03-04
+- **决策人**: SAGE
+- **背景**: processAIResponse 在 AgentChatView.tsx 中是闭包（L642-L810），直接操作 dispatch/state/setters，无法独立单元测试
+- **决策**: 提取为纯函数 `app/src/utils/processAIResponse.ts`：
+  - 输入: `ProcessAIResponseInput`（fullText, mode, chatPhase, menuItemIds, language, replacingVersion）
+  - 输出: `ProcessAIResponseResult`（messages, quickReplies, recommendations, orderAction, toasts...）
+  - 不生成 id/timestamp（由调用方负责）
+  - 不操作 React state
+- **测试**: 10 条回归测试（含 BUG-K #6/#7），替换原有 mock 版本
+- **交叉审查**: Opus-A 设计 → Codex-A 审查(3 mandatory fixes) → Codex CLI 编码 → Opus-B 审查(通过)
+- **状态**: ✅ 已上线 (commit cacc505)
+
+---
+
+### [DEC-073] AGENTS.md 知识地图重构
+
+- **日期**: 2026-03-04
+- **决策人**: SAGE
+- **背景**: OpenAI Harness Engineering 原则 "Give Codex a map, not a 1,000-page manual"。AGENTS.md 331 行，上下文占用过大，实际执行率低。
+- **决策**: 重构为 93 行"知识地图"：
+  - 4 条铁律（hook 机械化强制）
+  - 知识索引表（指向 docs/ 下已有文档）
+  - 项目结构速查
+  - 当前 Sprint 状态
+- **迁移**: 研发方法论 → `docs/engineering/spec-driven-workflow.md`；Hook 信息 → `docs/engineering-guardrails.md`
+- **状态**: ✅ 已上线 (commit 119074b)
+
+---
+
+### [DEC-074] 交叉审查工作流 v1.0
+
+- **日期**: 2026-03-04
+- **决策人**: SAGE + 夏总
+- **背景**: Sprint 3 自我审查形成"虚假繁荣"（8.4/10 自评，实际 2.2/5）
+- **决策**: 四步交叉审查，主 session 纯协调：
+  1. Opus-A 设计 → 2. Codex-A 审查 → 3. Codex-B 编码 → 4. Opus-B 审查
+  - "设计者不审自己的设计，编码者不审自己的代码"
+  - 风险分级：High 全 4 步，Medium 3 步（跳设计审查），Low 协调者直接执行
+- **实际效果**: Phase 1a/1b/2 共发现 10+ 个设计/实现问题，其中 4 个是真实 bug
+- **文档**: `docs/engineering/cross-review-workflow.md`
+- **状态**: ✅ 已建立 (commit f644bc7)

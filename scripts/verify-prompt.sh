@@ -24,7 +24,7 @@ echo "  Fixtures: $FIXTURE_DIR"
 # 检查 Worker 是否可达
 if ! curl -sf "$WORKER_URL/api/health" > /dev/null 2>&1; then
   echo -e "${RED}✗ Worker 不可达: $WORKER_URL${NC}"
-  echo "  请先启动: cd worker && npm run dev"
+  echo "  请先启动: cd worker && npx wrangler dev --port 8787"
   exit 1
 fi
 
@@ -36,18 +36,32 @@ for img in "$FIXTURE_DIR"/*.jpg "$FIXTURE_DIR"/*.png; do
   NAME="$(basename "$img" | sed 's/\.[^.]*$//')"
   echo -e "\n${YELLOW}Testing: $NAME${NC}"
 
-  # 调用 analyze API
+  # 调用 analyze API（multipart, field name = images）
   RESULT=$(curl -sf -X POST "$WORKER_URL/api/analyze" \
-    -F "file=@$img" \
-    -F "language=en" \
+    -F "images=@$img;type=image/jpeg" \
+    -F "context_language=en" -F "context_timestamp=1772607042000" \
     2>/dev/null) || {
     echo -e "${RED}  ✗ API 调用失败${NC}"
     FAIL=$((FAIL + 1))
     continue
   }
 
-  # Schema 验证：必须有 items 数组
-  if ! echo "$RESULT" | python3 -c "
+  # 从响应中提取 data
+  DATA=$(echo "$RESULT" | python3 -c "
+import sys, json
+resp = json.load(sys.stdin)
+if not resp.get('ok'):
+    print(json.dumps(resp.get('error', {})), file=sys.stderr)
+    sys.exit(1)
+print(json.dumps(resp.get('data', {})))
+" 2>&1) || {
+    echo -e "${RED}  ✗ API 返回错误: $DATA${NC}"
+    FAIL=$((FAIL + 1))
+    continue
+  }
+
+  # Schema 验证
+  if ! echo "$DATA" | python3 -c "
 import sys, json
 data = json.load(sys.stdin)
 items = data.get('items', [])
@@ -71,7 +85,7 @@ print(f'OK: {len(items)} items, {len(cats)} categories')
 
   # 保存结果供对比
   mkdir -p "$EXPECTED_DIR"
-  echo "$RESULT" | python3 -m json.tool > "$EXPECTED_DIR/$NAME.json" 2>/dev/null || true
+  echo "$DATA" | python3 -m json.tool > "$EXPECTED_DIR/$NAME.json" 2>/dev/null || true
 
   echo -e "${GREEN}  ✓ 通过${NC}"
   PASS=$((PASS + 1))
