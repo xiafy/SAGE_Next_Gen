@@ -1,0 +1,206 @@
+{
+    "menuType": "restaurant",
+    "detectedLanguage": "zh",
+    "priceLevel": 1,
+    "currency": "CNY",
+    "categories": [
+        {
+            "id": "cat01",
+            "nameOriginal": "\u51c9\u83dc",
+            "nameTranslated": "Cold Dishes",
+            "itemIds": [
+                "item0100",
+                "item0200",
+                "item0300",
+                "item0400"
+            ]
+        },
+        {
+            "id": "cat02",
+            "nameOriginal": "\u83dc",
+            "nameTranslated": "Hot Dishes",
+            "itemIds": [
+                "item0500",
+                "item0600",
+                "item0700",
+                "item0800"
+            ]
+        },
+        {
+            "id": "cat03",
+            "nameOriginal": "\u4e3b\u98df",
+            "nameTranslated": "Staple Food",
+            "itemIds": [
+                "item0900",
+                "item1000"
+            ]
+        }
+    ],
+    "items": [
+        {
+            "id": "item0100",
+            "nameOriginal": "\u592b\u59bb\u80ba\u7247",
+            "nameTranslated": "Beef Offal in Chili Sauce",
+            "price": 38,
+            "priceText": "\u00a538",
+            "tags": [],
+            "brief": "\u725b\u6742\u51c9\u83dc\uff0c\u9ebb\u8fa3\u5473",
+            "briefDetail": "\u7ecf\u5178\u5ddd\u83dc\uff0c\u591a\u79cd\u725b\u5185\u810f\u6df7\u5408\uff0c\u9999\u8fa3\u5f00\u80c3",
+            "allergens": [
+                {
+                    "type": "sesame",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 4,
+            "calories": null
+        },
+        {
+            "id": "item0200",
+            "nameOriginal": "\u9999\u8fa3\u725b\u8089",
+            "nameTranslated": "Spicy Beef",
+            "price": 18,
+            "priceText": "\u00a518",
+            "tags": [],
+            "brief": "\u9999\u8fa3\u725b\u8089\uff0c\u9ebb\u8fa3\u5473",
+            "briefDetail": "\u725b\u8089\u5207\u7247\uff0c\u9999\u8fa3\u5165\u5473\uff0c\u4f50\u9152\u4f73\u54c1",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 3,
+            "calories": null
+        },
+        {
+            "id": "item0300",
+            "nameOriginal": "\u51c9\u62cc\u9ec4\u74dc",
+            "nameTranslated": "Cucumber Salad",
+            "price": 18,
+            "priceText": "\u00a518",
+            "tags": [],
+            "brief": "\u51c9\u62cc\u9ec4\u74dc\uff0c\u6e05\u723d\u53ef\u53e3",
+            "briefDetail": "\u7b80\u5355\u6e05\u723d\u7684\u51c9\u83dc\uff0c\u5f00\u80c3\u89e3\u817b",
+            "allergens": [],
+            "dietaryFlags": [
+                "vegan",
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0400",
+            "nameOriginal": "\u76ae\u86cb\u8c46\u8150",
+            "nameTranslated": "Century Egg Tofu",
+            "price": 22,
+            "priceText": "\u00a522",
+            "tags": [],
+            "brief": "\u76ae\u86cb\u8c46\u8150\uff0c\u6e05\u6de1\u723d\u53e3",
+            "briefDetail": "\u7ecf\u5178\u51c9\u83dc\uff0c\u76ae\u86cb\u4e0e\u8c46\u8150\u7684\u642d\u914d",
+            "allergens": [],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0500",
+            "nameOriginal": "\u9999\u8089",
+            "nameTranslated": "Pork with Fragrant Sauce",
+            "price": 48,
+            "priceText": "\u00a548",
+            "tags": [],
+            "brief": "\u5ddd\u5473\u9999\u8089",
+            "briefDetail": "\u5ddd\u5473\u7279\u8272\u83dc",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item0600",
+            "nameOriginal": "\u9ebb\u5a46\u8c46\u8150",
+            "nameTranslated": "Mapo Tofu",
+            "price": 36,
+            "priceText": "\u00a536",
+            "tags": [],
+            "brief": "\u9ebb\u5a46\u8c46\u8150\uff0c\u9ebb\u8fa3\u9c9c\u9999",
+            "briefDetail": "\u7ecf\u5178\u5ddd\u83dc\uff0c\u8c46\u8150\u5ae9\u6ed1\uff0c\u9ebb\u8fa3\u4e0b\u996d",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 4,
+            "calories": null
+        },
+        {
+            "id": "item0700",
+            "nameOriginal": "\u4fdd\u4e01",
+            "nameTranslated": "Baoding Diced Meat",
+            "price": 52,
+            "priceText": "\u00a552",
+            "tags": [],
+            "brief": "\u4fdd\u4e01\uff0c\u542b\u82b1\u751f",
+            "briefDetail": "\u4fdd\u5b9a\u7279\u8272\u83dc",
+            "allergens": [
+                {
+                    "type": "peanut",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item0800",
+            "nameOriginal": "\u6e05\u84b8",
+            "nameTranslated": "Steamed Dish",
+            "price": 88,
+            "priceText": "\u00a588",
+            "tags": [],
+            "brief": "\u6e05\u84b8\u83dc",
+            "briefDetail": "\u6e05\u6de1\u5065\u5eb7\u7684\u84b8\u83dc",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0900",
+            "nameOriginal": "\u7c73",
+            "nameTranslated": "Rice",
+            "price": 3,
+            "priceText": "\u00a53",
+            "tags": [],
+            "brief": "\u7c73\u996d",
+            "briefDetail": "\u65e5\u5e38\u4e3b\u98df",
+            "allergens": [],
+            "dietaryFlags": [
+                "vegan",
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1000",
+            "nameOriginal": "\u7092\u9762",
+            "nameTranslated": "Fried Noodles",
+            "price": 28,
+            "priceText": "\u00a528",
+            "tags": [],
+            "brief": "\u7092\u9762",
+            "briefDetail": "\u5bb6\u5e38\u7092\u9762",
+            "allergens": [
+                {
+                    "type": "gluten",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        }
+    ],
+    "processingMs": 13346,
+    "imageCount": 1
+}

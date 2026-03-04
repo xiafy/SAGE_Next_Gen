@@ -1,0 +1,79 @@
+{
+    "menuType": "restaurant",
+    "detectedLanguage": "en",
+    "priceLevel": 2,
+    "currency": "USD",
+    "categories": [
+        {
+            "id": "cat01",
+            "nameOriginal": "Dim Sum",
+            "nameTranslated": "\u70b9\u5fc3",
+            "itemIds": [
+                "item0100",
+                "item0200",
+                "item0300"
+            ]
+        }
+    ],
+    "items": [
+        {
+            "id": "item0100",
+            "nameOriginal": "Har Gow",
+            "nameTranslated": "\u867e\u997a",
+            "tags": [],
+            "brief": "Shrimp dumpling with translucent wrapper.",
+            "briefDetail": "Classic Cantonese dim sum, steamed shrimp filling.",
+            "allergens": [
+                {
+                    "type": "shellfish",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0200",
+            "nameOriginal": "Siu Mai",
+            "nameTranslated": "\u70e7\u5356",
+            "tags": [],
+            "brief": "Pork and shrimp dumpling.",
+            "briefDetail": "Cantonese dim sum, steamed pork and shrimp.",
+            "allergens": [
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                },
+                {
+                    "type": "gluten",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0300",
+            "nameOriginal": "Steamed Buns",
+            "nameTranslated": "\u9992\u5934",
+            "tags": [],
+            "brief": "Steamed wheat buns.",
+            "briefDetail": "Soft, fluffy steamed buns, plain or filled.",
+            "allergens": [
+                {
+                    "type": "gluten",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        }
+    ],
+    "processingMs": 6046,
+    "imageCount": 1
+}

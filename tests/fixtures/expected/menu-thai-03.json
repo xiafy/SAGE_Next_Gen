@@ -1,0 +1,305 @@
+{
+    "menuType": "restaurant",
+    "detectedLanguage": "th",
+    "priceLevel": 1,
+    "currency": "THB",
+    "categories": [
+        {
+            "id": "cat01",
+            "nameOriginal": "MAIN DISHES THAI CUISINE",
+            "nameTranslated": "\u6cf0\u56fd\u4e3b\u83dc",
+            "itemIds": [
+                "item0100",
+                "item0200",
+                "item0300",
+                "item0400",
+                "item0500",
+                "item0600",
+                "item0700",
+                "item0800",
+                "item0900",
+                "item1000",
+                "item1100",
+                "item1200",
+                "item1300",
+                "item1400"
+            ]
+        }
+    ],
+    "items": [
+        {
+            "id": "item0100",
+            "nameOriginal": "Rice topped with Thai omelet / \u0e02\u0e49\u0e32\u0e27 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305\u996d \u732a\u8089",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\u996d\u76d6\u996d\uff0c\u642d\u914d\u732a\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u996d\u642d\u914d\u7c73\u996d\u548c\u732a\u8089\uff0c\u7b80\u5355\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0200",
+            "nameOriginal": "Rice topped with Thai omelet / \u0e02\u0e49\u0e32\u0e27 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305\u996d \u9e21\u8089",
+            "price": 90,
+            "priceText": "90.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\u996d\u76d6\u996d\uff0c\u642d\u914d\u9e21\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u996d\u642d\u914d\u7c73\u996d\u548c\u9e21\u8089\uff0c\u7b80\u5355\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0300",
+            "nameOriginal": "Rice topped with Thai omelet / \u0e02\u0e49\u0e32\u0e27 Prawn / \u0e01\u0e38\u0e49\u0e07",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305\u996d \u867e",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\u996d\u76d6\u996d\uff0c\u642d\u914d\u867e",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u996d\u642d\u914d\u7c73\u996d\u548c\u867e\uff0c\u7b80\u5355\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                },
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0400",
+            "nameOriginal": "Rice topped with Thai omelet / \u0e02\u0e49\u0e32\u0e27 Vegetarian / \u0e21\u0e31\u0e07\u0e2a\u0e27\u0e34\u0e23\u0e31\u0e15\u0e34",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305\u996d \u852c\u83dc",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\u996d\u76d6\u996d\uff0c\u642d\u914d\u852c\u83dc",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u996d\u642d\u914d\u7c73\u996d\u548c\u852c\u83dc\uff0c\u5065\u5eb7\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0500",
+            "nameOriginal": "Thai omelet / \u0e44\u0e02\u0e48\u0e40\u0e08\u0e35\u0e22\u0e27\u0e17\u0e23\u0e07\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305 \u732a\u8089",
+            "price": 65,
+            "priceText": "65.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\uff0c\u642d\u914d\u732a\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u642d\u914d\u732a\u8089\uff0c\u7b80\u5355\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0600",
+            "nameOriginal": "Thai omelet / \u0e44\u0e02\u0e48\u0e40\u0e08\u0e35\u0e22\u0e27\u0e17\u0e23\u0e07\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305 \u9e21\u8089",
+            "price": 65,
+            "priceText": "65.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\uff0c\u642d\u914d\u9e21\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u642d\u914d\u9e21\u8089\uff0c\u7b80\u5355\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0700",
+            "nameOriginal": "Thai omelet / \u0e44\u0e02\u0e48\u0e40\u0e08\u0e35\u0e22\u0e27\u0e17\u0e23\u0e07\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07 Prawn / \u0e01\u0e38\u0e49\u0e07",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305 \u867e",
+            "price": 85,
+            "priceText": "85.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\uff0c\u642d\u914d\u867e",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u642d\u914d\u867e\uff0c\u7b80\u5355\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                },
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0800",
+            "nameOriginal": "Thai omelet / \u0e44\u0e02\u0e48\u0e40\u0e08\u0e35\u0e22\u0e27\u0e17\u0e23\u0e07\u0e40\u0e04\u0e23\u0e37\u0e48\u0e2d\u0e07 Vegetarian / \u0e21\u0e31\u0e07\u0e2a\u0e27\u0e34\u0e23\u0e31\u0e15\u0e34",
+            "nameTranslated": "\u6cf0\u5f0f\u86cb\u5305 \u852c\u83dc",
+            "price": 65,
+            "priceText": "65.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u86cb\u5305\uff0c\u642d\u914d\u852c\u83dc",
+            "briefDetail": "\u6cf0\u5f0f\u86cb\u5305\u642d\u914d\u852c\u83dc\uff0c\u5065\u5eb7\u7f8e\u5473",
+            "allergens": [
+                {
+                    "type": "egg",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0900",
+            "nameOriginal": "Stir-fried Rice Noodles / \u0e01\u0e4b\u0e27\u0e22\u0e40\u0e15\u0e35\u0e4b\u0e22\u0e27\u0e04\u0e31\u0e48\u0e27 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u7cbf\u6761 \u732a\u8089",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u7cbf\u6761\uff0c\u642d\u914d\u732a\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u7092\u7cbf\u6761\u642d\u914d\u732a\u8089\uff0c\u98ce\u5473\u72ec\u7279",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1000",
+            "nameOriginal": "Stir-fried Rice Noodles / \u0e01\u0e4b\u0e27\u0e22\u0e40\u0e15\u0e35\u0e4b\u0e22\u0e27\u0e04\u0e31\u0e48\u0e27 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u7cbf\u6761 \u9e21\u8089",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u7cbf\u6761\uff0c\u642d\u914d\u9e21\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u7092\u7cbf\u6761\u642d\u914d\u9e21\u8089\uff0c\u98ce\u5473\u72ec\u7279",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1100",
+            "nameOriginal": "Stir-fried Rice Noodles / \u0e01\u0e4b\u0e27\u0e22\u0e40\u0e15\u0e35\u0e4b\u0e22\u0e27\u0e04\u0e31\u0e48\u0e27 Tofu / \u0e40\u0e15\u0e49\u0e32\u0e2b\u0e39\u0e49",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u7cbf\u6761 \u8c46\u8150",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u7cbf\u6761\uff0c\u642d\u914d\u8c46\u8150",
+            "briefDetail": "\u6cf0\u5f0f\u7092\u7cbf\u6761\u642d\u914d\u8c46\u8150\uff0c\u98ce\u5473\u72ec\u7279",
+            "allergens": [
+                {
+                    "type": "soy",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1200",
+            "nameOriginal": "Stir-fried Rice Noodles with Soy Sauce / \u0e1c\u0e31\u0e14\u0e0b\u0e35\u0e2d\u0e34\u0e4a\u0e27 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761 \u732a\u8089",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761\uff0c\u642d\u914d\u732a\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761\u642d\u914d\u732a\u8089\uff0c\u5473\u9053\u9c9c\u7f8e",
+            "allergens": [
+                {
+                    "type": "soy",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1300",
+            "nameOriginal": "Stir-fried Rice Noodles with Soy Sauce / \u0e1c\u0e31\u0e14\u0e0b\u0e35\u0e2d\u0e34\u0e4a\u0e27 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761 \u9e21\u8089",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761\uff0c\u642d\u914d\u9e21\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761\u642d\u914d\u9e21\u8089\uff0c\u5473\u9053\u9c9c\u7f8e",
+            "allergens": [
+                {
+                    "type": "soy",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1400",
+            "nameOriginal": "Stir-fried Rice Noodles with Soy Sauce / \u0e1c\u0e31\u0e14\u0e0b\u0e35\u0e2d\u0e34\u0e4a\u0e27 Tofu / \u0e40\u0e15\u0e49\u0e32\u0e2b\u0e39\u0e49",
+            "nameTranslated": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761 \u8c46\u8150",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761\uff0c\u642d\u914d\u8c46\u8150",
+            "briefDetail": "\u6cf0\u5f0f\u9171\u6cb9\u7092\u7cbf\u6761\u642d\u914d\u8c46\u8150\uff0c\u5473\u9053\u9c9c\u7f8e",
+            "allergens": [
+                {
+                    "type": "soy",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        }
+    ],
+    "processingMs": 18009,
+    "imageCount": 1
+}

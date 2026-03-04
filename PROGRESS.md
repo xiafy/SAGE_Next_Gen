@@ -8,16 +8,34 @@
 
 ## 当前状态
 
-**阶段**: Sprint 3 完成 ✅
-**当前子阶段**: 收尾，准备 Sprint 4
-**整体进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅
-**最后更新**: 2026-03-02 21:52
+**阶段**: Sprint 4a 完成 ✅ | Sprint 4b 进行中
+**当前子阶段**: Sprint 4b Step 1 (Opus-A 设计)
+**整体进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅
+**最后更新**: 2026-03-04 14:30
 
 ## 🌐 线上地址
-- **App**: https://sage-next-gen.pages.dev
-- **Worker**: https://sage-worker.xiafy920.workers.dev ✅（Version: 4693c69）
+- **App**: https://sage-next-gen.pages.dev (deploy: 62730ff)
+- **Worker**: https://sage-worker.xiafy920.workers.dev
 
 ---
+
+## 🔴 进行中（锁定区）
+
+**Sprint 4b: Memory System (DEC-067)**
+- [ ] Step 1: Opus-A 设计 (shared/types.ts + memory.ts + tests)
+- [ ] Step 3: Codex 实现
+- [ ] Step 4: Opus-B 审查
+- [ ] Commit + Deploy
+
+## ✅ Sprint 4a 完成 (2026-03-04)
+
+9 commits: `36088cc` → `62730ff`
+- Git hooks 硬门控 (pre-commit + commit-msg)
+- Deploy 门控脚本 (scripts/deploy.sh)
+- processAIResponse 纯函数提取 + 10 回归测试
+- AGENTS.md 331→93 行重构
+- Prompt fixtures + verify 脚本
+- 线上部署：https://48bd630c.sage-next-gen.pages.dev
 
 ## 🔴 进行中（锁定区）
 

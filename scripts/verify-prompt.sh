@@ -36,6 +36,12 @@ fi
 echo "  Worker: $WORKER_URL"
 echo "  Fixtures: $FIXTURE_DIR"
 
+# 检查 python3 是否可用
+command -v python3 >/dev/null || {
+  echo -e "${RED}✗ python3 not found. Please install Python 3.${NC}"
+  exit 1
+}
+
 # 检查 Worker 是否可达
 if ! curl -sf "$WORKER_URL/api/health" > /dev/null 2>&1; then
   echo -e "${RED}✗ Worker 不可达: $WORKER_URL${NC}"

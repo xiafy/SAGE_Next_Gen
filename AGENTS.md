@@ -45,6 +45,13 @@
 | API 设计 | `docs/api-design.md` | 接口契约 v3.0 |
 | 部署 | `docs/deployment.md` | Cloudflare Pages + Workers |
 
+### 测试
+| 主题 | 文件 | 一句话 |
+|------|------|--------|
+| 测试计划 | `tests/test-plan.md` | 5 层测试策略 |
+| 测试用例 | `tests/test-cases.md` | 60+ 用例，L1-L5 |
+| E2E | `app/tests/e2e/` | Playwright 冒烟测试 |
+
 ### 功能规格 (specs/)
 | 主题 | 文件 |
 |------|------|
@@ -70,6 +77,18 @@ worker/                 # Cloudflare Workers API
 └── schemas/            # Zod schema
 
 shared/types.ts         # 前后端共享类型（唯一权威）
+```
+
+---
+
+## 常用命令
+
+```bash
+cd app && npm run dev          # 前端开发服务器 (localhost:5173)
+cd worker && npx wrangler dev  # Worker 本地开发 (localhost:8787)
+cd app && npx vitest run       # 跑测试
+bash scripts/deploy.sh app      # 部署前端
+bash scripts/deploy.sh worker   # 部署 Worker
 ```
 
 ---

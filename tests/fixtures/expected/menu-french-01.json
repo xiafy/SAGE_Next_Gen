@@ -1,0 +1,61 @@
+{
+    "menuType": "restaurant",
+    "detectedLanguage": "en",
+    "priceLevel": 3,
+    "currency": "USD",
+    "categories": [
+        {
+            "id": "cat01",
+            "nameOriginal": "Appetizers",
+            "nameTranslated": "\u5f00\u80c3\u83dc",
+            "itemIds": [
+                "item0100",
+                "item0200"
+            ]
+        }
+    ],
+    "items": [
+        {
+            "id": "item0100",
+            "nameOriginal": "Smoked Salmon Salad",
+            "nameTranslated": "\u70df\u718f\u4e09\u6587\u9c7c\u6c99\u62c9",
+            "price": 22,
+            "priceText": "22",
+            "tags": [],
+            "brief": "\u70df\u718f\u4e09\u6587\u9c7c\u914d\u6df7\u5408\u852c\u83dc\u6c99\u62c9",
+            "briefDetail": "\u7ecf\u5178\u5f00\u80c3\u83dc\uff0c\u4e09\u6587\u9c7c\u7684\u9c9c\u7f8e\u4e0e\u852c\u83dc\u7684\u6e05\u65b0\u5b8c\u7f8e\u7ed3\u5408",
+            "allergens": [
+                {
+                    "type": "fish",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0200",
+            "nameOriginal": "Bread Basket",
+            "nameTranslated": "\u9762\u5305\u7bee",
+            "price": 8,
+            "priceText": "8",
+            "tags": [],
+            "brief": "\u5404\u5f0f\u9762\u5305\u642d\u914d\u9ec4\u6cb9",
+            "briefDetail": "\u9910\u524d\u5c0f\u70b9\uff0c\u63d0\u4f9b\u591a\u79cd\u53e3\u5473\u9762\u5305",
+            "allergens": [
+                {
+                    "type": "gluten",
+                    "uncertain": false
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        }
+    ],
+    "processingMs": 5620,
+    "imageCount": 1
+}

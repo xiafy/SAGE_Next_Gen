@@ -63,6 +63,7 @@ export CLOUDFLARE_ACCOUNT_ID="a8a991250287ac8543cef3e5cf773c3e"
 # ── Force bypass ──
 if $FORCE; then
   echo -e "${RED}⚠️⚠️⚠️  FORCE DEPLOY — ALL QUALITY GATES BYPASSED  ⚠️⚠️⚠️${NC}"
+  echo "[FORCE DEPLOY] $(date -u +%Y-%m-%dT%H:%M:%SZ) target=$TARGET user=$(whoami) commit=$(git rev-parse --short HEAD)" >> "$REPO_ROOT/.force-deploy.log"
   echo -e "${YELLOW}Skipping compile, tests, and git checks.${NC}"
 else
   # ── L1: TypeScript compile ──

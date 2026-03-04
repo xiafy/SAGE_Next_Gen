@@ -1,0 +1,387 @@
+{
+    "menuType": "restaurant",
+    "detectedLanguage": "th",
+    "priceLevel": 1,
+    "currency": "THB",
+    "categories": [
+        {
+            "id": "cat01",
+            "nameOriginal": "MAIN DISHES THAI CUISINE",
+            "nameTranslated": "\u6cf0\u56fd\u4e3b\u83dc",
+            "itemIds": [
+                "item0100",
+                "item0200",
+                "item0300",
+                "item0400",
+                "item0500",
+                "item0600",
+                "item0700",
+                "item0800",
+                "item0900",
+                "item1000",
+                "item1100",
+                "item1200",
+                "item1300",
+                "item1400",
+                "item1500",
+                "item1600",
+                "item1700",
+                "item1800",
+                "item1900",
+                "item2000"
+            ]
+        }
+    ],
+    "items": [
+        {
+            "id": "item0100",
+            "nameOriginal": "Pad Thai / \u0e1c\u0e31\u0e14\u0e44\u0e17\u0e22 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff08\u732a\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff0c\u732a\u8089\uff0c\u82b1\u751f\u788e\uff0c\u9178\u751c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u56fd\u7ecf\u5178\u7092\u7c89\uff0c\u732a\u8089\u642d\u914d\u82b1\u751f\u788e\u548c\u9178\u751c\u9171\u6c41",
+            "allergens": [
+                {
+                    "type": "peanut",
+                    "uncertain": true
+                },
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 1,
+            "calories": null
+        },
+        {
+            "id": "item0200",
+            "nameOriginal": "Pad Thai / \u0e1c\u0e31\u0e14\u0e44\u0e17\u0e22 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff08\u9e21\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff0c\u9e21\u8089\uff0c\u82b1\u751f\u788e\uff0c\u9178\u751c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u56fd\u7ecf\u5178\u7092\u7c89\uff0c\u9e21\u8089\u642d\u914d\u82b1\u751f\u788e\u548c\u9178\u751c\u9171\u6c41",
+            "allergens": [
+                {
+                    "type": "peanut",
+                    "uncertain": true
+                },
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 1,
+            "calories": null
+        },
+        {
+            "id": "item0300",
+            "nameOriginal": "Pad Thai / \u0e1c\u0e31\u0e14\u0e44\u0e17\u0e22 Prawn / \u0e01\u0e38\u0e49\u0e07",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff08\u867e\uff09",
+            "price": 90,
+            "priceText": "90.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff0c\u867e\uff0c\u82b1\u751f\u788e\uff0c\u9178\u751c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u56fd\u7ecf\u5178\u7092\u7c89\uff0c\u867e\u4ec1\u642d\u914d\u82b1\u751f\u788e\u548c\u9178\u751c\u9171\u6c41",
+            "allergens": [
+                {
+                    "type": "peanut",
+                    "uncertain": true
+                },
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 1,
+            "calories": null
+        },
+        {
+            "id": "item0400",
+            "nameOriginal": "Pad Thai / \u0e1c\u0e31\u0e14\u0e44\u0e17\u0e22 Vegetarian / \u0e21\u0e31\u0e07\u0e2a\u0e27\u0e34\u0e23\u0e31\u0e15\u0e34",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff08\u7d20\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff0c\u7d20\u98df\uff0c\u82b1\u751f\u788e\uff0c\u9178\u751c\u5fae\u8fa3",
+            "briefDetail": "\u65e0\u8089\u7248\u6cf0\u5f0f\u7092\u7c89\uff0c\u82b1\u751f\u788e\u548c\u9178\u751c\u9171\u6c41",
+            "allergens": [
+                {
+                    "type": "peanut",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [
+                "vegetarian",
+                "vegan"
+            ],
+            "spiceLevel": 1,
+            "calories": null
+        },
+        {
+            "id": "item0500",
+            "nameOriginal": "Pad Thai / \u0e1c\u0e31\u0e14\u0e44\u0e17\u0e22 Tea Sauce / \u0e0b\u0e2d\u0e2a\u0e0b\u0e32",
+            "nameTranslated": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff08\u8336\u9171\uff09",
+            "price": 20,
+            "priceText": "+20.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff0c\u8336\u9171",
+            "briefDetail": "\u6cf0\u5f0f\u7092\u6cb3\u7c89\uff0c\u642d\u914d\u7279\u8272\u8336\u9171",
+            "allergens": [
+                {
+                    "type": "peanut",
+                    "uncertain": true
+                },
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 1,
+            "calories": null
+        },
+        {
+            "id": "item0600",
+            "nameOriginal": "Fried rice / \u0e02\u0e49\u0e32\u0e27\u0e1c\u0e31\u0e14 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u7092\u996d\uff08\u732a\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u996d\uff0c\u732a\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u98ce\u5473\u7092\u996d\uff0c\u642d\u914d\u732a\u8089",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0700",
+            "nameOriginal": "Fried rice / \u0e02\u0e49\u0e32\u0e27\u0e1c\u0e31\u0e14 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u7092\u996d\uff08\u9e21\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u996d\uff0c\u9e21\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u98ce\u5473\u7092\u996d\uff0c\u642d\u914d\u9e21\u8089",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0800",
+            "nameOriginal": "Fried rice / \u0e02\u0e49\u0e32\u0e27\u0e1c\u0e31\u0e14 Prawn / \u0e01\u0e38\u0e49\u0e07",
+            "nameTranslated": "\u7092\u996d\uff08\u867e\uff09",
+            "price": 90,
+            "priceText": "90.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u996d\uff0c\u867e",
+            "briefDetail": "\u6cf0\u5f0f\u98ce\u5473\u7092\u996d\uff0c\u642d\u914d\u867e\u4ec1",
+            "allergens": [
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item0900",
+            "nameOriginal": "Fried rice / \u0e02\u0e49\u0e32\u0e27\u0e1c\u0e31\u0e14 Vegetarian / \u0e21\u0e31\u0e07\u0e2a\u0e27\u0e34\u0e23\u0e31\u0e15\u0e34",
+            "nameTranslated": "\u7092\u996d\uff08\u7d20\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u996d\uff0c\u7d20\u98df",
+            "briefDetail": "\u6cf0\u5f0f\u98ce\u5473\u7092\u996d\uff0c\u65e0\u8089",
+            "allergens": [],
+            "dietaryFlags": [
+                "vegetarian",
+                "vegan"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1000",
+            "nameOriginal": "Fried rice / \u0e02\u0e49\u0e32\u0e27\u0e1c\u0e31\u0e14 Tea Sauce / \u0e0b\u0e2d\u0e2a\u0e0b\u0e32",
+            "nameTranslated": "\u7092\u996d\uff08\u8336\u9171\uff09",
+            "price": 20,
+            "priceText": "+20.-",
+            "tags": [],
+            "brief": "\u6cf0\u5f0f\u7092\u996d\uff0c\u8336\u9171",
+            "briefDetail": "\u6cf0\u5f0f\u98ce\u5473\u7092\u996d\uff0c\u642d\u914d\u7279\u8272\u8336\u9171",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1100",
+            "nameOriginal": "Rice topped with stir-fried basil / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e1e\u0e23\u0e32 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u7f57\u52d2\u7092\u996d\uff08\u732a\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u7f57\u52d2\u7092\u996d\uff0c\u732a\u8089\uff0c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u5f0f\u7ecf\u5178\u7f57\u52d2\u7092\u996d\uff0c\u732a\u8089\u642d\u914d\u7f57\u52d2\u53f6",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item1200",
+            "nameOriginal": "Rice topped with stir-fried basil / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e1e\u0e23\u0e32 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u7f57\u52d2\u7092\u996d\uff08\u9e21\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u7f57\u52d2\u7092\u996d\uff0c\u9e21\u8089\uff0c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u5f0f\u7ecf\u5178\u7f57\u52d2\u7092\u996d\uff0c\u9e21\u8089\u642d\u914d\u7f57\u52d2\u53f6",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item1300",
+            "nameOriginal": "Rice topped with stir-fried basil / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e1e\u0e23\u0e32 Prawn / \u0e01\u0e38\u0e49\u0e07",
+            "nameTranslated": "\u7f57\u52d2\u7092\u996d\uff08\u867e\uff09",
+            "price": 90,
+            "priceText": "90.-",
+            "tags": [],
+            "brief": "\u7f57\u52d2\u7092\u996d\uff0c\u867e\uff0c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u5f0f\u7ecf\u5178\u7f57\u52d2\u7092\u996d\uff0c\u867e\u4ec1\u642d\u914d\u7f57\u52d2\u53f6",
+            "allergens": [
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item1400",
+            "nameOriginal": "Rice topped with stir-fried basil / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e1e\u0e23\u0e32 Vegetarian / \u0e21\u0e31\u0e07\u0e2a\u0e27\u0e34\u0e23\u0e31\u0e15\u0e34",
+            "nameTranslated": "\u7f57\u52d2\u7092\u996d\uff08\u7d20\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u7f57\u52d2\u7092\u996d\uff0c\u7d20\u98df\uff0c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u5f0f\u7ecf\u5178\u7f57\u52d2\u7092\u996d\uff0c\u65e0\u8089",
+            "allergens": [],
+            "dietaryFlags": [
+                "vegetarian",
+                "vegan"
+            ],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item1500",
+            "nameOriginal": "Rice topped with stir-fried basil / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e1e\u0e23\u0e32 Tea Sauce / \u0e0b\u0e2d\u0e2a\u0e0b\u0e32",
+            "nameTranslated": "\u7f57\u52d2\u7092\u996d\uff08\u8336\u9171\uff09",
+            "price": 20,
+            "priceText": "+20.-",
+            "tags": [],
+            "brief": "\u7f57\u52d2\u7092\u996d\uff0c\u8336\u9171\uff0c\u5fae\u8fa3",
+            "briefDetail": "\u6cf0\u5f0f\u7f57\u52d2\u7092\u996d\uff0c\u642d\u914d\u7279\u8272\u8336\u9171",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 2,
+            "calories": null
+        },
+        {
+            "id": "item1600",
+            "nameOriginal": "Rice topped with stir-fried Garic and Pepper / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e17\u0e35\u0e22\u0e21\u0e1e\u0e23\u0e34\u0e01\u0e44\u0e17\u0e22 Pork / \u0e2b\u0e21\u0e39",
+            "nameTranslated": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff08\u732a\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u732a\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u732a\u8089\u98ce\u5473",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1700",
+            "nameOriginal": "Rice topped with stir-fried Garic and Pepper / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e17\u0e35\u0e22\u0e21\u0e1e\u0e23\u0e34\u0e01\u0e44\u0e17\u0e22 Chicken / \u0e44\u0e01\u0e48",
+            "nameTranslated": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff08\u9e21\u8089\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u9e21\u8089",
+            "briefDetail": "\u6cf0\u5f0f\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u9e21\u8089\u98ce\u5473",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1800",
+            "nameOriginal": "Rice topped with stir-fried Garic and Pepper / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e17\u0e35\u0e22\u0e21\u0e1e\u0e23\u0e34\u0e01\u0e44\u0e17\u0e22 Prawn / \u0e01\u0e38\u0e49\u0e07",
+            "nameTranslated": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff08\u867e\uff09",
+            "price": 90,
+            "priceText": "90.-",
+            "tags": [],
+            "brief": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u867e",
+            "briefDetail": "\u6cf0\u5f0f\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u867e\u4ec1\u98ce\u5473",
+            "allergens": [
+                {
+                    "type": "shellfish",
+                    "uncertain": true
+                }
+            ],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item1900",
+            "nameOriginal": "Rice topped with stir-fried Garic and Pepper / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e17\u0e35\u0e22\u0e21\u0e1e\u0e23\u0e34\u0e01\u0e44\u0e17\u0e22 Vegetarian / \u0e21\u0e31\u0e07\u0e2a\u0e27\u0e34\u0e23\u0e31\u0e15\u0e34",
+            "nameTranslated": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff08\u7d20\uff09",
+            "price": 70,
+            "priceText": "70.-",
+            "tags": [],
+            "brief": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u7d20\u98df",
+            "briefDetail": "\u6cf0\u5f0f\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u65e0\u8089",
+            "allergens": [],
+            "dietaryFlags": [
+                "vegetarian",
+                "vegan"
+            ],
+            "spiceLevel": 0,
+            "calories": null
+        },
+        {
+            "id": "item2000",
+            "nameOriginal": "Rice topped with stir-fried Garic and Pepper / \u0e02\u0e49\u0e32\u0e27\u0e01\u0e23\u0e30\u0e40\u0e17\u0e35\u0e22\u0e21\u0e1e\u0e23\u0e34\u0e01\u0e44\u0e17\u0e22 Tea Sauce / \u0e0b\u0e2d\u0e2a\u0e0b\u0e32",
+            "nameTranslated": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff08\u8336\u9171\uff09",
+            "price": 20,
+            "priceText": "+20.-",
+            "tags": [],
+            "brief": "\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u8336\u9171",
+            "briefDetail": "\u6cf0\u5f0f\u849c\u9999\u80e1\u6912\u7092\u996d\uff0c\u642d\u914d\u7279\u8272\u8336\u9171",
+            "allergens": [],
+            "dietaryFlags": [],
+            "spiceLevel": 0,
+            "calories": null
+        }
+    ],
+    "processingMs": 21996,
+    "imageCount": 1
+}

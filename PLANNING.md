@@ -181,20 +181,20 @@
 > 目标：规则执行率从 19% → 100%（通过工具强制，而非文档自觉）
 
 ### Phase 1: 硬门控
-- [ ] pre-commit hook（tsc + vitest + Prompt I/O diff + fix 关联测试）
-- [ ] deploy 门控脚本（编译→单测→冒烟→部署）
+- [x] pre-commit hook（tsc + vitest + Prompt I/O diff + fix 关联测试）
+- [x] deploy 门控脚本（编译→单测→冒烟→部署）
 
 ### Phase 2: 核心函数提取 + 测试加固
-- [ ] processAIResponse 从组件闭包提取为纯函数
-- [ ] BUG-K/J 回归测试
-- [ ] E2E 主路径冒烟扩展
+- [x] processAIResponse 从组件闭包提取为纯函数
+- [x] BUG-K/J 回归测试
+- [ ] E2E 主路径冒烟扩展（Sprint 4b）
 
 ### Phase 3: AGENTS.md 重构
-- [ ] 331行→80行目录 + docs/engineering/ 结构化知识库
+- [x] 331行→93行目录 + docs/engineering/ 结构化知识库
 
 ### Phase 4: Prompt 工程化 + 日常质量扫描
-- [ ] Prompt 测试夹具 + 验证脚本
-- [ ] 每日质量 cron
+- [x] Prompt 测试夹具 + 验证脚本
+- [x] 每日质量 cron
 
 ### 预估
 - 总工作量: ~14h
