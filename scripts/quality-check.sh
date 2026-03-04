@@ -82,18 +82,108 @@ import re, os, glob
 stale = 0
 for doc in glob.glob('docs/**/*.md', recursive=True) + glob.glob('specs/*.md'):
     if not os.path.isfile(doc): continue
+    doc_dir = os.path.dirname(doc)
     with open(doc) as f:
         content = f.read()
     refs = re.findall(r'\x60([a-zA-Z][a-zA-Z0-9_/.-]+\.(?:ts|tsx|md|sh))\x60', content)
     for ref in refs[:20]:
-        if '/' in ref and not os.path.exists(ref) and not ref.startswith('http'):
-            print(f'    ⚠ {doc} → {ref}')
-            stale += 1
+        if '/' not in ref: continue
+        if ref.startswith('http'): continue
+        # 检查：仓库根 或 文档所在目录
+        if os.path.exists(ref) or os.path.exists(os.path.join(doc_dir, ref)):
+            continue
+        print(f'    ⚠ {doc} → {ref}')
+        stale += 1
 if stale == 0:
     print('    ✓ 无 stale 引用')
 " 2>/dev/null || echo "    ⚠ python3 不可用，跳过")
 echo "$STALE_OUTPUT"
-STALE_COUNT=$(echo "$STALE_OUTPUT" | grep -c "⚠" || echo 0)
+STALE_COUNT=$(echo "$STALE_OUTPUT" | grep -c "⚠" 2>/dev/null) || STALE_COUNT=0
 
 echo ""
 echo "  God Components: $GOD_COUNT | Stale 文档引用: $STALE_COUNT"
+
+# 7. 仓库一致性检查
+echo -e "\n${YELLOW}▶ 仓库一致性检查${NC}"
+
+CONSISTENCY_ISSUES=0
+
+# 7a. 根目录游离文件（不应有图片、已完成 TASK）
+echo "  --- 根目录规范 ---"
+ROOT_IMGS=$(find . -maxdepth 1 \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" \) 2>/dev/null)
+if [ -n "$ROOT_IMGS" ]; then
+  echo "    ✗ 根目录有游离图片:"
+  echo "$ROOT_IMGS" | sed 's/^/      /'
+  CONSISTENCY_ISSUES=$((CONSISTENCY_ISSUES + 1))
+else
+  echo "    ✓ 根目录无游离图片"
+fi
+
+ROOT_TASKS=$(find . -maxdepth 1 -name "TASK_*.md" ! -name "TASK_TEMPLATE.md" 2>/dev/null)
+if [ -n "$ROOT_TASKS" ]; then
+  echo "    ⚠ 根目录有未归档的 TASK（完成后应移到 archive/tasks/）:"
+  echo "$ROOT_TASKS" | sed 's/^/      /'
+  CONSISTENCY_ISSUES=$((CONSISTENCY_ISSUES + 1))
+fi
+
+# 7b. docs/ 根目录不应有游离 .md 文件（应归入子目录）
+echo "  --- docs/ 目录规范 ---"
+DOCS_ROOT_FILES=$(find docs/ -maxdepth 1 -name "*.md" 2>/dev/null)
+if [ -n "$DOCS_ROOT_FILES" ]; then
+  echo "    ✗ docs/ 根目录有游离文件（应归入 product/technical/engineering/gtm）:"
+  echo "$DOCS_ROOT_FILES" | sed 's/^/      /'
+  CONSISTENCY_ISSUES=$((CONSISTENCY_ISSUES + 1))
+else
+  echo "    ✓ docs/ 目录结构规范"
+fi
+
+# 7c. 全量文件引用一致性（所有 .md 中引用的 .ts/.tsx/.md/.sh 是否存在）
+echo "  --- 跨文档引用一致性 ---"
+REF_OUTPUT=$(python3 -c "
+import re, os, glob
+
+issues = 0
+checked = 0
+# 只检查活跃文档，不检查历史日志（PROGRESS/DECISIONS 记录的是历史快照）
+skip_files = {'PROGRESS.md', 'DECISIONS.md'}
+for doc in glob.glob('**/*.md', recursive=True):
+    if 'node_modules' in doc or '.git' in doc or 'archive/' in doc:
+        continue
+    if os.path.basename(doc) in skip_files:
+        continue
+    if not os.path.isfile(doc): continue
+    doc_dir = os.path.dirname(doc)
+    with open(doc) as f:
+        content = f.read()
+    refs = re.findall(r'\x60([a-zA-Z][a-zA-Z0-9_/.-]+\.(?:ts|tsx|sh))\x60', content)
+    for ref in set(refs):
+        checked += 1
+        # 从仓库根检查
+        if os.path.exists(ref):
+            continue
+        # 从文档所在目录检查（相对路径）
+        if os.path.exists(os.path.join(doc_dir, ref)):
+            continue
+        # 排除短文件名（无路径分隔符的单文件引用，通常是示例或简写）
+        if '/' not in ref:
+            continue
+        # 排除明显的示例/伪代码
+        if any(x in ref for x in ['example', 'xxx', 'your-', 'PascalCase', 'camelCase']):
+            continue
+        print(f'    ⚠ {doc} → {ref}')
+        issues += 1
+        if issues >= 10:
+            print(f'    ... (截断，共 {issues}+ 处)')
+            break
+    if issues >= 10:
+        break
+if issues == 0:
+    print(f'    ✓ {checked} 个引用全部有效')
+else:
+    print(f'    共 {issues} 个引用指向不存在的文件')
+" 2>/dev/null || echo "    ⚠ python3 不可用，跳过")
+echo "$REF_OUTPUT"
+REF_ISSUES=$(echo "$REF_OUTPUT" | grep -c "⚠" 2>/dev/null) || REF_ISSUES=0
+
+echo ""
+echo "  一致性问题: $((CONSISTENCY_ISSUES + REF_ISSUES))"
