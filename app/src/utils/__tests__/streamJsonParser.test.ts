@@ -139,6 +139,37 @@ describe('extractJsonBlock — supplemental', () => {
   });
 });
 
+describe('F06-AC12: JSON code block detection during streaming', () => {
+  it('F06-AC12: detects ```json opening marker in partial stream', () => {
+    const partialStream = 'Here is the meal plan I recommend for you:\n```json\n{"version":1';
+    const extracted = extractJsonBlock(partialStream);
+    // Even without closing ```, extractJsonBlock should return the partial content
+    expect(extracted).not.toBeNull();
+    expect(extracted).toContain('"version":1');
+  });
+
+  it('F06-AC12: no ```json marker → returns null (still streaming text)', () => {
+    const partialStream = 'Let me think about the best dishes for your group...';
+    expect(extractJsonBlock(partialStream)).toBeNull();
+  });
+
+  it('F06-AC12: incomplete JSON (missing one closing brace) → parseJsonBlock L2 repairs', () => {
+    // Missing only the final closing brace — L2 repair should handle this
+    const truncated = '{"version":1,"totalEstimate":500,"currency":"THB","rationale":"good","diners":2,"courses":[{"name":"Main","items":[{"dishId":"d1","name":"Pad Thai","nameOriginal":"PT","price":120,"reason":"classic","quantity":1}]}]';
+    const result = parseJsonBlock(truncated);
+    // L2 repair should close the final brace
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('mealPlan');
+  });
+
+  it('F06-AC12: JSON with trailing comma (common LLM artifact) → L2 repairs', () => {
+    const withTrailingComma = '{"version":1,"totalEstimate":200,"currency":"USD","rationale":"ok","diners":1,"courses":[{"name":"Main","items":[{"dishId":"d1","name":"A","nameOriginal":"A","price":10,"reason":"","quantity":1,}],}],}';
+    const result = parseJsonBlock(withTrailingComma);
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe('mealPlan');
+  });
+});
+
 describe('extractJsonBlock — error recovery', () => {
   it('completely invalid structure (XML) → null', () => {
     expect(extractJsonBlock('<root><item>hello</item></root>')).toBeNull();

@@ -140,3 +140,32 @@ describe('MealPlanCard — concurrent/replacing states', () => {
     replaceButtons.forEach(btn => expect(btn).toBeDisabled());
   });
 });
+
+describe('F06-AC8: MealPlanCard for meal plan display', () => {
+  it('F06-AC8: renders dynamic course structure (not hardcoded Western order)', () => {
+    const mp = makeMealPlan({
+      courses: [
+        { name: '前菜', items: [{ dishId: 'd1', name: 'Edamame', nameOriginal: '枝豆', price: 300, reason: 'Light', quantity: 1 }] },
+        { name: '刺身', items: [{ dishId: 'd2', name: 'Sashimi', nameOriginal: '刺身盛り', price: 1200, reason: 'Fresh', quantity: 1 }] },
+        { name: '焼物', items: [{ dishId: 'd3', name: 'Yakitori', nameOriginal: '焼き鳥', price: 500, reason: 'Classic', quantity: 2 }] },
+      ],
+    });
+    render(<MealPlanCard mealPlan={mp} {...defaultProps} />);
+    expect(screen.getByText('前菜')).toBeInTheDocument();
+    expect(screen.getByText('刺身')).toBeInTheDocument();
+    expect(screen.getByText('焼物')).toBeInTheDocument();
+  });
+
+  it('F06-AC8: Add All to Order button includes all courses', () => {
+    const onAddAll = vi.fn();
+    const mp = makeMealPlan();
+    render(<MealPlanCard mealPlan={mp} {...defaultProps} onAddAllToOrder={onAddAll} />);
+    fireEvent.click(screen.getByText('Add All to Order'));
+    expect(onAddAll).toHaveBeenCalledWith(mp);
+    // Verify the meal plan passed has all courses
+    const passedPlan = onAddAll.mock.calls[0]![0] as MealPlan;
+    expect(passedPlan.courses).toHaveLength(2);
+    const allItems = passedPlan.courses.flatMap(c => c.items);
+    expect(allItems).toHaveLength(3);
+  });
+});

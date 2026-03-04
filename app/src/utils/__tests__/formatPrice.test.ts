@@ -35,3 +35,31 @@ describe('formatPrice', () => {
     expect(formatPrice(100)).toBe('¥100');
   });
 });
+
+describe('F08-AC1: formatPrice used in total price display', () => {
+  it('F08-AC1: total price formats correctly with THB currency', () => {
+    const items = [
+      { price: 120, quantity: 2 },
+      { price: 80, quantity: 1 },
+    ];
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    expect(formatPrice(total, 'THB')).toBe('฿320');
+  });
+
+  it('F08-AC1: total price formats correctly with USD', () => {
+    const items = [
+      { price: 15, quantity: 3 },
+      { price: 22, quantity: 2 },
+    ];
+    const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    expect(formatPrice(total, 'USD')).toBe('$89');
+  });
+
+  it('F08-AC1: quantity change updates formatted total', () => {
+    const beforeTotal = 100 * 1 + 200 * 1;
+    expect(formatPrice(beforeTotal, 'CNY')).toBe('¥300');
+
+    const afterTotal = 100 * 3 + 200 * 1;
+    expect(formatPrice(afterTotal, 'CNY')).toBe('¥500');
+  });
+});

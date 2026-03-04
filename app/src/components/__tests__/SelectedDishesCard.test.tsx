@@ -87,6 +87,14 @@ describe('SelectedDishesCard', () => {
     expect(screen.queryByTestId('estimated-total')).not.toBeInTheDocument();
   });
 
+  it('F07-AC7: empty newlySelected renders no dish items (boundary: consult AI with nothing)', () => {
+    const payload = makePayload({ newlySelected: [], existingOrder: [] });
+    render(<SelectedDishesCard payload={payload} isZh={false} />);
+    // Card still renders header but no dishes
+    expect(screen.getByText(/Selected Dishes/)).toBeInTheDocument();
+    expect(screen.queryByText('Pad Thai')).not.toBeInTheDocument();
+  });
+
   it('single category → no category headers shown', () => {
     const payload = makePayload({
       newlySelected: [

@@ -150,6 +150,58 @@ describe('OPEN-001: badge should show total quantity, not item count', () => {
   });
 });
 
+describe('F01-AC6 / F08-AC6: RESET_SESSION complete clearing (DEC-057)', () => {
+  it('F01-AC6: clears orderItems + messages + menuData + chatPhase + navigationPayload', () => {
+    const d1 = makeMenuItem('d1');
+    const state = makeState({
+      menuData: makeMenuData([d1]),
+      orderItems: [{ menuItem: d1, quantity: 3 }],
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi', timestamp: 1 },
+        { id: 'm2', role: 'assistant', content: 'hello', timestamp: 2 },
+      ],
+      chatPhase: 'chatting',
+      waiterAllergyConfirmed: true,
+      navigationPayload: { newlySelected: [], existingOrder: [] },
+      currentView: 'chat',
+    });
+    const r = appReducer(state, { type: 'RESET_SESSION' });
+    expect(r.orderItems).toHaveLength(0);
+    expect(r.messages).toHaveLength(0);
+    expect(r.menuData).toBeNull();
+    expect(r.chatPhase).toBe('pre_chat');
+    expect(r.waiterAllergyConfirmed).toBe(false);
+    expect(r.navigationPayload).toBeNull();
+  });
+
+  it('F01-AC6: RESET_SESSION preserves language preference', () => {
+    const state = makeState({ preferences: { language: 'zh', dietary: ['peanut'] } });
+    const r = appReducer(state, { type: 'RESET_SESSION' });
+    expect(r.preferences.language).toBe('zh');
+  });
+});
+
+describe('F10-AC2: SET_LANGUAGE updates preferences.language', () => {
+  it('F10-AC2: en → zh', () => {
+    const state = makeState({ preferences: { language: 'en', dietary: [] } });
+    const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'zh' });
+    expect(r.preferences.language).toBe('zh');
+  });
+
+  it('F10-AC2: zh → en', () => {
+    const state = makeState({ preferences: { language: 'zh', dietary: [] } });
+    const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'en' });
+    expect(r.preferences.language).toBe('en');
+  });
+
+  it('F10-AC2: language change does not affect other preferences', () => {
+    const state = makeState({ preferences: { language: 'en', dietary: ['peanut'], flavors: ['spicy'] } });
+    const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'zh' });
+    expect(r.preferences.dietary).toEqual(['peanut']);
+    expect(r.preferences.flavors).toEqual(['spicy']);
+  });
+});
+
 describe('appReducer — SET_NAV_PAYLOAD / SET_WAITER_ALLERGY_CONFIRMED', () => {
   it('SET_NAV_PAYLOAD sets and clears', () => {
     const p = { newlySelected: [], existingOrder: [] };

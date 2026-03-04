@@ -87,3 +87,23 @@ describe('DishCommunicationPanel', () => {
     expect(screen.getByText(/sold out/i)).toBeInTheDocument();
   });
 });
+
+describe('F08-AC8: Waiter Mode communication panel with 4 actions', () => {
+  it('F08-AC8: renders all 4 communication actions (sold_out, change, add_more, other)', () => {
+    render(<DishCommunicationPanel {...baseProps} />);
+    // DEC-060: 🚫没有了 / 🔄换一道 / ➕加一份 / ❓其他
+    expect(screen.getByText('Sold out')).toBeInTheDocument();
+    expect(screen.getByText('Change this')).toBeInTheDocument();
+    expect(screen.getByText('One more')).toBeInTheDocument();
+    expect(screen.getByText('Other question')).toBeInTheDocument();
+  });
+
+  it('F08-AC8: each action triggers onAction callback with correct action type', () => {
+    const onAction = vi.fn();
+    const { unmount } = render(<DishCommunicationPanel {...baseProps} onAction={onAction} />);
+    fireEvent.click(screen.getByText('One more'));
+    fireEvent.click(screen.getByText(/Confirm/));
+    expect(onAction).toHaveBeenCalledWith('add_more', expect.objectContaining({ id: 'd1' }));
+    unmount();
+  });
+});

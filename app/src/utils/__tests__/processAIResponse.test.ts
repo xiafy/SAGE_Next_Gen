@@ -148,3 +148,110 @@ describe('processAIResponse', () => {
     expect(result.preferenceUpdates).toEqual(updates);
   });
 });
+
+// ─── F06 AC Tests (Batch 1) ───
+
+describe('F06-AC11: MealPlan streamed — extracted from JSON code block after narrative', () => {
+  it('F06-AC11: narrative text + JSON block → text message + MealPlanCard message', () => {
+    const narrative = '根据你的口味偏好，我为你搭配了一套泰式晚餐：\n\n这套方案兼顾辣度和清淡，适合2人享用。';
+    const mealPlanJson = JSON.stringify({
+      version: 1, totalEstimate: 350, currency: 'THB', rationale: 'balanced',
+      diners: 2,
+      courses: [{
+        name: 'Main', items: [
+          { dishId: 'dish_1', name: 'Tom Yum', nameOriginal: 'ต้มยำ', price: 200, reason: 'spicy', quantity: 1 },
+        ],
+      }],
+    });
+    const fullText = `${narrative}\n\`\`\`json\n${mealPlanJson}\n\`\`\``;
+    const result = processAIResponse(buildInput({ fullText }));
+
+    // Should produce 2 messages: narrative text + mealPlan card
+    expect(result.messages.length).toBeGreaterThanOrEqual(2);
+    const textMsg = result.messages.find(m => m.content.includes('泰式晚餐'));
+    expect(textMsg).toBeDefined();
+    const cardMsg = result.messages.find(m => m.cardType === 'mealPlan');
+    expect(cardMsg).toBeDefined();
+    expect(cardMsg!.cardData).toBeDefined();
+  });
+});
+
+describe('F06-AC12: Streaming fallback levels', () => {
+  it('F06-AC12 L1: valid JSON → MealPlanCard rendered', () => {
+    const fullText = [
+      '方案如下',
+      '```json',
+      JSON.stringify({
+        version: 1, totalEstimate: 200, currency: 'THB', rationale: 'ok', diners: 2,
+        courses: [{ name: 'Main', items: [{ dishId: 'dish_1', name: 'A', nameOriginal: 'A', price: 100, reason: '', quantity: 1 }] }],
+      }),
+      '```',
+    ].join('\n');
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.messages.some(m => m.cardType === 'mealPlan')).toBe(true);
+    expect(result.quickReplies).toEqual([]);
+  });
+
+  it('F06-AC12 L2: truncated JSON with repairable structure → still parsed', () => {
+    // Missing closing brace — L2 repair should fix it
+    const fullText = [
+      '```json',
+      '{"version":1,"totalEstimate":200,"currency":"THB","rationale":"ok","diners":2,"courses":[{"name":"Main","items":[{"dishId":"dish_1","name":"A","nameOriginal":"A","price":100,"reason":"","quantity":1}]}]',
+      '```',
+    ].join('\n');
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.messages.some(m => m.cardType === 'mealPlan')).toBe(true);
+  });
+
+  it('F06-AC12 L3: completely broken JSON → fallback to plain text + regenerate button', () => {
+    const fullText = '```json\n{completely broken json garbage!!!\n```';
+    const result = processAIResponse(buildInput({ fullText, language: 'en' }));
+    expect(result.messages.some(m => m.cardType === 'mealPlan')).toBe(false);
+    expect(result.quickReplies).toContain('🔄 Regenerate');
+  });
+
+  it('F06-AC12 L3 zh: broken JSON → Chinese regenerate button', () => {
+    const fullText = '```json\n{garbage\n```';
+    const result = processAIResponse(buildInput({ fullText, language: 'zh' }));
+    expect(result.quickReplies).toContain('🔄 重新生成方案');
+  });
+});
+
+describe('F06-AC13: AI operates Order (add/remove/replace)', () => {
+  it('F06-AC13: orderAction add → parsed and toast generated (zh)', () => {
+    const fullText = [
+      '好的，帮你加入冬阴功。',
+      '```json',
+      JSON.stringify({ orderAction: 'add', add: { dishId: 'dish_1', qty: 1 } }),
+      '```',
+    ].join('\n');
+    const result = processAIResponse(buildInput({ fullText, language: 'zh' }));
+    expect(result.orderAction).toBeDefined();
+    expect(result.orderAction!.orderAction).toBe('add');
+    expect(result.toasts).toContain('已添加到点菜单');
+  });
+
+  it('F06-AC13: orderAction remove → parsed and toast', () => {
+    const fullText = [
+      'Removed the soup.',
+      '```json',
+      JSON.stringify({ orderAction: 'remove', remove: { dishId: 'dish_2' } }),
+      '```',
+    ].join('\n');
+    const result = processAIResponse(buildInput({ fullText, language: 'en' }));
+    expect(result.orderAction!.orderAction).toBe('remove');
+    expect(result.toasts).toContain('Removed from order');
+  });
+
+  it('F06-AC13: orderAction replace → parsed and toast', () => {
+    const fullText = [
+      'Replaced with Pad Thai.',
+      '```json',
+      JSON.stringify({ orderAction: 'replace', remove: { dishId: 'dish_1' }, add: { dishId: 'dish_2', qty: 1 } }),
+      '```',
+    ].join('\n');
+    const result = processAIResponse(buildInput({ fullText, language: 'en' }));
+    expect(result.orderAction!.orderAction).toBe('replace');
+    expect(result.toasts).toContain('Dish replaced');
+  });
+});
