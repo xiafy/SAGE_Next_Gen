@@ -1,136 +1,150 @@
-/**
- * BUG-H: Tests for AI JSON response parsing robustness.
- *
- * Covers:
- * - ```json {...} ``` wrapped chat responses (message/quickReplies/recommendations)
- * - ```json\n...\n``` format with newlines
- * - Bare JSON without code block wrapper
- * - JSON.parse failure fallback to plain text
- * - MealPlan / OrderAction pass-through (covered by streamJsonParser.test.ts)
- */
-import { describe, it, expect } from 'vitest';
-import { extractJsonBlock, parseJsonBlock } from '../streamJsonParser';
+import { describe, expect, it } from 'vitest';
+import { processAIResponse } from '../processAIResponse';
 
-/** Simulates the key parsing logic from AgentChatView.processAIResponse */
-function processAIResponseText(fullText: string): {
-  displayText: string;
-  quickReplies: string[];
-  isMealPlan: boolean;
-  isOrderAction: boolean;
-  isFallback: boolean;
-} {
-  let displayText = fullText;
-  let quickReplies: string[] = [];
-  let isMealPlan = false;
-  let isOrderAction = false;
-  let isFallback = false;
-
-  const jsonStr = extractJsonBlock(fullText);
-  if (jsonStr) {
-    const parsed = parseJsonBlock(jsonStr);
-    if (parsed) {
-      displayText = fullText.replace(/```json\s*[\s\S]*?```/g, '').trim();
-      if (parsed.type === 'mealPlan') isMealPlan = true;
-      if (parsed.type === 'orderAction') isOrderAction = true;
-    } else {
-      // Not mealPlan/orderAction — try parsing as regular chat response
-      try {
-        const obj = JSON.parse(jsonStr) as Record<string, unknown>;
-        if (typeof obj['message'] === 'string') {
-          displayText = obj['message'];
-        }
-        if (Array.isArray(obj['quickReplies'])) {
-          quickReplies = obj['quickReplies'] as string[];
-        }
-      } catch {
-        // L3 fallback
-        displayText = fullText.replace(/```json\s*[\s\S]*?```/g, '').trim() || fullText;
-        isFallback = true;
-      }
-    }
-  } else {
-    // No JSON block — try full text parse
-    try {
-      let jsonContent = fullText;
-      try {
-        JSON.parse(jsonContent);
-      } catch {
-        const codeBlockMatch = fullText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch?.[1]) {
-          jsonContent = codeBlockMatch[1];
-        } else {
-          throw new Error('no json found');
-        }
-      }
-      const obj = JSON.parse(jsonContent) as Record<string, unknown>;
-      if (typeof obj['message'] === 'string') {
-        displayText = obj['message'];
-      }
-      if (Array.isArray(obj['quickReplies'])) {
-        quickReplies = obj['quickReplies'] as string[];
-      }
-    } catch {
-      // plain text
-    }
-  }
-
-  return { displayText, quickReplies, isMealPlan, isOrderAction, isFallback };
+function buildInput(overrides: Partial<Parameters<typeof processAIResponse>[0]> = {}) {
+  return {
+    fullText: 'plain text',
+    mode: 'chat' as const,
+    chatPhase: 'chatting',
+    menuItemIds: new Set<string>(['dish_1', 'dish_2']),
+    language: 'zh',
+    replacingVersion: null,
+    ...overrides,
+  };
 }
 
-describe('BUG-H: processAIResponse JSON parsing robustness', () => {
-  it('parses ```json\\n{...}\\n``` wrapped chat response', () => {
-    const text = '```json\n{"message":"推荐你试试冬阴功汤","quickReplies":["好的","换一道"]}\n```';
-    const result = processAIResponseText(text);
-    expect(result.displayText).toBe('推荐你试试冬阴功汤');
-    expect(result.quickReplies).toEqual(['好的', '换一道']);
-    expect(result.isMealPlan).toBe(false);
-  });
-
-  it('parses ```json{...}``` without newline after marker', () => {
-    const text = '```json{"message":"Try the Tom Yum","quickReplies":["Sure","Next"]}\n```';
-    const result = processAIResponseText(text);
-    expect(result.displayText).toBe('Try the Tom Yum');
-    expect(result.quickReplies).toEqual(['Sure', 'Next']);
-  });
-
-  it('parses bare JSON without code block', () => {
-    const text = '{"message":"这道菜不错","quickReplies":["加入","继续看"]}';
-    const result = processAIResponseText(text);
-    expect(result.displayText).toBe('这道菜不错');
-    expect(result.quickReplies).toEqual(['加入', '继续看']);
-  });
-
-  it('falls back to plain text for non-JSON content', () => {
-    const text = '今天推荐你试试冬阴功汤，酸辣开胃很好喝！';
-    const result = processAIResponseText(text);
-    expect(result.displayText).toBe(text);
+describe('processAIResponse', () => {
+  it('1) plain text response -> single message, no JSON parsing', () => {
+    const result = processAIResponse(buildInput({ fullText: '今天推荐冬阴功汤。' }));
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0]?.content).toBe('今天推荐冬阴功汤。');
     expect(result.quickReplies).toEqual([]);
+    expect(result.recommendations).toEqual([]);
+    expect(result.orderAction).toBeUndefined();
   });
 
-  it('handles text + JSON code block mix (MealPlan)', () => {
-    const mp = JSON.stringify({
-      version: 1,
-      totalEstimate: 500,
-      currency: 'THB',
-      rationale: 'balanced',
-      courses: [{ name: 'Main', items: [{ dishId: 'd1', name: 'Tom Yum', nameOriginal: 'ต้มยำ', price: 200, reason: 'good', quantity: 1 }] }],
-      diners: 2,
+  it('2) JSON code block with message + quickReplies -> extracted correctly', () => {
+    const fullText = '```json\n{"message":"试试冬阴功","quickReplies":["好","换一道"]}\n```';
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.messages[0]?.content).toBe('试试冬阴功');
+    expect(result.quickReplies).toEqual(['好', '换一道']);
+  });
+
+  it('3) MealPlan JSON -> includes mealPlan card + mealPlanVersion', () => {
+    const fullText = [
+      '这是你的方案：',
+      '```json',
+      JSON.stringify({
+        version: 1,
+        totalEstimate: 180,
+        currency: 'THB',
+        rationale: 'balanced',
+        diners: 2,
+        courses: [
+          {
+            name: 'Main',
+            items: [
+              {
+                dishId: 'dish_1',
+                name: 'Tom Yum',
+                nameOriginal: 'ต้มยำ',
+                price: 120,
+                reason: '招牌',
+                quantity: 1,
+              },
+            ],
+          },
+        ],
+      }),
+      '```',
+    ].join('\n');
+
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.messages.some((m) => m.cardType === 'mealPlan')).toBe(true);
+    expect(result.mealPlanVersion).toBe(1);
+  });
+
+  it('4) MealPlan with replacingVersion=3 -> mealPlanVersion=4', () => {
+    const fullText = [
+      '```json',
+      JSON.stringify({
+        version: 1,
+        totalEstimate: 200,
+        currency: 'THB',
+        rationale: 'replace',
+        diners: 2,
+        courses: [{ name: 'Main', items: [] }],
+      }),
+      '```',
+    ].join('\n');
+
+    const result = processAIResponse(buildInput({ fullText, replacingVersion: 3 }));
+    expect(result.mealPlanVersion).toBe(4);
+    const card = result.messages.find((m) => m.cardType === 'mealPlan');
+    expect(card?.cardData?.version).toBe(4);
+  });
+
+  it('5) OrderAction JSON -> orderAction populated + toast', () => {
+    const fullText = [
+      '已帮你加入。',
+      '```json',
+      JSON.stringify({ orderAction: 'add', add: { dishId: 'dish_1', qty: 1 } }),
+      '```',
+    ].join('\n');
+
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.orderAction).toEqual({ orderAction: 'add', add: { dishId: 'dish_1', qty: 1 } });
+    expect(result.toasts.length).toBeGreaterThan(0);
+  });
+
+  it('6) BUG-K regression: non-mealPlan/orderAction JSON block but valid chat JSON still yields message + transition', () => {
+    const fullText = [
+      '```json',
+      JSON.stringify({
+        message: '已根据你的偏好整理好。',
+        quickReplies: ['继续', '看方案'],
+      }),
+      '```',
+    ].join('\n');
+
+    const result = processAIResponse(buildInput({ fullText, mode: 'chat', chatPhase: 'handing_off' }));
+    expect(result.messages[0]?.content).toBe('已根据你的偏好整理好。');
+    expect(result.chatPhaseTransition).toBe('chatting');
+  });
+
+  it('7) BUG-K regression: handing_off + mode=chat -> chatPhaseTransition=chatting', () => {
+    const result = processAIResponse(buildInput({ fullText: '普通文本', mode: 'chat', chatPhase: 'handing_off' }));
+    expect(result.chatPhaseTransition).toBe('chatting');
+  });
+
+  it('8) malformed JSON -> fallback plain text + regenerate quickReply', () => {
+    const fullText = '```json\n{broken\n```';
+    const result = processAIResponse(buildInput({ fullText, language: 'en' }));
+    expect(result.messages[0]?.content).toBe(fullText);
+    expect(result.quickReplies).toEqual(['🔄 Regenerate']);
+  });
+
+  it('9) recommendations with invalid itemIds -> filtered out', () => {
+    const fullText = JSON.stringify({
+      message: '推荐如下',
+      recommendations: [
+        { itemId: 'dish_1', reason: '好吃' },
+        { itemId: 'invalid', reason: '不存在' },
+      ],
     });
-    const text = `为你搭配了一套方案：\n\`\`\`json\n${mp}\n\`\`\``;
-    const result = processAIResponseText(text);
-    expect(result.isMealPlan).toBe(true);
+
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.recommendations).toEqual([{ itemId: 'dish_1', reason: '好吃' }]);
   });
 
-  it('handles malformed JSON in code block → L3 fallback', () => {
-    const text = '```json\n{broken json here\n```';
-    const result = processAIResponseText(text);
-    expect(result.isFallback).toBe(true);
-  });
+  it('10) preferenceUpdates in response -> passed through', () => {
+    const updates = [{ type: 'restriction', action: 'add', value: 'peanut' }] as const;
+    const fullText = JSON.stringify({
+      message: '收到',
+      preferenceUpdates: updates,
+    });
 
-  it('extracts message from JSON with recommendations', () => {
-    const text = '```json\n{"message":"推荐三道菜","recommendations":[{"itemId":"d1","reason":"好吃"}],"quickReplies":["加入"]}\n```';
-    const result = processAIResponseText(text);
-    expect(result.displayText).toBe('推荐三道菜');
-    expect(result.quickReplies).toEqual(['加入']);
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.preferenceUpdates).toEqual(updates);
   });
 });

@@ -119,3 +119,8 @@ export function parseJsonBlock(
   }
   return null;
 }
+
+/** Remove ```json ... ``` code blocks from text. */
+export function stripJsonCodeBlocks(text: string): string {
+  return text.replace(/```json\s*[\s\S]*?```/g, '').trim();
+}

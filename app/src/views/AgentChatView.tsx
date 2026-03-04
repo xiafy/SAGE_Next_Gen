@@ -12,8 +12,9 @@ import { SelectedDishesCard } from '../components/SelectedDishesCard';
 import { streamChat, buildChatParams } from '../api/chat';
 import { analyzeMenu } from '../api/analyze';
 import { transcribeAudio } from '../api/transcribe';
-import { extractJsonBlock, parseJsonBlock } from '../utils/streamJsonParser';
-import type { Message, PreferenceUpdate, MealPlan, SelectedDishesPayload } from '../types';
+import { stripJsonCodeBlocks } from '../utils/streamJsonParser';
+import { processAIResponse as processAIResponsePure } from '../utils/processAIResponse';
+import type { Message, MealPlan, SelectedDishesPayload } from '../types';
 import type { MenuItem } from '../../../shared/types';
 import { toUserFacingError } from '../utils/errorMessage';
 import { dlog } from '../utils/debugLog';
@@ -45,11 +46,6 @@ function pickMimeType(): string {
 const VOICE_CANCEL_THRESHOLD = 80;
 const VOICE_MIN_DURATION_MS = 500;
 const VOICE_MAX_DURATION_MS = 60_000;
-
-/** Remove ```json ... ``` code blocks from text */
-function stripJsonCodeBlocks(text: string): string {
-  return text.replace(/```json\s*[\s\S]*?```/g, '').trim();
-}
 
 /** Build system message for selected dishes injection */
 function buildSelectedDishesSystemMessage(payload: SelectedDishesPayload): string {
@@ -597,7 +593,56 @@ export function AgentChatView() {
         dlog('chat', '✅ stream done, total len=', fullText.length);
         setIsStreaming(false);
         setGeneratingMealPlan(false);
-        processAIResponse(fullText, mode);
+        const result = processAIResponsePure({
+          fullText,
+          mode,
+          chatPhase: state.chatPhase,
+          menuItemIds: new Set(state.menuData?.items.map(i => i.id) ?? []),
+          language: state.preferences.language,
+          replacingVersion: replacingStateRef.current?.sentAtVersion ?? null,
+        });
+
+        const messagesWithMeta = result.messages.map((msg, index) => ({
+          ...msg,
+          id: `ai_${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${index}`,
+          timestamp: Date.now(),
+        }));
+
+        messagesWithMeta.forEach((message) => {
+          dispatch({ type: 'ADD_MESSAGE', message });
+        });
+
+        if (result.chatPhaseTransition) {
+          dispatch({ type: 'SET_CHAT_PHASE', phase: result.chatPhaseTransition });
+        }
+        if (result.orderAction) {
+          dispatch({ type: 'APPLY_ORDER_ACTION', payload: result.orderAction });
+        }
+        if (result.preferenceUpdates?.length) {
+          dispatch({ type: 'UPDATE_PREFERENCES', updates: result.preferenceUpdates });
+        }
+
+        const mealPlanMessage = messagesWithMeta.find((m) => m.cardType === 'mealPlan');
+        if (mealPlanMessage?.cardData && result.mealPlanVersion !== undefined) {
+          const mealPlan = {
+            ...(mealPlanMessage.cardData as MealPlan),
+            version: result.mealPlanVersion,
+          };
+          setMealPlans(prev => [
+            ...prev.map(e => ({ ...e, isActive: false })),
+            { mealPlan, isActive: true, messageId: mealPlanMessage.id },
+          ]);
+
+          if (replacingStateRef.current) {
+            clearTimeout(replacingStateRef.current.timeoutId);
+            setReplacingState(null);
+          }
+        }
+
+        setStreamingText('');
+        setQuickReplies(result.quickReplies);
+        setRecommendations(result.recommendations);
+        result.toasts.forEach(t => showToast(t));
       },
       (err) => {
         dlog('chat', '❌ stream ERROR:', err, 'fullText.len=', fullText.length);
@@ -636,170 +681,6 @@ export function AgentChatView() {
         }
       },
     );
-  }
-
-  // ---------- Process AI response (T7.1: with JSON block extraction) ----------
-  function processAIResponse(fullText: string, mode: 'pre_chat' | 'chat') {
-    let displayText = fullText;
-    let newQuickReplies: string[] = [];
-    let newRecommendations: Recommendation[] = [];
-
-    // T7.1: Try extracting structured JSON block (MealPlan / OrderAction)
-    const jsonStr = extractJsonBlock(fullText);
-    if (jsonStr) {
-      const parsed = parseJsonBlock(jsonStr);
-      if (parsed) {
-        displayText = stripJsonCodeBlocks(fullText);
-
-        if (parsed.type === 'mealPlan') {
-          // T7.2: MealPlan handling
-          const mp = parsed.data as MealPlan;
-
-          // BUG-003 fix: 替换响应时，清除 replacingState 并确保版本递增
-          // AI 始终返回 version:1，客户端负责维护正确的版本号
-          // 使用 ref 读取以避免 stale closure
-          const curReplacingState = replacingStateRef.current;
-          if (curReplacingState) {
-            clearTimeout(curReplacingState.timeoutId);
-            mp.version = curReplacingState.sentAtVersion + 1;
-            setReplacingState(null);
-          }
-
-          const mpMsgId = `mp_${Date.now()}`;
-
-          if (displayText) {
-            dispatch({
-              type: 'ADD_MESSAGE',
-              message: {
-                id: `ai_${Date.now()}`,
-                role: 'assistant',
-                content: displayText,
-                timestamp: Date.now(),
-              },
-            });
-          }
-
-          dispatch({
-            type: 'ADD_MESSAGE',
-            message: {
-              id: mpMsgId,
-              role: 'assistant',
-              content: '',
-              cardType: 'mealPlan',
-              cardData: mp,
-              timestamp: Date.now(),
-            },
-          });
-
-          setMealPlans(prev => [
-            ...prev.map(e => ({ ...e, isActive: false })),
-            { mealPlan: mp, isActive: true, messageId: mpMsgId },
-          ]);
-
-          setStreamingText('');
-          setQuickReplies([]);
-          setRecommendations([]);
-
-          if (mode === 'chat' && state.chatPhase === 'handing_off') {
-            dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' });
-          }
-          return;
-        }
-
-        if (parsed.type === 'orderAction') {
-          const oa = parsed.data;
-          dispatch({ type: 'APPLY_ORDER_ACTION', payload: oa });
-
-          const addName = oa.add?.dishId
-            ? state.menuData?.items.find(i => i.id === oa.add!.dishId)?.nameTranslated
-            : null;
-          const removeName = oa.remove?.dishId
-            ? state.menuData?.items.find(i => i.id === oa.remove!.dishId)?.nameTranslated
-            : null;
-
-          if (oa.orderAction === 'add' && addName) {
-            showToast(isZh ? `已添加 ${addName}` : `Added ${addName}`);
-          } else if (oa.orderAction === 'remove' && removeName) {
-            showToast(isZh ? `已移除 ${removeName}` : `Removed ${removeName}`);
-          } else if (oa.orderAction === 'replace') {
-            showToast(isZh ? `已替换菜品` : `Dish replaced`);
-          }
-        }
-      } else {
-        // Not mealPlan/orderAction — try parsing as regular chat response JSON
-        if (!tryParseChatJson(jsonStr)) {
-          // L3 fallback: strip JSON code blocks, show regenerate
-          displayText = stripJsonCodeBlocks(fullText) || fullText;
-          newQuickReplies = [isZh ? '🔄 重新生成方案' : '🔄 Regenerate'];
-        }
-      }
-    } else {
-      // No JSON block — try existing JSON parse logic
-      tryParseChatJson(fullText);
-    }
-
-    /** Try to parse text as a chat response JSON (message/quickReplies/recommendations).
-     *  Returns true if successfully extracted message field. */
-    function tryParseChatJson(text: string): boolean {
-      try {
-        let jsonContent = text;
-        try {
-          JSON.parse(jsonContent);
-        } catch {
-          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-          if (codeBlockMatch?.[1]) {
-            jsonContent = codeBlockMatch[1];
-          } else {
-            const braceMatch = text.match(/(\{[\s\S]*"message"[\s\S]*\})\s*$/);
-            if (braceMatch?.[1]) {
-              jsonContent = braceMatch[1];
-            } else {
-              throw new Error('no json found');
-            }
-          }
-        }
-        const parsedObj: unknown = JSON.parse(jsonContent);
-        const obj = parsedObj as Record<string, unknown>;
-
-        if (typeof obj['message'] === 'string') {
-          displayText = obj['message'];
-        }
-        if (Array.isArray(obj['quickReplies'])) {
-          newQuickReplies = obj['quickReplies'] as string[];
-        }
-        if (Array.isArray(obj['recommendations'])) {
-          const validIds = new Set(state.menuData?.items.map(i => i.id) ?? []);
-          newRecommendations = (obj['recommendations'] as Recommendation[]).filter(
-            rec => typeof rec.itemId === 'string' && validIds.has(rec.itemId)
-          );
-        }
-        if (Array.isArray(obj['preferenceUpdates']) && (obj['preferenceUpdates'] as PreferenceUpdate[]).length > 0) {
-          dispatch({ type: 'UPDATE_PREFERENCES', updates: obj['preferenceUpdates'] as PreferenceUpdate[] });
-        }
-        return typeof obj['message'] === 'string';
-      } catch {
-        // Not JSON — use raw text
-        return false;
-      }
-    }
-
-    setStreamingText('');
-    setQuickReplies(newQuickReplies);
-    setRecommendations(newRecommendations);
-
-    dispatch({
-      type: 'ADD_MESSAGE',
-      message: {
-        id: `ai_${Date.now()}`,
-        role: 'assistant',
-        content: displayText,
-        timestamp: Date.now(),
-      },
-    });
-
-    if (mode === 'chat' && state.chatPhase === 'handing_off') {
-      dispatch({ type: 'SET_CHAT_PHASE', phase: 'chatting' });
-    }
   }
 
   // ---------- T7.2: MealPlan actions ----------
