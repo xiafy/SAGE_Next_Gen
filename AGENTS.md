@@ -81,7 +81,7 @@ shared/types.ts         # 前后端共享类型（唯一权威）
 - [x] Deploy 门控脚本
 - [x] processAIResponse 纯函数提取
 - [x] AGENTS.md 重构
-- [ ] Prompt 工程化 + 日常质量扫描
+- [x] Prompt 工程化 + 日常质量扫描
 
 ---
 
