@@ -59,7 +59,7 @@ SAGE_Next_Gen/
 │   │   ├── components/       # MealPlanCard / AllergenWarningSheet / DishCommunicationPanel 等
 │   │   ├── context/          # AppContext（全局状态机，单一数据源）
 │   │   └── utils/            # streamJsonParser / localLanguage / formatPrice
-│   └── src/**/__tests__/     # 106 条测试（单元 + 组件 + 集成）
+│   └── src/**/__tests__/     # 175 条测试（单元 + 组件 + 集成）+ 14 E2E
 ├── worker/                   # Cloudflare Workers API
 │   ├── handlers/             # analyze / chat
 │   ├── prompts/              # AI Prompt
@@ -74,7 +74,14 @@ SAGE_Next_Gen/
 │   ├── mealplan-and-order-spec.md
 │   ├── explore-chat-injection-spec.md
 │   └── waiter-upgrade-spec.md
-└── DECISIONS.md              # 设计决策记录（DEC-001 ~ DEC-065）
+├── .sage/                    # 🤖 Agent Swarm 基建（DEC-075）
+│   ├── worktree.sh           # git worktree 并行管理（创建/清理/列表）
+│   ├── task-manager.sh       # 任务 Registry CRUD + 生命周期管理
+│   ├── active-tasks.json     # 任务状态跟踪（running→pr_created→reviewing→ready→merged）
+│   ├── auto-review.sh        # 自动化双路 Code Review（scan→spawn→collect→notify/respawn）
+│   └── prompt-patterns.md    # Prompt 模式记忆 + Anti-Patterns
+├── tests/fixtures/           # 22 张真实菜单照片（7 语言）
+└── DECISIONS.md              # 设计决策记录（DEC-001 ~ DEC-075）
 ```
 
 ---
@@ -86,8 +93,10 @@ SAGE_Next_Gen/
 | Sprint 0 | 文档完备 | ✅ 完成 |
 | Sprint 1 | MVP Alpha 上线 | ✅ 完成（2026-02-26）|
 | Sprint 2 | 4+1 维感知接入 | ✅ 完成（2026-03-01）|
-| Sprint 3 | 体验升级（方案推荐 + Waiter 沟通）| 🔄 待夏总真机验收 |
-| Sprint 4 | Beta 内测 | ⬜ 计划中 |
+| Sprint 3 | 体验升级（方案推荐 + Waiter 沟通）| ✅ 完成 |
+| Sprint 4a | 工程治理（硬门控 + 测试加固）| ✅ 完成 |
+| Sprint 4b | Agent Swarm 基建 + Memory System | 🔄 Phase 1 ✅ Phase 2 进行中 |
+| Sprint 5 | Beta 内测 | ⬜ 计划中 |
 
 ---
 
@@ -113,7 +122,7 @@ cd app && npx tsc --noEmit
 
 ## 核心设计决策
 
-完整记录见 [`DECISIONS.md`](./DECISIONS.md)（DEC-001 ~ DEC-065）。
+完整记录见 [`DECISIONS.md`](./DECISIONS.md)（DEC-001 ~ DEC-075）。
 
 | DEC | 决策 |
 |-----|------|
@@ -124,6 +133,27 @@ cd app && npx tsc --noEmit
 | DEC-060 | Waiter 指点式沟通面板，9 语言覆盖 |
 | DEC-063 | 自顶向下一致性闸门（愿景→PRD→Spec→Code）|
 | DEC-064 | 测试分层配比（单元50%/组件20%/集成20%/E2E10%）|
+
+---
+
+## Agent Swarm 工作流（DEC-075）
+
+SAGE 使用多 Agent 并行开发 + 自动化审查：
+
+```
+任务分配 → worktree.sh 创建隔离分支
+    → sessions_spawn 启动编码 Agent（Claude Code / Codex）
+    → 完成后创建 PR
+    → auto-review.sh scan 检测新 PR
+    → spawn Codex 审查 + Opus 审查（双路并行）
+    → collect 聚合结果
+    → 全过 → 通知合并 | 有 critical → 自动 respawn 修复（最多 2 次）
+```
+
+关键脚本：
+- `worktree.sh` — 并行开发隔离（Mac Mini 支持 3-4 Agent）
+- `task-manager.sh` — 任务生命周期管理（atomic mkdir 锁 + JSON Registry）
+- `auto-review.sh` — 审查引擎（prompt injection 防护 + diff 截断 + CAS 防并发）
 
 ---
 
