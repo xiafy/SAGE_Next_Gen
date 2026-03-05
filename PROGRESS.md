@@ -8,10 +8,10 @@
 
 ## 当前状态
 
-**阶段**: Sprint 4a 完成 ✅ | Sprint 4b 待启动
-**当前子阶段**: Sprint 4b Step 0 — Spec 审查 + 一致性闸门
-**整体进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅
-**最后更新**: 2026-03-04 23:25
+**阶段**: Sprint 4b Phase 1 ✅ 完成 | Phase 2 待启动
+**当前子阶段**: Phase 2 Step 0 — Spec 审查 + 一致性闸门 (DEC-063)
+**整体进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅ | Sprint 4b Phase 1 ✅
+**最后更新**: 2026-03-05 15:50
 
 ## 🌐 线上地址
 - **App**: https://sage-next-gen.pages.dev (deploy: 62730ff)
@@ -21,12 +21,22 @@
 
 ## 🔴 进行中（锁定区）
 
-**Sprint 4b: Memory System (DEC-067)**
+**Sprint 4b Phase 2: Memory System (DEC-067)**
 - [ ] Step 0: Spec 审查 + 一致性闸门 (DEC-063) — 待夏总确认
 - [ ] Step 1: 数据层设计 + 实现
 - [ ] Step 2: 会话摘要生成
 - [ ] Step 3: 跨会话记忆注入
 - [ ] Step 4: 验收 + 部署
+
+## ✅ Sprint 4b Phase 1: Agent Swarm 基建 (2026-03-05)
+
+12 commits: `76460a4` → `ad62405` (DEC-075)
+- Step 1: git worktree 并行脚本 (.sage/worktree.sh) — v2 通过
+- Step 2: Agent Task Registry (.sage/task-manager.sh + active-tasks.json) — v2 通过
+- Step 3: 自动化双路 Code Review (.sage/auto-review.sh) — v4 9.0/10
+- Step 4: PR Screenshot + E2E — 25 data-testid + API mock + 14 E2E tests
+- Step 5: Prompt 模式记忆 (.sage/prompt-patterns.md)
+- 测试: 175 单测 + 14 E2E specs 全绿
 
 ## ✅ Sprint 4a 完成 (2026-03-04)
 
