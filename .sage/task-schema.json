@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "branch", "worktree", "agent", "model", "description", "status", "startedAt"],
+        "properties": {
+          "id":          { "type": "string", "pattern": "^[a-zA-Z0-9._-]+$" },
+          "branch":      { "type": "string" },
+          "worktree":    { "type": "string" },
+          "agent":       { "type": "string", "enum": ["claude-code", "codex"] },
+          "model":       { "type": "string" },
+          "sessionKey":  { "type": ["string", "null"] },
+          "description": { "type": "string" },
+          "relatedDocs": { "type": "array", "items": { "type": "string" } },
+          "ac":          { "type": "array", "items": { "type": "string" } },
+          "startedAt":   { "type": "string", "format": "date-time" },
+          "completedAt": { "type": ["string", "null"], "format": "date-time" },
+          "status": {
+            "type": "string",
+            "enum": ["running", "pr_created", "reviewing", "ready", "merged", "failed"]
+          },
+          "pr":          { "type": ["integer", "null"] },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "ciPassed":    { "type": ["boolean", "null"] },
+              "codexReview": { "type": ["string", "null"], "enum": ["pass", "critical", "pending", null] },
+              "opusReview":  { "type": ["string", "null"], "enum": ["pass", "critical", "pending", null] }
+            }
+          },
+          "retries":    { "type": "integer", "minimum": 0 },
+          "maxRetries": { "type": "integer", "minimum": 0, "default": 2 },
+          "note":       { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}
