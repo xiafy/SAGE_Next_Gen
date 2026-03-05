@@ -167,7 +167,10 @@ export interface DiningHistory {
 
 export interface ChatPreferences {
   restrictions: Restriction[];
+  allergies: string[];
   flavors: FlavorPreference[];
+  spicyLevel: 'none' | 'mild' | 'medium' | 'hot';
+  learned: PreferenceEntry[];
   history: DiningHistory[];
 }
 
@@ -182,12 +185,18 @@ export interface ChatContext {
   };
 }
 
+/** Memory context sent from frontend for prompt injection */
+export interface MemoryContext {
+  sessions: SessionSummary[];
+}
+
 export interface ChatRequest {
   mode: ChatMode;
   messages: ChatMessage[];
   menuData: MenuData | null;
   preferences: ChatPreferences;
   context: ChatContext;
+  memory?: MemoryContext;
 }
 
 // ─────────────────────────────────────────────

@@ -75,11 +75,22 @@ function getMealType(timestamp: number, language: 'zh' | 'en', utcOffsetMinutes 
   return language === 'zh' ? '宵夜' : 'late night';
 }
 
+interface MemorySession {
+  restaurantType?: string;
+  dishesOrdered: string[];
+  dishesSkipped: string[];
+  keyMoments: string[];
+  date?: string;
+}
+
 interface AgentChatSystemOptions {
   menu: MenuAnalyzeResult;
   preferences: {
     restrictions: unknown[];
+    allergies: string[];
     flavors: unknown[];
+    spicyLevel: 'none' | 'mild' | 'medium' | 'hot';
+    learned: Array<{ value: string; confidence: number }>;
     history: unknown[];
   };
   context: {
@@ -89,10 +100,123 @@ interface AgentChatSystemOptions {
     location?: { lat: number; lng: number };
   };
   weather?: { temp: number; description: string } | null;
+  memory?: { sessions: MemorySession[] };
+}
+
+/** Match sessions by restaurant type, return up to 3. Fallback: most recent 2 of any type. */
+function matchSessions(sessions: MemorySession[], restaurantType?: string): MemorySession[] {
+  if (!sessions.length) return [];
+
+  if (restaurantType) {
+    const matched = sessions
+      .filter(s => s.restaurantType === restaurantType)
+      .slice(-3);
+    if (matched.length > 0) return matched;
+  }
+
+  // Fallback: most recent 2 sessions of any type
+  return sessions.slice(-2);
+}
+
+function buildMemoryBlock(
+  preferences: AgentChatSystemOptions['preferences'],
+  memory: AgentChatSystemOptions['memory'],
+  restaurantType: string | undefined,
+  lang: 'zh' | 'en',
+): string {
+  const allergies = preferences.allergies ?? [];
+  const spicyLevel = preferences.spicyLevel ?? 'medium';
+  const learned = (preferences.learned ?? []).filter(l => l.confidence >= 0.7);
+  const sessions = memory?.sessions ?? [];
+
+  const matched = matchSessions(sessions, restaurantType);
+
+  if (lang === 'zh') {
+    const lines: string[] = [];
+
+    // Layer 1: user profile
+    lines.push('## 用户画像');
+    lines.push(`⚠️ 过敏原（绝对禁止推荐）: ${allergies.length ? allergies.join(', ') : '无'}`);
+    // restrictions + flavors already in prefSummary above, skip duplication
+    lines.push(`辣度偏好: ${spicyLevel}`);
+    lines.push(`AI 学习到的偏好: ${learned.length ? learned.map(l => l.value).join(', ') : '无'}`);
+
+    // Layer 2: relevant history
+    lines.push('');
+    lines.push('## 相关用餐历史');
+    if (matched.length) {
+      for (const s of matched) {
+        const ordered = s.dishesOrdered.length ? s.dishesOrdered.join('/') : '无';
+        const skipped = s.dishesSkipped.length ? s.dishesSkipped.join('/') : '无';
+        const moments = s.keyMoments.length ? s.keyMoments.join(' ') : '';
+        lines.push(`- ${s.date ?? '未知日期'} ${s.restaurantType ?? '未知类型'}: 点了${ordered}, 跳过${skipped}。${moments}`);
+      }
+    } else {
+      lines.push('首次用餐');
+    }
+
+    // Layer 3: recent changes
+    lines.push('');
+    lines.push('## 近期偏好变化');
+    if (sessions.length > 0) {
+      const last = sessions[sessions.length - 1]!;
+      const recentLearned = (preferences.learned ?? []).filter(l => l.confidence >= 0.5 && l.confidence < 0.7);
+      if (recentLearned.length) {
+        lines.push(recentLearned.map(l => `- 新发现: ${l.value}`).join('\n'));
+      } else if (last.keyMoments.length) {
+        lines.push(last.keyMoments.map(m => `- ${m}`).join('\n'));
+      } else {
+        lines.push('无');
+      }
+    } else {
+      lines.push('无');
+    }
+
+    return lines.join('\n');
+  }
+
+  // English
+  const lines: string[] = [];
+
+  lines.push('## User Profile');
+  lines.push(`⚠️ Allergens (NEVER recommend): ${allergies.length ? allergies.join(', ') : 'none'}`);
+  lines.push(`Spice preference: ${spicyLevel}`);
+  lines.push(`AI-learned preferences: ${learned.length ? learned.map(l => l.value).join(', ') : 'none'}`);
+
+  lines.push('');
+  lines.push('## Relevant Dining History');
+  if (matched.length) {
+    for (const s of matched) {
+      const ordered = s.dishesOrdered.length ? s.dishesOrdered.join('/') : 'none';
+      const skipped = s.dishesSkipped.length ? s.dishesSkipped.join('/') : 'none';
+      const moments = s.keyMoments.length ? s.keyMoments.join(' ') : '';
+      lines.push(`- ${s.date ?? 'unknown'} ${s.restaurantType ?? 'unknown'}: ordered ${ordered}, skipped ${skipped}. ${moments}`);
+    }
+  } else {
+    lines.push('First time dining');
+  }
+
+  lines.push('');
+  lines.push('## Recent Preference Changes');
+  if (sessions.length > 0) {
+    const last = sessions[sessions.length - 1]!;
+    const recentLearned = (preferences.learned ?? []).filter(l => l.confidence >= 0.5 && l.confidence < 0.7);
+    if (recentLearned.length) {
+      lines.push(recentLearned.map(l => `- New: ${l.value}`).join('\n'));
+    } else if (last.keyMoments.length) {
+      lines.push(last.keyMoments.map(m => `- ${m}`).join('\n'));
+    } else {
+      lines.push('None');
+    }
+  } else {
+    lines.push('None');
+  }
+
+  return lines.join('\n');
 }
 
 export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
-  const { menu, preferences, context, weather } = opts;
+  const { menu, preferences, context, weather, memory } = opts;
   const lang = context.language;
   const mealType = getMealType(context.timestamp, lang, context.utcOffsetMinutes ?? 0);
   const location = context.location
@@ -110,6 +234,9 @@ export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
     ? (lang === 'zh' ? `（共 ${itemCount} 道，已采样 ${MAX_ITEMS_IN_CONTEXT} 道）` : `(${itemCount} total, sampled ${MAX_ITEMS_IN_CONTEXT})`)
     : '';
 
+  // Build memory block (three-layer injection) — empty string when no memory
+  const memoryBlock = buildMemoryBlock(preferences, memory, menu.menuType, lang);
+
   if (lang === 'zh') {
     return `你是 SAGE，一个专为旅行者设计的餐饮智能体。
 
@@ -120,7 +247,7 @@ export function buildAgentChatSystem(opts: AgentChatSystemOptions): string {
 
 当前场景：
 - 用户偏好：${prefSummary}
-
+${memoryBlock ? `\n${memoryBlock}\n` : ''}
 菜单（${menu.menuType}，价格档次 ${menu.priceLevel}/3，${menu.detectedLanguage}）${sampled}：
 ${menuSummary}
 
@@ -191,7 +318,7 @@ ${menuSummary}
 
 Current context:
 - User preferences: ${prefSummary}
-
+${memoryBlock ? `\n${memoryBlock}\n` : ''}
 Menu (${menu.menuType}, price level ${menu.priceLevel}/3, language: ${menu.detectedLanguage})${sampled}:
 ${menuSummary}
 

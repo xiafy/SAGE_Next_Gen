@@ -7,8 +7,10 @@ import type {
   MenuData,
   Restriction,
   FlavorPreference,
+  MemoryContext,
 } from '../types';
 import type { Preferences } from '../types';
+import { loadMemory } from '../utils/memory';
 
 /**
  * 将 App 本地 Preferences 格式转换为 API ChatPreferences 格式
@@ -17,18 +19,32 @@ import type { Preferences } from '../types';
  * 此函数是两种格式之间的唯一转换点。
  */
 function toApiPreferences(prefs: Preferences): ChatPreferences {
+  const memory = loadMemory();
   return {
     restrictions: prefs.dietary.map((value): Restriction => ({
       type: 'dislike',     // 默认类型，后续可细分
       value,
     })),
+    allergies: memory.preferences.allergies,
     flavors: (prefs.flavors ?? []).map((value): FlavorPreference => ({
       type: 'like',
       value,
       strength: 2,         // 默认强度
     })),
+    spicyLevel: memory.preferences.spicyLevel,
+    learned: memory.preferences.learned,
     history: [],           // 历史记录暂未在 App 端持久化
   };
+}
+
+function getMemoryContext(): MemoryContext | undefined {
+  try {
+    const memory = loadMemory();
+    if (memory.sessions.length === 0) return undefined;
+    return { sessions: memory.sessions };
+  } catch {
+    return undefined;
+  }
 }
 
 export function buildChatParams(
@@ -38,6 +54,7 @@ export function buildChatParams(
   preferences: Preferences,
   location?: GeoLocation | null,
 ): ChatRequest {
+  const memory = getMemoryContext();
   return {
     mode,
     messages: messages.map((m) => ({
@@ -52,6 +69,7 @@ export function buildChatParams(
       utcOffsetMinutes: -new Date().getTimezoneOffset(), // 本地时区偏移（分钟），东八区=+480
       ...(location ? { location } : {}),
     },
+    ...(memory ? { memory } : {}),
   };
 }
 

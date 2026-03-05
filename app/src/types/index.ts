@@ -53,6 +53,7 @@ export type {
   SessionSummary,
   UserPreferences,
   SAGE_Memory,
+  MemoryContext,
 } from '../../../shared/types';
 
 export { TIMEOUTS, LIMITS, VALID_TAGS } from '../../../shared/types';

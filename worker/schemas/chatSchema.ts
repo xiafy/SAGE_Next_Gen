@@ -47,9 +47,24 @@ export const ChatRequestSchema = z.object({
   menuData: z.record(z.unknown()).nullable(),
   preferences: z.object({
     restrictions: z.array(z.unknown()).default([]),
+    allergies:    z.array(z.string()).default([]),
     flavors:      z.array(z.unknown()).default([]),
+    spicyLevel:   z.enum(['none', 'mild', 'medium', 'hot']).default('medium'),
+    learned:      z.array(z.object({
+      value:      z.string(),
+      confidence: z.number(),
+    })).default([]),
     history:      z.array(z.unknown()).default([]),
   }).default({}),
+  memory: z.object({
+    sessions: z.array(z.object({
+      restaurantType: z.string().optional(),
+      dishesOrdered:  z.array(z.string()).default([]),
+      dishesSkipped:  z.array(z.string()).default([]),
+      keyMoments:     z.array(z.string()).default([]),
+      date:           z.string().optional(),
+    })).default([]),
+  }).optional(),
   context: z.object({
     language:         z.enum(['zh', 'en']),
     timestamp:        z.number(),

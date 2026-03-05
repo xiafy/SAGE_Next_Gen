@@ -36,7 +36,7 @@ export async function handleChat(
     return errorResponse('INVALID_REQUEST', request, env, requestId, parsed.error.issues[0]?.message);
   }
 
-  const { mode, messages, menuData, preferences, context } = parsed.data;
+  const { mode, messages, menuData, preferences, context, memory } = parsed.data;
 
   // 构造 system prompt
   let systemPrompt: string;
@@ -64,6 +64,7 @@ export async function handleChat(
       preferences,
       context,
       weather,
+      memory,
     });
   }
 
