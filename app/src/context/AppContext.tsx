@@ -1,16 +1,30 @@
 import { createContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { AppState, AppAction } from '../types';
+import type { AppState, AppAction, Preferences } from '../types';
+import { MEMORY_KEY, OLD_PREFS_KEY } from '../utils/memory';
 
-const STORAGE_KEY = 'sage_preferences_v1';
+const STORAGE_KEY = MEMORY_KEY;
 
-function getInitialPreferences() {
-  const prefs: { language: 'zh' | 'en'; dietary: string[]; flavors?: string[]; other?: string[] } = {
+function getInitialPreferences(): Preferences {
+  const prefs: Preferences = {
     language: 'en',
     dietary: [],
+    allergies: [],
   };
 
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    // Try new key first
+    let stored = localStorage.getItem(STORAGE_KEY);
+
+    // Migration: old key → new key
+    if (!stored) {
+      const oldStored = localStorage.getItem(OLD_PREFS_KEY);
+      if (oldStored) {
+        localStorage.setItem(STORAGE_KEY, oldStored);
+        localStorage.removeItem(OLD_PREFS_KEY);
+        stored = oldStored;
+      }
+    }
+
     if (stored) {
       const parsed = JSON.parse(stored);
       if (parsed?.language === 'zh' || parsed?.language === 'en') {
@@ -19,8 +33,17 @@ function getInitialPreferences() {
       if (Array.isArray(parsed?.dietary)) {
         prefs.dietary = parsed.dietary;
       }
+      if (Array.isArray(parsed?.allergies)) {
+        prefs.allergies = parsed.allergies;
+      }
       if (Array.isArray(parsed?.flavors)) {
         prefs.flavors = parsed.flavors;
+      }
+      if (parsed?.spicyLevel && ['none', 'mild', 'medium', 'hot'].includes(parsed.spicyLevel)) {
+        prefs.spicyLevel = parsed.spicyLevel;
+      }
+      if (Array.isArray(parsed?.learned)) {
+        prefs.learned = parsed.learned;
       }
       if (Array.isArray(parsed?.other)) {
         prefs.other = parsed.other;
@@ -31,7 +54,7 @@ function getInitialPreferences() {
   }
 
   // 系统语言检测（仅当 localStorage 无值时）
-  if (!localStorage.getItem(STORAGE_KEY)) {
+  if (!localStorage.getItem(STORAGE_KEY) && !localStorage.getItem(OLD_PREFS_KEY)) {
     const sysLang = navigator.language.toLowerCase();
     if (sysLang.startsWith('zh') || sysLang === 'zh-cn' || sysLang === 'zh-tw') {
       prefs.language = 'zh';

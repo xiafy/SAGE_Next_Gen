@@ -29,7 +29,7 @@ function makeMenuItem(id: string, name = 'Dish'): MenuItem {
 function makeState(overrides: Partial<AppState> = {}): AppState {
   return {
     chatPhase: 'chatting', menuData: null, messages: [],
-    preferences: { language: 'en', dietary: [] }, location: null,
+    preferences: { language: 'en', dietary: [], allergies: [] }, location: null,
     orderItems: [], currentView: 'waiter', analyzingFiles: null,
     isSupplementing: false, navigationPayload: null, waiterAllergyConfirmed: false,
     ...overrides,

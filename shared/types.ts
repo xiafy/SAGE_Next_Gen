@@ -401,3 +401,54 @@ export interface AllergyBannerData {
   items: AllergyBannerItem[];
   detectedLanguage: string;
 }
+
+// ─────────────────────────────────────────────
+// Memory System (DEC-067)
+// ─────────────────────────────────────────────
+
+export interface PreferenceEntry {
+  value: string;
+  source: 'explicit' | 'inferred';
+  confidence: number;          // 0-1
+  firstSeen: string;           // ISO date
+  lastSeen: string;
+  occurrences: number;
+}
+
+export type PreferenceEvolutionAction = 'add' | 'strengthen' | 'modify' | 'weaken';
+
+export interface PreferenceEvolution {
+  action: PreferenceEvolutionAction;
+  key: string;
+  entry?: PreferenceEntry;
+  newConfidence?: number;
+  oldValue?: string;
+  newValue?: string;
+}
+
+export interface SessionSummary {
+  id: string;
+  date: string;
+  restaurantType?: string;
+  dishesOrdered: string[];
+  dishesSkipped: string[];
+  preferencesLearned: string[];
+  keyMoments: string[];
+}
+
+export interface UserPreferences {
+  restrictions: Restriction[];
+  allergies: string[];
+  flavors: FlavorPreference[];
+  spicyLevel: 'none' | 'mild' | 'medium' | 'hot';
+  language: Language;
+  learned: PreferenceEntry[];
+  history: DiningHistory[];
+}
+
+export interface SAGE_Memory {
+  version: 1;
+  preferences: UserPreferences;
+  sessions: SessionSummary[];     // max 20, FIFO
+  lastUpdated: number;
+}

@@ -21,7 +21,7 @@ const { appReducer } = await import('../AppContext');
 function makeState(overrides: Partial<AppState> = {}): AppState {
   return {
     chatPhase: 'chatting', menuData: null, messages: [],
-    preferences: { language: 'en', dietary: [] }, location: null,
+    preferences: { language: 'en', dietary: [], allergies: [] }, location: null,
     orderItems: [], currentView: 'home', analyzingFiles: null,
     isSupplementing: false, navigationPayload: null, waiterAllergyConfirmed: false,
     ...overrides,
@@ -175,7 +175,7 @@ describe('F01-AC6 / F08-AC6: RESET_SESSION complete clearing (DEC-057)', () => {
   });
 
   it('F01-AC6: RESET_SESSION preserves language preference', () => {
-    const state = makeState({ preferences: { language: 'zh', dietary: ['peanut'] } });
+    const state = makeState({ preferences: { language: 'zh', dietary: ['peanut'], allergies: [] } });
     const r = appReducer(state, { type: 'RESET_SESSION' });
     expect(r.preferences.language).toBe('zh');
   });
@@ -183,19 +183,19 @@ describe('F01-AC6 / F08-AC6: RESET_SESSION complete clearing (DEC-057)', () => {
 
 describe('F10-AC2: SET_LANGUAGE updates preferences.language', () => {
   it('F10-AC2: en → zh', () => {
-    const state = makeState({ preferences: { language: 'en', dietary: [] } });
+    const state = makeState({ preferences: { language: 'en', dietary: [], allergies: [] } });
     const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'zh' });
     expect(r.preferences.language).toBe('zh');
   });
 
   it('F10-AC2: zh → en', () => {
-    const state = makeState({ preferences: { language: 'zh', dietary: [] } });
+    const state = makeState({ preferences: { language: 'zh', dietary: [], allergies: [] } });
     const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'en' });
     expect(r.preferences.language).toBe('en');
   });
 
   it('F10-AC2: language change does not affect other preferences', () => {
-    const state = makeState({ preferences: { language: 'en', dietary: ['peanut'], flavors: ['spicy'] } });
+    const state = makeState({ preferences: { language: 'en', dietary: ['peanut'], allergies: [], flavors: ['spicy'] } });
     const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'zh' });
     expect(r.preferences.dietary).toEqual(['peanut']);
     expect(r.preferences.flavors).toEqual(['spicy']);

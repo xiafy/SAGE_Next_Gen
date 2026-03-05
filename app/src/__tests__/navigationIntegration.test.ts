@@ -28,7 +28,7 @@ function makeMenuData(items: MenuItem[]): MenuData {
 function makeState(overrides: Partial<AppState> = {}): AppState {
   return {
     chatPhase: 'chatting', menuData: null, messages: [],
-    preferences: { language: 'en', dietary: [] }, location: null,
+    preferences: { language: 'en', dietary: [], allergies: [] }, location: null,
     orderItems: [], currentView: 'home', analyzingFiles: null,
     isSupplementing: false, navigationPayload: null, waiterAllergyConfirmed: false,
     ...overrides,
@@ -115,7 +115,7 @@ describe('F01-AC6 / F08-AC6: New meal / End meal clears session', () => {
 
   it('F01-AC6: RESET_SESSION preserves language preference', () => {
     const state = makeState({
-      preferences: { language: 'zh', dietary: ['peanut'] },
+      preferences: { language: 'zh', dietary: ['peanut'], allergies: [] },
       orderItems: [{ menuItem: makeMenuItem('d1'), quantity: 1 }],
     });
 

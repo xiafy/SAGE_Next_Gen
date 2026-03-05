@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import type { AppState } from '../../types';
 
-const STORAGE_KEY = 'sage_preferences_v1';
+const STORAGE_KEY = 'sage_memory_v1';
 
 // localStorage mock with controllable store
 const store: Record<string, string> = {};
@@ -21,7 +21,7 @@ const { appReducer } = await import('../../context/AppContext');
 function makeState(overrides: Partial<AppState> = {}): AppState {
   return {
     chatPhase: 'chatting', menuData: null, messages: [],
-    preferences: { language: 'en', dietary: [] }, location: null,
+    preferences: { language: 'en', dietary: [], allergies: [] }, location: null,
     orderItems: [], currentView: 'home', analyzingFiles: null,
     isSupplementing: false, navigationPayload: null, waiterAllergyConfirmed: false,
     ...overrides,
@@ -50,7 +50,7 @@ describe('F09-AC1: Preferences persist in localStorage across sessions', () => {
   });
 
   it('F09-AC1: SET_LANGUAGE persists language in preferences', () => {
-    const state = makeState({ preferences: { language: 'en', dietary: [] } });
+    const state = makeState({ preferences: { language: 'en', dietary: [], allergies: [] } });
     const r = appReducer(state, { type: 'SET_LANGUAGE', language: 'zh' });
     expect(r.preferences.language).toBe('zh');
   });
@@ -62,13 +62,13 @@ describe('F09-AC1: Preferences persist in localStorage across sessions', () => {
   });
 
   it('F09-AC1: REMOVE_DIETARY removes restriction from preferences', () => {
-    const state = makeState({ preferences: { language: 'en', dietary: ['peanut', 'shellfish'] } });
+    const state = makeState({ preferences: { language: 'en', dietary: ['peanut', 'shellfish'], allergies: [] } });
     const r = appReducer(state, { type: 'REMOVE_DIETARY', restriction: 'peanut' });
     expect(r.preferences.dietary).toEqual(['shellfish']);
   });
 
   it('F09-AC1: duplicate ADD_DIETARY does not create duplicates', () => {
-    const state = makeState({ preferences: { language: 'en', dietary: ['peanut'] } });
+    const state = makeState({ preferences: { language: 'en', dietary: ['peanut'], allergies: [] } });
     const r = appReducer(state, { type: 'ADD_DIETARY', restriction: 'peanut' });
     expect(r.preferences.dietary).toEqual(['peanut']);
   });
@@ -83,7 +83,7 @@ describe('F09-AC1: Preferences persist in localStorage across sessions', () => {
   });
 
   it('F09-AC1: UPDATE_PREFERENCES removes restriction', () => {
-    const state = makeState({ preferences: { language: 'en', dietary: ['gluten'] } });
+    const state = makeState({ preferences: { language: 'en', dietary: ['gluten'], allergies: [] } });
     const r = appReducer(state, {
       type: 'UPDATE_PREFERENCES',
       updates: [{ type: 'restriction', action: 'remove', value: 'gluten' }],

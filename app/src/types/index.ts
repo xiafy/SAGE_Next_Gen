@@ -47,6 +47,12 @@ export type {
   OrderAction,
   SelectedDishSummary,
   SelectedDishesPayload,
+  PreferenceEntry,
+  PreferenceEvolution,
+  PreferenceEvolutionAction,
+  SessionSummary,
+  UserPreferences,
+  SAGE_Memory,
 } from '../../../shared/types';
 
 export { TIMEOUTS, LIMITS, VALID_TAGS } from '../../../shared/types';
@@ -72,8 +78,11 @@ export interface Message {
 /** App 本地偏好存储格式（简化版，和 ChatPreferences 不同）*/
 export interface Preferences {
   language: 'zh' | 'en';
-  dietary: string[];           // restriction values
+  dietary: string[];           // restriction values (backward compat)
+  allergies: string[];         // allergy values (highest priority)
   flavors?: string[];          // flavor values
+  spicyLevel?: 'none' | 'mild' | 'medium' | 'hot';
+  learned?: import('../../../shared/types').PreferenceEntry[];
   other?: string[];            // other values
 }
 
