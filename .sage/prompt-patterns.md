@@ -98,3 +98,23 @@ Bug 描述: [root cause + 复现步骤]
 | 03-05 | Step 2 task-manager.sh | SAGE | — | 3→fixed | mkdir 锁 + mktemp |
 | 03-05 | Step 3 auto-review.sh | SAGE | — | 3→7→8.5→9.0 | 嵌套锁→统一锁域 |
 | 03-05 | Step 4 E2E automation | Claude Code | claude | 6.5→fixing | waitForTimeout + 假绿 |
+
+## Anti-Pattern 6: 条件 Mock（2026-03-05 CI 事故）
+
+❌ **错误**:
+```typescript
+if (typeof globalThis.localStorage === 'undefined') {
+  globalThis.localStorage = mockStorage;
+}
+```
+本地 node 环境无 localStorage → mock 生效；CI jsdom 环境有 localStorage → mock 跳过 → 测试读写不同对象。
+
+✅ **正确**:
+```typescript
+Object.defineProperty(globalThis, 'localStorage', {
+  value: mockStorage, writable: true, configurable: true
+});
+```
+无条件覆盖，确保所有环境一致。
+
+**规则**: 测试中的 mock/stub 永远无条件注入，不要用 if 判断目标是否存在。

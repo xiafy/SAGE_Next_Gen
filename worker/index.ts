@@ -13,6 +13,7 @@ import { handleHealth } from './handlers/health.js';
 import { handleAnalyze } from './handlers/analyze.js';
 import { handleChat } from './handlers/chat.js';
 import { handleTranscribe } from './handlers/transcribe.js';
+import { handleSummarize } from './handlers/summarize.js';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -43,6 +44,11 @@ export default {
       // POST /api/transcribe — 音频转文字
       if (request.method === 'POST' && url.pathname === '/api/transcribe') {
         return await handleTranscribe(request, env, requestId);
+      }
+
+      // POST /api/memory/summarize — 会话摘要 + 偏好进化
+      if (request.method === 'POST' && url.pathname === '/api/memory/summarize') {
+        return await handleSummarize(request, env, requestId);
       }
 
       // 404
