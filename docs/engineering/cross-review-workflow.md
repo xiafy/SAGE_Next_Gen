@@ -1,9 +1,12 @@
 # 交叉审查工作流（Cross-Review Workflow）
 
-> 版本: v1.0
-> 日期: 2026-03-04
+> 版本: v2.0
+> 日期: 2026-03-05
 > 决策人: Mr. Xia
-> 状态: ✅ 执行中
+> 状态: ✅ 自动化执行中（DEC-075）
+>
+> ⚡ **自动化升级**: Sprint 4b 后，双路审查已由 `.sage/auto-review.sh` 自动执行。
+> 手动流程仅作 fallback。详见 `docs/engineering/agent-swarm-ops.md`。
 
 ---
 
