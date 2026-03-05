@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# .sage/auto-review.sh v2 — 自动化双路 Code Review (DEC-075 Step 3)
+# .sage/auto-review.sh v4 — 自动化双路 Code Review (DEC-075 Step 3)
 #
 # 架构说明:
 #   本脚本是 SAGE 的"审查大脑"，负责：
@@ -15,7 +15,6 @@ set -euo pipefail
 SAGE_DIR="$(cd "$(dirname "$0")" && pwd)"
 REGISTRY="$SAGE_DIR/active-tasks.json"
 LOCKDIR="$REGISTRY.lock"
-COLLECT_LOCKDIR="$SAGE_DIR/.collect-lock"
 PROJECT_ROOT="$(cd "$SAGE_DIR/.." && pwd)"
 TASK_MGR="$SAGE_DIR/task-manager.sh"
 MAX_DIFF_CHARS=8000
@@ -30,6 +29,8 @@ log()  { printf "%b✓%b %s\n" "$GREEN" "$NC" "$*" >&2; }
 warn() { printf "%b⚠%b %s\n" "$YELLOW" "$NC" "$*" >&2; }
 err()  { printf "%b✗%b %s\n" "$RED" "$NC" "$*" >&2; }
 info() { printf "%b→%b %s\n" "$CYAN" "$NC" "$*" >&2; }
+
+now_iso() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
 
 command -v jq &>/dev/null || { err "需要 jq"; exit 1; }
 command -v gh &>/dev/null || { err "需要 gh CLI"; exit 1; }
@@ -246,9 +247,7 @@ case "$action" in
     echo "$verdict_json" > "$SAGE_DIR/review-prompts/${task_id}-${reviewer}-result.json"
 
     # 事务化：加锁 → 写 registry → 读状态 → 判断 → 解锁 → 输出
-    _collect_lock() { local i=0; while ! mkdir "$COLLECT_LOCKDIR" 2>/dev/null; do i=$((i+1)); [[ $i -ge 10 ]] && { err "collect 锁超时"; return 1; }; sleep 1; done; trap 'rm -rf "$COLLECT_LOCKDIR"' EXIT; }
-    _collect_unlock() { rm -rf "$COLLECT_LOCKDIR"; trap - EXIT; }
-    _collect_lock
+    acquire_lock
 
     # 直接写 registry（不调 task-manager，避免嵌套锁）
     tmpfile=$(mktemp "${REGISTRY}.XXXXXX")
@@ -308,7 +307,7 @@ case "$action" in
       fi
     fi
 
-    _collect_unlock
+    release_lock
     echo "$action_json"
     ;;
 
