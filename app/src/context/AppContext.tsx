@@ -1,6 +1,7 @@
 import { createContext, useReducer, useEffect, type ReactNode } from 'react';
 import type { AppState, AppAction, Preferences, CurrentSession } from '../types';
 import { MEMORY_KEY, OLD_PREFS_KEY, SESSION_KEY, PENDING_SUMMARY_KEY } from '../utils/memory';
+import { useLazySummarize } from '../hooks/useLazySummarize';
 
 const STORAGE_KEY = MEMORY_KEY;
 
@@ -362,6 +363,9 @@ export const AppContext = createContext<{
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // Lazy summarize: on mount, check for pending session and summarize in background
+  useLazySummarize();
 
   // Persist preferences to localStorage on change
   useEffect(() => {
