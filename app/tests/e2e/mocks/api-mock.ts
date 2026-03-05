@@ -54,6 +54,29 @@ export async function mockAnalyzeAPI(page: Page) {
   });
 }
 
+// ─── Analyze API Error Mock (SSE error event) ───
+
+export async function mockAnalyzeAPIError(page: Page) {
+  await page.route('**/api/analyze', async (route) => {
+    let body = '';
+    body += toSSE('progress', { stage: 'uploading', progress: 10, message: 'Uploading images...' });
+    body += toSSE('error', {
+      ok: false,
+      error: { message: 'Menu analysis failed (503): AI service temporarily unavailable' },
+    });
+
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+      body,
+    });
+  });
+}
+
 // ─── Chat API Mock (OpenAI-compatible SSE) ──────
 
 export async function mockChatAPI(page: Page, responseText?: string) {
@@ -83,6 +106,21 @@ export async function mockChatAPI(page: Page, responseText?: string) {
         'Connection': 'keep-alive',
       },
       body,
+    });
+  });
+}
+
+// ─── Chat API Error Mock ────────────────────────
+
+export async function mockChatAPIError(page: Page) {
+  await page.route('**/api/chat', async (route) => {
+    await route.fulfill({
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ok: false,
+        error: { message: 'AI service temporarily unavailable' },
+      }),
     });
   });
 }

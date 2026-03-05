@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { mockAnalyzeAPI, mockChatAPIWithMealPlan, mockChatAPI } from './mocks/api-mock';
+import { mockAnalyzeAPI, mockAnalyzeAPIError, mockChatAPIWithMealPlan, mockChatAPI, mockChatAPIError } from './mocks/api-mock';
+import { createMinimalPNG } from './helpers/test-utils';
 
 /**
  * SAGE E2E Regression Tests
@@ -8,20 +9,6 @@ import { mockAnalyzeAPI, mockChatAPIWithMealPlan, mockChatAPI } from './mocks/ap
  *        (chatPhase transitions from handing_off to chatting)
  * BUG-J: MealPlanCard renders in Chat view
  */
-
-function createMinimalPNG(): Buffer {
-  return Buffer.from([
-    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-    0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
-    0xde, 0x00, 0x00, 0x00, 0x0c, 0x49, 0x44, 0x41,
-    0x54, 0x08, 0xd7, 0x63, 0xf8, 0xcf, 0xc0, 0x00,
-    0x00, 0x00, 0x02, 0x00, 0x01, 0xe2, 0x21, 0xbc,
-    0x33, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e,
-    0x44, 0xae, 0x42, 0x60, 0x82,
-  ]);
-}
 
 /** Helper: Go through scan flow to get to chat with menu data */
 async function scanToChat(page: import('@playwright/test').Page) {
@@ -44,9 +31,9 @@ async function scanToChat(page: import('@playwright/test').Page) {
   await expect(analyzeBtn).toBeVisible({ timeout: 5000 });
   await analyzeBtn.click();
 
-  // Wait for chat to load with results
+  // Wait for chat to load with results — at least one chat bubble rendered
   await expect(page.getByTestId('sage-chat-messages')).toBeVisible({ timeout: 15000 });
-  await page.waitForTimeout(2000);
+  await expect(page.getByTestId('sage-chat-bubble').first()).toBeVisible({ timeout: 10000 });
 }
 
 test.describe('BUG-K Regression: processAIResponse MealPlan dispatch', () => {
@@ -63,11 +50,7 @@ test.describe('BUG-K Regression: processAIResponse MealPlan dispatch', () => {
     await chatInput.fill('Please recommend a meal plan for 2 people');
     await page.getByTestId('sage-chat-send-btn').click();
 
-    // Step 4: Wait for streaming to complete
-    await page.waitForTimeout(3000);
-
-    // Step 5: Verify MealPlanCard rendered (BUG-K fix: chatPhase transitions correctly)
-    // The MealPlanCard should appear in the chat messages
+    // Step 4: Verify MealPlanCard rendered (BUG-K fix: chatPhase transitions correctly)
     const mealPlanCard = page.getByTestId('sage-mealplan-card');
     await expect(mealPlanCard).toBeVisible({ timeout: 10000 });
 
@@ -94,7 +77,6 @@ test.describe('BUG-J Regression: MealPlanCard in Chat', () => {
     await page.getByTestId('sage-chat-send-btn').click();
 
     // Step 4: Wait for MealPlanCard
-    await page.waitForTimeout(3000);
     const mealPlanCard = page.getByTestId('sage-mealplan-card');
     await expect(mealPlanCard).toBeVisible({ timeout: 10000 });
 
@@ -123,7 +105,6 @@ test.describe('BUG-J Regression: MealPlanCard in Chat', () => {
     await page.getByTestId('sage-chat-send-btn').click();
 
     // Step 4: Wait for MealPlanCard
-    await page.waitForTimeout(3000);
     await expect(page.getByTestId('sage-mealplan-card')).toBeVisible({ timeout: 10000 });
 
     // Step 5: Re-mock chat for follow-up message
@@ -135,11 +116,61 @@ test.describe('BUG-J Regression: MealPlanCard in Chat', () => {
     await page.getByTestId('sage-chat-send-btn').click();
 
     // Step 7: Verify AI replies (proves chatPhase transitioned to chatting)
-    await page.waitForTimeout(2000);
+    // Wait for bubble count to increase — at least the new AI reply bubble
     const bubbles = page.getByTestId('sage-chat-bubble');
-    const count = await bubbles.count();
-    expect(count).toBeGreaterThanOrEqual(2); // At least user + AI messages
+    await expect(bubbles).not.toHaveCount(0, { timeout: 10000 });
+    await expect(async () => {
+      const count = await bubbles.count();
+      expect(count).toBeGreaterThanOrEqual(2);
+    }).toPass({ timeout: 10000 });
 
     await page.screenshot({ path: 'screenshots/regression-bugk-followup.png' });
+  });
+});
+
+test.describe('Error Path Regression', () => {
+  test('Analyze API error shows toast error message', async ({ page }) => {
+    await mockAnalyzeAPIError(page);
+
+    await page.goto('/');
+    await expect(page.getByTestId('sage-home-scan-btn')).toBeVisible({ timeout: 10000 });
+    await page.getByTestId('sage-home-scan-btn').click();
+
+    // Upload image
+    const fileInput = page.locator('input[type="file"]');
+    await fileInput.setInputFiles({
+      name: 'test-menu.png',
+      mimeType: 'image/png',
+      buffer: createMinimalPNG(),
+    });
+
+    // Confirm analyze
+    const analyzeBtn = page.getByRole('button', { name: /Analyze|确认并分析/i });
+    await expect(analyzeBtn).toBeVisible({ timeout: 5000 });
+    await analyzeBtn.click();
+
+    // Verify error toast appears (toUserFacingError maps 503 → "AI service is temporarily unavailable")
+    await expect(page.getByText(/unavailable|不可用|失败|retry|重试/i).first()).toBeVisible({ timeout: 10000 });
+
+    await page.screenshot({ path: 'screenshots/regression-error-analyze.png' });
+  });
+
+  test('Chat API error shows toast error message', async ({ page }) => {
+    // First: successful scan to get to chat
+    await scanToChat(page);
+
+    // Then: mock chat to fail
+    await mockChatAPIError(page);
+
+    // Send a message
+    const chatInput = page.getByTestId('sage-chat-input');
+    await expect(chatInput).toBeVisible({ timeout: 5000 });
+    await chatInput.fill('Tell me about this menu');
+    await page.getByTestId('sage-chat-send-btn').click();
+
+    // Verify error toast appears
+    await expect(page.getByText(/failed|失败|unavailable|不可用|retry|重试/i).first()).toBeVisible({ timeout: 10000 });
+
+    await page.screenshot({ path: 'screenshots/regression-error-chat.png' });
   });
 });
