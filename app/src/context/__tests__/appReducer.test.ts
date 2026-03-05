@@ -5,16 +5,15 @@ import { PENDING_SUMMARY_KEY, SESSION_KEY } from '../../utils/memory';
 
 // Provide localStorage mock for module-level init in AppContext
 const store: Record<string, string> = {};
-if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.getItem !== 'function') {
-  (globalThis as any).localStorage = {
+// Always override localStorage for test isolation (jsdom has its own)
+Object.defineProperty(globalThis, 'localStorage', { value: {
     getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, val: string) => { store[key] = val; },
     removeItem: (key: string) => { delete store[key]; },
     clear: () => { for (const k of Object.keys(store)) delete store[k]; },
     get length() { return Object.keys(store).length; },
     key: (i: number) => Object.keys(store)[i] ?? null,
-  };
-}
+  }, writable: true, configurable: true });
 
 function clearStore() {
   for (const k of Object.keys(store)) delete store[k];
