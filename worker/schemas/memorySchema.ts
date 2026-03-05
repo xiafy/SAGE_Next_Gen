@@ -56,7 +56,7 @@ export const SummarizeResponseSchema = z.object({
     dishesSkipped: z.array(z.string()),
     restaurantType: z.string().optional(),
     preferencesLearned: z.array(z.string()),
-    keyMoments: z.array(z.string()).max(3),
+    keyMoments: z.array(z.string()).transform(arr => arr.slice(0, 3)),
   }),
   evolutions: z.array(z.object({
     action: z.enum(['add', 'strengthen', 'modify']),

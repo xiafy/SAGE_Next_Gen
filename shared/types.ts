@@ -185,7 +185,7 @@ export interface ChatContext {
   };
 }
 
-/** Memory context sent from frontend for prompt injection */
+/** Memory context sent from frontend for prompt context enrichment */
 export interface MemoryContext {
   sessions: SessionSummary[];
 }

@@ -139,16 +139,16 @@ function buildMemoryBlock(
     lines.push(`⚠️ 过敏原（绝对禁止推荐）: ${allergies.length ? allergies.join(', ') : '无'}`);
     // restrictions + flavors already in prefSummary above, skip duplication
     lines.push(`辣度偏好: ${spicyLevel}`);
-    lines.push(`AI 学习到的偏好: ${learned.length ? learned.map(l => l.value).join(', ') : '无'}`);
+    lines.push(`AI 学习到的偏好: ${learned.length ? learned.map(l => sanitizeForPrompt(l.value)).join(', ') : '无'}`);
 
     // Layer 2: relevant history
     lines.push('');
     lines.push('## 相关用餐历史');
     if (matched.length) {
       for (const s of matched) {
-        const ordered = s.dishesOrdered.length ? s.dishesOrdered.join('/') : '无';
-        const skipped = s.dishesSkipped.length ? s.dishesSkipped.join('/') : '无';
-        const moments = s.keyMoments.length ? s.keyMoments.join(' ') : '';
+        const ordered = s.dishesOrdered.length ? s.dishesOrdered.map(sanitizeForPrompt).join('/') : '无';
+        const skipped = s.dishesSkipped.length ? s.dishesSkipped.map(sanitizeForPrompt).join('/') : '无';
+        const moments = s.keyMoments.length ? s.keyMoments.map(sanitizeForPrompt).join(' ') : '';
         lines.push(`- ${s.date ?? '未知日期'} ${s.restaurantType ?? '未知类型'}: 点了${ordered}, 跳过${skipped}。${moments}`);
       }
     } else {
@@ -162,9 +162,9 @@ function buildMemoryBlock(
       const last = sessions[sessions.length - 1]!;
       const recentLearned = (preferences.learned ?? []).filter(l => l.confidence >= 0.5 && l.confidence < 0.7);
       if (recentLearned.length) {
-        lines.push(recentLearned.map(l => `- 新发现: ${l.value}`).join('\n'));
+        lines.push(recentLearned.map(l => `- 新发现: ${sanitizeForPrompt(l.value)}`).join('\n'));
       } else if (last.keyMoments.length) {
-        lines.push(last.keyMoments.map(m => `- ${m}`).join('\n'));
+        lines.push(last.keyMoments.map(m => `- ${sanitizeForPrompt(m)}`).join('\n'));
       } else {
         lines.push('无');
       }
@@ -181,15 +181,15 @@ function buildMemoryBlock(
   lines.push('## User Profile');
   lines.push(`⚠️ Allergens (NEVER recommend): ${allergies.length ? allergies.join(', ') : 'none'}`);
   lines.push(`Spice preference: ${spicyLevel}`);
-  lines.push(`AI-learned preferences: ${learned.length ? learned.map(l => l.value).join(', ') : 'none'}`);
+  lines.push(`AI-learned preferences: ${learned.length ? learned.map(l => sanitizeForPrompt(l.value)).join(', ') : 'none'}`);
 
   lines.push('');
   lines.push('## Relevant Dining History');
   if (matched.length) {
     for (const s of matched) {
-      const ordered = s.dishesOrdered.length ? s.dishesOrdered.join('/') : 'none';
-      const skipped = s.dishesSkipped.length ? s.dishesSkipped.join('/') : 'none';
-      const moments = s.keyMoments.length ? s.keyMoments.join(' ') : '';
+      const ordered = s.dishesOrdered.length ? s.dishesOrdered.map(sanitizeForPrompt).join('/') : 'none';
+      const skipped = s.dishesSkipped.length ? s.dishesSkipped.map(sanitizeForPrompt).join('/') : 'none';
+      const moments = s.keyMoments.length ? s.keyMoments.map(sanitizeForPrompt).join(' ') : '';
       lines.push(`- ${s.date ?? 'unknown'} ${s.restaurantType ?? 'unknown'}: ordered ${ordered}, skipped ${skipped}. ${moments}`);
     }
   } else {
@@ -204,7 +204,7 @@ function buildMemoryBlock(
     if (recentLearned.length) {
       lines.push(recentLearned.map(l => `- New: ${l.value}`).join('\n'));
     } else if (last.keyMoments.length) {
-      lines.push(last.keyMoments.map(m => `- ${m}`).join('\n'));
+      lines.push(last.keyMoments.map(m => `- ${sanitizeForPrompt(m)}`).join('\n'));
     } else {
       lines.push('None');
     }
@@ -378,4 +378,17 @@ When modifying the user's order, output at the end:
 
 ## When receiving a selected-dishes system message
 Reply format: factual summary (count, category distribution, estimated total) + open-ended guiding question. Do NOT proactively analyze pairing suitability.`;
+}
+
+/** Sanitize user-controlled memory data to prevent prompt injection */
+function sanitizeForPrompt(text: string): string {
+  // Remove common prompt injection patterns
+  return text
+    .replace(/```/g, '')           // code blocks
+    .replace(/#{1,6}\s/g, '')      // markdown headers that could override system prompt
+    .replace(/\[INST\]/gi, '')     // instruction markers
+    .replace(/<<SYS>>/gi, '')      // system prompt markers
+    .replace(/<\|.*?\|>/g, '')     // special tokens
+    .replace(/\n{3,}/g, '\n\n')   // excessive newlines
+    .slice(0, 500);                // length cap per field
 }

@@ -107,7 +107,7 @@ describe('SummarizeResponseSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects keyMoments with more than 3 entries', () => {
+  it('truncates keyMoments to 3 entries', () => {
     const result = SummarizeResponseSchema.safeParse({
       ...validAIResponse,
       summary: {
@@ -115,7 +115,10 @@ describe('SummarizeResponseSchema', () => {
         keyMoments: ['a', 'b', 'c', 'd'],
       },
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.summary.keyMoments).toHaveLength(3);
+    }
   });
 
   it('rejects invalid evolution action', () => {
