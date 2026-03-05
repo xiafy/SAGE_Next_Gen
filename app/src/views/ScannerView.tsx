@@ -110,7 +110,7 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
           <>
             {/* Photo grid - 2 column layout */}
             <div className="w-full flex-1 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4 pt-1 px-1">
+              <div data-testid="sage-scanner-preview" className="grid grid-cols-2 gap-4 pt-1 px-1">
                 {previews.map((url, idx) => (
                   <div key={url} className="relative">
                     <Card3D className="!p-0 overflow-hidden rounded-2xl">
@@ -166,6 +166,7 @@ export function ScannerView({ isSupplementing = false }: ScannerViewProps) {
               onClick={() => fileInputRef.current?.click()}
               className="w-full"
               size="lg"
+              data-testid="sage-scanner-upload-btn"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-2 -mt-0.5">
                 <path d="M23 19C23 19.5304 22.7893 20.0391 22.4142 20.4142C22.0391 20.7893 21.5304 21 21 21H3C2.46957 21 1.96086 20.7893 1.58579 20.4142C1.21071 20.0391 1 19.5304 1 19V8C1 7.46957 1.21071 6.96086 1.58579 6.58579C1.96086 6.21071 2.46957 6 3 6H7L9 3H15L17 6H21C21.5304 6 22.0391 6.21071 22.4142 6.58579C22.7893 6.96086 23 7.46957 23 8V19Z" />

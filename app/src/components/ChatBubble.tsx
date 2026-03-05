@@ -9,7 +9,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 animate-slide-up`}>
+    <div data-testid="sage-chat-bubble" className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 animate-slide-up`}>
       {!isUser && (
         <div className="shrink-0 mt-1 mr-2">
           <MascotImage expression="default" size={32} className="rounded-full" />

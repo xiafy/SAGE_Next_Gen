@@ -24,7 +24,7 @@ export function OrderCardView() {
       />
 
       {/* Order items */}
-      <div className="flex-1 px-4 py-4 space-y-3">
+      <div data-testid="sage-order-list" className="flex-1 px-4 py-4 space-y-3">
         {state.orderItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-4">
             <MascotImage expression="confused" size={160} />
@@ -40,7 +40,7 @@ export function OrderCardView() {
           </div>
         ) : (
           state.orderItems.map((oi) => (
-            <Card3D key={oi.menuItem.id} className="flex items-center gap-3">
+            <Card3D key={oi.menuItem.id} className="flex items-center gap-3" data-testid="sage-order-dish-item">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[var(--color-sage-text)] truncate">
                   {oi.menuItem.nameTranslated || oi.menuItem.nameOriginal}
@@ -97,7 +97,7 @@ export function OrderCardView() {
             <span className="text-base font-bold text-[var(--color-sage-text-secondary)]">
               {isZh ? `共 ${totalQty} 道菜` : `${totalQty} items`}
             </span>
-            <span className="text-2xl font-extrabold text-[var(--color-sage-primary)]">{formatPrice(totalPrice, currency)}</span>
+            <span data-testid="sage-order-total" className="text-2xl font-extrabold text-[var(--color-sage-primary)]">{formatPrice(totalPrice, currency)}</span>
           </div>
           <Button3D
             size="lg"

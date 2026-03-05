@@ -933,7 +933,7 @@ export function AgentChatView() {
       })()}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
+      <div data-testid="sage-chat-messages" className="flex-1 overflow-y-auto px-4 py-4 pb-24">
         {state.messages.map((msg) => {
           // T7.3: Render SelectedDishesCard
           if (msg.cardType === 'selectedDishes' && msg.cardData) {
@@ -1135,6 +1135,7 @@ export function AgentChatView() {
                 onKeyDown={handleKeyDown}
                 placeholder={isZh ? '输入消息…' : 'Type a message…'}
                 disabled={isStreaming}
+                data-testid="sage-chat-input"
                 className="flex-1 bg-[var(--color-sage-bg)] rounded-[var(--radius-md)] px-4 py-2.5 text-base font-semibold text-[var(--color-sage-text)] placeholder:text-[var(--color-sage-text-secondary)] border-2 border-[var(--color-sage-border)] focus:border-[var(--color-sage-primary)] focus:outline-none transition-colors disabled:opacity-50"
               />
               <button
@@ -1142,6 +1143,7 @@ export function AgentChatView() {
                 disabled={!inputValue.trim() || isStreaming}
                 className="btn-3d btn-3d-primary w-10 h-10 rounded-full !p-0 flex items-center justify-center"
                 aria-label="Send message"
+                data-testid="sage-chat-send-btn"
               >
                 ↑
               </button>

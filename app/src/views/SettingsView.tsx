@@ -114,6 +114,7 @@ export function SettingsView() {
               className="flex-1"
               onClick={() => dispatch({ type: 'SET_LANGUAGE', language: 'zh' })}
               aria-label="切换为中文"
+              data-testid="sage-settings-lang-zh"
             >
               中文
             </Button3D>
@@ -122,6 +123,7 @@ export function SettingsView() {
               className="flex-1"
               onClick={() => dispatch({ type: 'SET_LANGUAGE', language: 'en' })}
               aria-label="Switch to English"
+              data-testid="sage-settings-lang-en"
             >
               English
             </Button3D>

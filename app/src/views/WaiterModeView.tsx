@@ -200,11 +200,12 @@ export function WaiterModeView() {
       <WaiterAllergyBanner allergyData={allergyBannerData} isZh={isZh} />
 
       {/* Menu items — large text for waiter readability */}
-      <div className="flex-1 flex flex-col justify-center px-8 py-8 gap-4">
+      <div data-testid="sage-waiter-panel" className="flex-1 flex flex-col justify-center px-8 py-8 gap-4">
         {state.orderItems.map((oi) => (
           <button
             key={oi.menuItem.id}
             onClick={() => setSelectedDish(oi.menuItem)}
+            data-testid="sage-waiter-comm-btn"
             className="flex items-baseline justify-between rounded-xl bg-white/5 px-5 py-4 text-left w-full hover:bg-white/10 transition-colors"
           >
             <div className="min-w-0">

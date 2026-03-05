@@ -64,7 +64,7 @@ export function DishCard({ item, isZh, userAllergens, currency, orderItem, onAdd
     : '';
 
   return (
-    <Card3D className="!p-3">
+    <Card3D className="!p-3" data-testid="sage-dish-card">
       {/* Allergen warning bar */}
       {hasAllergenWarning && (
         <div className="bg-orange-50 border border-orange-200 text-orange-700 rounded-lg px-3 py-1.5 text-xs mb-2 font-medium">
@@ -75,14 +75,14 @@ export function DishCard({ item, isZh, userAllergens, currency, orderItem, onAdd
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           {/* Name: translated (user language) big + original (menu) small */}
-          <p className="text-base font-semibold text-[var(--color-sage-text)]">
+          <p data-testid="sage-dish-name" className="text-base font-semibold text-[var(--color-sage-text)]">
             {item.nameTranslated}
           </p>
           <p className="text-sm text-[var(--color-sage-text-secondary)]">{item.nameOriginal}</p>
 
           {/* F11: Brief */}
           {item.brief && (
-            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.brief}</p>
+            <p data-testid="sage-dish-brief" className="text-xs text-gray-500 mt-0.5 line-clamp-1">{item.brief}</p>
           )}
 
           {/* F11: BriefDetail expand toggle */}
@@ -170,7 +170,7 @@ export function DishCard({ item, isZh, userAllergens, currency, orderItem, onAdd
         {/* Right side: price + order controls */}
         <div className="flex flex-col items-end gap-2 shrink-0 ml-3">
           {(item.price != null || item.priceText) && (
-            <span className="text-sm font-bold text-[var(--color-sage-primary)]">
+            <span data-testid="sage-dish-price" className="text-sm font-bold text-[var(--color-sage-primary)]">
               {item.price != null ? formatPrice(item.price, currency) : item.priceText}
             </span>
           )}

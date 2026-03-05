@@ -105,6 +105,7 @@ export function MealPlanCard({
 
   return (
     <div
+      data-testid="sage-mealplan-card"
       className={`bg-[var(--color-sage-card)] rounded-[var(--radius-md)] shadow-[var(--shadow-sage)]
         border border-[var(--color-sage-border)] overflow-hidden transition-opacity
         ${!isActive ? 'opacity-50' : ''}`}
@@ -115,6 +116,7 @@ export function MealPlanCard({
         <button
           disabled={!isActive}
           onClick={() => onAddAllToOrder(mealPlan)}
+          data-testid="sage-mealplan-add-btn"
           className="shrink-0 px-3 py-1 text-xs font-semibold text-white bg-indigo-500
             rounded-full hover:bg-indigo-600 active:bg-indigo-700
             disabled:opacity-40 disabled:cursor-not-allowed transition-colors"

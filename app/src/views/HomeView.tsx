@@ -42,7 +42,7 @@ export function HomeView() {
       </div>
 
       {/* Greeting */}
-      <h1 className="text-[28px] font-extrabold text-[var(--color-sage-text)] mt-4 text-center">
+      <h1 data-testid="sage-home-greeting" className="text-[28px] font-extrabold text-[var(--color-sage-text)] mt-4 text-center">
         {greeting}{isZh ? '！' : '!'}
       </h1>
       <p className="text-base font-semibold text-[var(--color-sage-text-secondary)] mt-1 text-center">
@@ -59,6 +59,7 @@ export function HomeView() {
               className="w-full"
               onClick={() => dispatch({ type: 'NAV_TO', view: 'chat' })}
               aria-label={isZh ? '继续上次用餐' : 'Continue last meal'}
+              data-testid="sage-home-continue-btn"
             >
               {isZh ? '🍽 继续上次用餐' : '🍽 Continue Last Meal'}
             </Button3D>
@@ -83,6 +84,7 @@ export function HomeView() {
             className="w-full"
             onClick={() => dispatch({ type: 'NAV_TO', view: 'scanner' })}
             aria-label={isZh ? '扫描菜单' : 'Scan Menu'}
+            data-testid="sage-home-scan-btn"
           >
             <span className="flex flex-col items-center gap-0.5">
               <span>{isZh ? '📷 扫描菜单' : '📷 Scan Menu'}</span>
