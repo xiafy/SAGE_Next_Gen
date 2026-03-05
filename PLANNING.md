@@ -178,14 +178,42 @@
 
 ---
 
-## Sprint 4b — Memory System (DEC-067)
+## Sprint 4b — Agent Swarm 基建 + Memory System
 
 **前置条件**: Sprint 4a 工程治理完成 ✅  
-**目标**: 跨会话记忆能力，从"工具"升级为"伙伴"  
-**Spec**: `specs/sprint-4b-memory.md` (Draft v1.0)  
-**状态**: 未开始（Spec 需审查确认后启动）
+**策略**: 先基建后功能（方案 A），Memory System 作为新基建的第一个实战验证项目  
+**决策依据**: DEC-075（Elvis Agent Swarm 架构对标）  
+**状态**: Phase 1 待启动
 
-### 任务清单
+### Phase 1: Agent Swarm 基建（DEC-075，~7 天）
+
+- [ ] **Step 1: git worktree 并行**（0.5 天）
+  - [ ] worktree 创建/清理脚本（`.sage/worktree.sh`）
+  - [ ] sessions_spawn + cwd 参数集成验证
+
+- [ ] **Step 2: Agent 任务 Registry**（1 天）
+  - [ ] `.sage/active-tasks.json` schema 定义
+  - [ ] 任务写入/状态更新逻辑
+  - [ ] `.sage/check-tasks.sh` cron 监控脚本（每 10min）
+
+- [ ] **Step 3: 自动化双路 Code Review**（1-2 天）
+  - [ ] cron job：检测新 PR → spawn Codex 审查 + Opus 审查
+  - [ ] Review 结果聚合 → 全过通知 / critical 自动 respawn
+  - [ ] 与 Registry 联动（status 自动流转）
+
+- [ ] **Step 4: PR 截图 + E2E 自动化**（3 天）
+  - [ ] 4a: playwright.config screenshot: 'on' + PR 截图附加脚本
+  - [ ] 4b: 补 data-testid（~10 个组件，规范 `sage-{component}-{element}`）
+  - [ ] 4c: API Mock 层（page.route，标准 fixture: thai-dense-01）
+  - [ ] 4d: main-flow.spec.ts（完整主路径 30s）
+  - [ ] 4e: regression.spec.ts（BUG-001~004）
+  - [ ] 4f: 多图补充扫描 E2E（english-03~07）
+
+- [ ] **Step 5: Prompt 模式记忆**（0.5 天）
+  - [ ] `.sage/prompt-patterns.md` 初始化（从历史任务提取）
+  - [ ] 任务完成后自动更新机制
+
+### Phase 2: Memory System（DEC-067，用新基建执行）
 
 - [ ] **Step 0: Spec 审查 + 一致性闸门 (DEC-063)**
   - [ ] sprint-4b-memory.md 从 Draft 升为 Approved
@@ -209,17 +237,14 @@
 - [ ] **Step 4: 验收 + 部署**
   - [ ] 测试覆盖（DEC-064 配比）
   - [ ] 交叉审查（DEC-074）
+  - [ ] 用新基建执行：worktree 隔离 + 自动 Review + PR 截图
   - [ ] 部署上线
 
-### 优先级
-- P0: 偏好持久化 schema v1 + 版本化
-- P1: 会话摘要生成
-- P2: 跨会话检索 + Prompt 注入
-
-### 不做
+### 不做（本 Sprint）
 - 云端同步（需后端数据库）
 - 多设备共享
 - 用户账户系统
+- DEC-075 3C 后期项（截图 baseline 对比、Waiter/MealPlan E2E、真实 API 集成测试）
 
 ---
 
