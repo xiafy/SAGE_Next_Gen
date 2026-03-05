@@ -1,111 +1,137 @@
-# Sprint 4b: Memory System (DEC-067)
+# Sprint 4b Phase 2: Memory System (DEC-067)
 
-> 版本: v1.0
-> 日期: 2026-03-04
-> 状态: Draft
+> 版本: v2.0
+> 日期: 2026-03-05
+> 状态: Approved ✅（夏总 3/5 确认）
+
+## 决策记录
+
+1. **偏好结构**：合并 `ChatPreferences` + `SAGE_Memory.preferences` 为统一结构
+2. **自我进化**：MVP 做。跨会话偏好累积 + prompt 注入
+3. **存储架构**：方案 A — localStorage 主存储 + Worker 无状态 AI 摘要
+4. **会话边界**：方案 D（懒摘要）— 下次打开 App 时对上次未摘要的会话生成摘要
 
 ## 目标
 
-实现跨会话记忆能力，让 SAGE 从"工具"升级为"伙伴"。
+跨会话记忆能力，从"工具"升级为"伙伴"。AI 越用越懂用户。
 
 ## 核心能力
 
-### 1. 用户偏好持久化（当前已有 localStorage，需升级）
+### P0: 统一偏好结构 + 版本化
+- 合并现有 `ChatPreferences` 和新增字段为 `UserPreferences`
+- schema version + migration 机制
+- localStorage key: `sage_memory_v1`
 
-**现状**: `localStorage` 存 `sage-preferences`，仅本地有效
+### P1: 会话摘要（懒生成）
+- 会话消息实时存 localStorage（现有 + sessionId 标记）
+- 下次打开 App 时检测未摘要的旧会话 → 调 Worker 生成摘要 → 存入 `sessions[]`
+- 会话边界：新扫描 / 超过 2 小时 / Home 选"新的" = 新会话
 
-**升级**: 
-- 结构化存储：饮食限制、口味偏好、过敏原、常用语言
-- 版本化：schema version + migration
-- 导出/导入：用户可备份
-
-### 2. 会话历史摘要
-
-**现状**: 无历史会话记录
-
-**新增**:
-- 每次会话结束后生成摘要（AI 驱动）
-- 存储关键决策：点了什么菜、跳过什么推荐、偏好更新
-- 支持"上次你说..."式引用
-
-### 3. 跨会话记忆检索
-
-**现状**: 无
-
-**新增**:
-- 新会话开始时检索相关历史
-- Prompt 注入："用户上次在泰国餐厅点了冬阴功，偏好辣度中等"
-- 隐私边界：仅存储用户明确同意的数据
+### P2: 跨会话记忆注入（自我进化）
+- 新会话 prompt 注入历史摘要 + 偏好
+- "上次你在曼谷点了冬阴功，说中辣刚好"
+- 最近 5 次会话摘要，按相关性排序（餐厅类型匹配优先）
 
 ## 技术设计
 
-### 存储层
+### 统一类型（shared/types.ts）
 
 ```typescript
-// localStorage schema v1
-interface SAGE_Memory {
+// 合并 ChatPreferences → UserPreferences
+export interface UserPreferences {
+  restrictions: Restriction[];        // 现有：饮食限制
+  allergies: string[];                // 新增：过敏原（独立于 restrictions）
+  flavors: FlavorPreference[];        // 现有：口味偏好
+  spicyLevel: 'none' | 'mild' | 'medium' | 'hot';  // 新增
+  language: 'zh' | 'en';             // 现有
+  history: DiningHistory[];           // 现有
+}
+
+export interface SessionSummary {
+  id: string;                         // menuSessionId
+  date: string;                       // ISO date
+  restaurantType?: string;            // "泰式" / "日料" / "意大利"
+  dishesOrdered: string[];            // 最终点的菜
+  dishesSkipped: string[];            // 明确拒绝的菜
+  preferencesLearned: string[];       // 新发现的偏好信号
+  keyMoments: string[];               // AI 生成的关键决策摘要（2-3 句）
+  summarized: boolean;                // 是否已生成摘要
+}
+
+export interface SAGE_Memory {
   version: 1;
-  preferences: {
-    restrictions: string[];      // ['vegetarian', 'halal']
-    allergies: string[];         // ['peanut', 'shellfish']
-    tasteProfile: {
-      spicyLevel: 'none' | 'mild' | 'medium' | 'hot';
-      sweetLevel: 'low' | 'medium' | 'high';
-    };
-    language: 'zh' | 'en' | 'th' | 'ja';
-  };
-  sessions: SessionSummary[];
-  lastUpdated: number;  // timestamp
-}
-
-interface SessionSummary {
-  id: string;
-  date: string;  // ISO date
-  location?: { lat: number; lng: number; name: string };
-  dishesOrdered: string[];  // dish names
-  preferencesChanged: boolean;
-  keyDecisions: string[];  // AI-generated summary
+  preferences: UserPreferences;
+  sessions: SessionSummary[];         // 最近 20 次，FIFO
+  lastUpdated: number;                // timestamp
 }
 ```
 
-### API 层 (Worker)
+### 存储架构
+
+```
+前端 localStorage (sage_memory_v1)
+  ├── preferences: UserPreferences     ← 实时更新（F09 preferenceUpdates）
+  ├── sessions: SessionSummary[]       ← 懒摘要填充
+  └── currentMessages: ChatMessage[]   ← 当前会话消息（带 sessionId）
+
+App 启动时:
+  1. 读取 localStorage
+  2. 检测 currentMessages 中是否有未摘要的旧会话
+  3. 如有 → POST /api/memory/summarize → 存入 sessions[] → 清空 currentMessages
+  4. 注入记忆到新会话 prompt
+```
+
+### Worker API
 
 ```typescript
-// POST /api/memory
-// Request: { action: 'get' | 'update' | 'summarize', data: ... }
-// Response: { memory: SAGE_Memory, summary?: string }
-
-// 会话结束时自动调用 summarize
+// POST /api/memory/summarize
+// Request: { messages: ChatMessage[], preferences: UserPreferences }
+// Response: { summary: SessionSummary }
+// 
+// Worker 调 Qwen3.5-Flash 生成摘要，不存储任何数据
 ```
 
-### Prompt 注入
+### Prompt 注入模板
 
 ```
-用户记忆摘要：
-- 饮食限制：{{memory.preferences.restrictions.join(', ')}}
-- 过敏原：{{memory.preferences.allergies.join(', ')}}
-- 口味偏好：辣度{{memory.preferences.tasteProfile.spicyLevel}}
-- 上次用餐：{{memory.sessions[0]?.date}} 在 {{memory.sessions[0]?.location?.name}} 点了 {{memory.sessions[0]?.dishesOrdered.join(', ')}}
+## 用户记忆
+饮食限制: {{preferences.restrictions}}
+过敏原: {{preferences.allergies}}
+口味: 辣度{{preferences.spicyLevel}}, 偏好{{preferences.flavors}}
+
+## 历史用餐（最近）
+{{#each recentSessions}}
+- {{date}} {{restaurantType}}: 点了{{dishesOrdered}}, 
+  跳过{{dishesSkipped}}。{{keyMoments}}
+{{/each}}
 ```
 
 ## 验收标准
 
-| # | 标准 | 验证方式 |
-|---|------|---------|
-| 1 | 偏好设置跨会话持久化 | 刷新页面后偏好保留 |
-| 2 | 会话摘要自动生成 | 每次会话结束调用 summarize |
-| 3 | 新会话 Prompt 注入记忆 | 人工检查 Prompt |
-| 4 | 隐私边界清晰 | 无敏感数据（支付、位置精确坐标）存储 |
-| 5 | 存储 schema 版本化 | 支持 future migration |
+| # | 标准 | 优先级 | 验证方式 |
+|---|------|--------|---------|
+| AC1 | 偏好跨会话持久化，刷新后保留 | P0 | 单测 + 手动 |
+| AC2 | schema v1 版本化，支持 migration | P0 | 单测 |
+| AC3 | 下次打开 App 自动对旧会话生成摘要 | P1 | 集成测试 |
+| AC4 | 摘要包含点了什么/跳过什么/偏好信号 | P1 | AI 输出验证 |
+| AC5 | 新会话 prompt 注入最近 5 次历史 | P2 | prompt 检查 |
+| AC6 | 2 小时 / 新扫描 / Home"新的" = 新会话 | P1 | 单测 |
+| AC7 | sessions[] 最多 20 条，FIFO | P0 | 单测 |
+| AC8 | Worker /api/memory/summarize 不存储用户数据 | P0 | 代码审查 |
 
-## 优先级
+## 实现计划
 
-P0: 偏好持久化 schema v1 + 版本化
-P1: 会话摘要生成
-P2: 跨会话检索 + Prompt 注入
+| Step | 任务 | 预计 |
+|------|------|------|
+| 1 | shared/types.ts + 偏好迁移 + 版本化 | 2h |
+| 2 | 会话消息持久化 + sessionId 标记 + 边界检测 | 3h |
+| 3 | Worker /api/memory/summarize 端点 | 2h |
+| 4 | App 启动懒摘要流程 | 2h |
+| 5 | Prompt 注入 + 自我进化 | 2h |
+| 6 | 测试 + 审查 + 部署 | 3h |
 
-## 不做范围
+## 不做
 
-- 云端同步（需后端数据库，超出当前架构）
-- 多设备共享
-- 用户账户系统
+- 云端同步 / 多设备共享 / 用户账户
+- navigator.sendBeacon 实时摘要（D 方案不需要）
+- 摘要编辑 UI（MVP 不需要）
