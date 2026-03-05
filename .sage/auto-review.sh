@@ -15,6 +15,7 @@ set -euo pipefail
 SAGE_DIR="$(cd "$(dirname "$0")" && pwd)"
 REGISTRY="$SAGE_DIR/active-tasks.json"
 LOCKDIR="$REGISTRY.lock"
+COLLECT_LOCKDIR="$SAGE_DIR/.collect-lock"
 PROJECT_ROOT="$(cd "$SAGE_DIR/.." && pwd)"
 TASK_MGR="$SAGE_DIR/task-manager.sh"
 MAX_DIFF_CHARS=8000
@@ -37,10 +38,22 @@ command -v gh &>/dev/null || { err "需要 gh CLI"; exit 1; }
 acquire_lock() {
   local i=0
   while ! mkdir "$LOCKDIR" 2>/dev/null; do
+    # stale 锁检测：超过 60s 的锁视为残留，强制清理
+    if [[ -d "$LOCKDIR" ]]; then
+      local lock_age
+      lock_age=$(( $(date +%s) - $(stat -f %m "$LOCKDIR" 2>/dev/null || echo "0") ))
+      if [[ $lock_age -gt 60 ]]; then
+        warn "检测到 stale 锁 (${lock_age}s)，强制清理"
+        rm -rf "$LOCKDIR"
+        continue
+      fi
+    fi
     i=$((i + 1)); [[ $i -ge 10 ]] && { err "锁超时"; return 1; }; sleep 1
   done
+  # trap 确保异常退出时释放锁
+  trap 'rm -rf "$LOCKDIR"' EXIT
 }
-release_lock() { rm -rf "$LOCKDIR"; }
+release_lock() { rm -rf "$LOCKDIR"; trap - EXIT; }
 
 # 原子 CAS: 只有当前 status 匹配时才更新
 # 返回 0=成功 1=失败（已被其他进程 claim）
@@ -224,68 +237,79 @@ case "$action" in
 
     if [[ "$verdict" != "pass" && "$verdict" != "critical" ]]; then
       err "无效 verdict: '$verdict'（期望 pass 或 critical）"
-      # 尝试从 score 推断
-      if [[ "$score" -ge 6 ]]; then
-        verdict="pass"
-        warn "根据 score=$score 推断 verdict=pass"
-      else
-        verdict="critical"
-        warn "根据 score=$score 推断 verdict=critical"
-      fi
+      jq -n --arg id "$task_id" --arg reviewer "$reviewer" --arg raw "$verdict_json"         '{"action":"error","task":$id,"reviewer":$reviewer,"message":"审查结果 JSON 无效，需人工检查","raw":$raw}'
+      exit 1
     fi
 
-    # 更新 registry
-    bash "$TASK_MGR" update "$task_id" "${reviewer}Review" "$verdict"
-    log "$task_id: ${reviewer} 审查结果 = $verdict (score: $score, criticals: $criticals)"
+    # 保存审查结果到文件（供 respawn 时聚合 criticals）
+    mkdir -p "$SAGE_DIR/review-prompts"
+    echo "$verdict_json" > "$SAGE_DIR/review-prompts/${task_id}-${reviewer}-result.json"
 
-    # 读取当前状态，判断下一步
+    # 事务化：加锁 → 写 registry → 读状态 → 判断 → 解锁 → 输出
+    _collect_lock() { local i=0; while ! mkdir "$COLLECT_LOCKDIR" 2>/dev/null; do i=$((i+1)); [[ $i -ge 10 ]] && { err "collect 锁超时"; return 1; }; sleep 1; done; trap 'rm -rf "$COLLECT_LOCKDIR"' EXIT; }
+    _collect_unlock() { rm -rf "$COLLECT_LOCKDIR"; trap - EXIT; }
+    _collect_lock
+
+    # 直接写 registry（不调 task-manager，避免嵌套锁）
+    tmpfile=$(mktemp "${REGISTRY}.XXXXXX")
+    jq --arg id "$task_id" --arg f "${reviewer}Review" --arg v "$verdict"       '(.tasks[] | select(.id == $id)).checks[$f] = $v' "$REGISTRY" > "$tmpfile"
+    mv "$tmpfile" "$REGISTRY"
+    log "$task_id: ${reviewer} 审查结果 = $verdict (score: $score)" >&2
+
+    # 读当前状态
     checks=$(jq --arg id "$task_id" '.tasks[] | select(.id == $id) | .checks' "$REGISTRY")
     codex_v=$(echo "$checks" | jq -r '.codexReview // "pending"')
     opus_v=$(echo "$checks" | jq -r '.opusReview // "pending"')
     ci=$(echo "$checks" | jq -r '.ciPassed // "null"')
-    retries=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .retries' "$REGISTRY")
-    max_retries=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .maxRetries' "$REGISTRY")
+    retries=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .retries // 0' "$REGISTRY")
+    max_retries=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .maxRetries // 2' "$REGISTRY")
 
-    # 判断下一步动作
-    if [[ "$codex_v" == "pending" || "$opus_v" == "pending" ]]; then
-      # 还有审查未完成
-      jq -n --arg id "$task_id" --arg status "waiting" \
-        --arg msg "等待另一路审查完成 (codex=$codex_v, opus=$opus_v)" \
-        '{"action":"wait","task":$id,"status":$status,"message":$msg}'
+    action_json=""
+    if [[ "$codex_v" == "pending" || "$opus_v" == "pending" || "$codex_v" == "null" || "$opus_v" == "null" ]]; then
+      action_json=$(jq -n --arg id "$task_id"         --arg msg "等待另一路审查完成 (codex=$codex_v, opus=$opus_v)"         '{"action":"wait","task":$id,"message":$msg}')
     elif [[ "$codex_v" == "pass" && "$opus_v" == "pass" ]]; then
-      # 双路通过
       if [[ "$ci" == "true" ]]; then
-        bash "$TASK_MGR" update "$task_id" status ready
+        # 直接写 status=ready + completedAt
+        tmpfile=$(mktemp "${REGISTRY}.XXXXXX")
+        jq --arg id "$task_id" --arg now "$(now_iso)"           '(.tasks[] | select(.id == $id)) |= (.status = "ready" | .completedAt = $now)' "$REGISTRY" > "$tmpfile"
+        mv "$tmpfile" "$REGISTRY"
         pr_num=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .pr' "$REGISTRY")
-        jq -n --arg id "$task_id" --argjson pr "$pr_num" \
-          '{"action":"notify","task":$id,"pr":$pr,"message":"双路审查全部通过，PR 待合并"}'
+        action_json=$(jq -n --arg id "$task_id" --argjson pr "$pr_num"           '{"action":"notify","task":$id,"pr":$pr,"message":"双路审查全部通过，PR 待合并"}')
       else
-        jq -n --arg id "$task_id" \
-          '{"action":"wait_ci","task":$id,"message":"审查通过但 CI 未完成，等待 CI"}'
+        action_json=$(jq -n --arg id "$task_id"           '{"action":"wait_ci","task":$id,"message":"审查通过但 CI 未完成"}')
       fi
     else
       # 有 critical
+      retries=${retries:-0}
       if [[ "$retries" -lt "$max_retries" ]]; then
         new_retries=$((retries + 1))
-        bash "$TASK_MGR" update "$task_id" retries "$new_retries"
-        bash "$TASK_MGR" update "$task_id" status "pr_created"
-        # 重置 review 状态
-        bash "$TASK_MGR" update "$task_id" codexReview "pending"
-        bash "$TASK_MGR" update "$task_id" opusReview "pending"
+        # 直接写：retries + status=pr_created + 重置 reviews + 重置 ciPassed
+        tmpfile=$(mktemp "${REGISTRY}.XXXXXX")
+        jq --arg id "$task_id" --argjson r "$new_retries"           '(.tasks[] | select(.id == $id)) |= (.retries = $r | .status = "pr_created" | .checks.codexReview = "pending" | .checks.opusReview = "pending" | .checks.ciPassed = null)'           "$REGISTRY" > "$tmpfile"
+        mv "$tmpfile" "$REGISTRY"
 
-        # 收集所有 critical 问题
-        all_criticals=$(echo "$verdict_json" | jq -r '.critical[]?' 2>/dev/null || echo "审查发现 critical 问题")
+        # 聚合两路 criticals
+        current_criticals=$(echo "$verdict_json" | jq -r '.critical[]?' 2>/dev/null || echo "")
+        other_reviewer="codex"; [[ "$reviewer" == "codex" ]] && other_reviewer="opus"
+        other_result="$SAGE_DIR/review-prompts/${task_id}-${other_reviewer}-result.json"
+        other_criticals=""
+        [[ -f "$other_result" ]] && other_criticals=$(jq -r '.critical[]?' "$other_result" 2>/dev/null || echo "")
+        all_criticals="${current_criticals}"
+        [[ -n "$other_criticals" ]] && all_criticals="${all_criticals}, ${other_criticals}"
+        [[ -z "$all_criticals" ]] && all_criticals="审查发现 critical 问题"
 
-        jq -n --arg id "$task_id" --arg retries "$new_retries/$max_retries" \
-          --arg issues "$all_criticals" \
-          '{"action":"respawn","task":$id,"retries":$retries,"issues":$issues,"message":"审查发现 critical，自动 respawn 修复"}'
+        action_json=$(jq -n --arg id "$task_id" --arg retries "$new_retries/$max_retries"           --arg issues "$all_criticals"           '{"action":"respawn","task":$id,"retries":$retries,"issues":$issues}')
       else
-        bash "$TASK_MGR" update "$task_id" status failed
+        tmpfile=$(mktemp "${REGISTRY}.XXXXXX")
+        jq --arg id "$task_id" --arg now "$(now_iso)"           '(.tasks[] | select(.id == $id)) |= (.status = "failed" | .completedAt = $now)' "$REGISTRY" > "$tmpfile"
+        mv "$tmpfile" "$REGISTRY"
         pr_num=$(jq -r --arg id "$task_id" '.tasks[] | select(.id == $id) | .pr' "$REGISTRY")
-        jq -n --arg id "$task_id" --argjson pr "$pr_num" --arg retries "$retries/$max_retries" \
-          '{"action":"escalate","task":$id,"pr":$pr,"retries":$retries,"message":"审查失败且重试次数已耗尽，需人工介入"}'
+        action_json=$(jq -n --arg id "$task_id" --argjson pr "$pr_num"           '{"action":"escalate","task":$id,"pr":$pr,"message":"重试耗尽，需人工介入"}')
       fi
     fi
+
+    _collect_unlock
+    echo "$action_json"
     ;;
 
   prompt)
