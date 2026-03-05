@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import type { AppState } from '../../types';
 import type { MenuItem, MenuData } from '../../../../shared/types';
+import { PENDING_SUMMARY_KEY, SESSION_KEY } from '../../utils/memory';
 
 // Provide localStorage mock for module-level init in AppContext
+const store: Record<string, string> = {};
 if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.getItem !== 'function') {
-  const store: Record<string, string> = {};
   (globalThis as any).localStorage = {
     getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, val: string) => { store[key] = val; },
@@ -13,6 +14,10 @@ if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localSto
     get length() { return Object.keys(store).length; },
     key: (i: number) => Object.keys(store)[i] ?? null,
   };
+}
+
+function clearStore() {
+  for (const k of Object.keys(store)) delete store[k];
 }
 
 // Now safe to import
@@ -24,6 +29,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
     preferences: { language: 'en', dietary: [], allergies: [] }, location: null,
     orderItems: [], currentView: 'home', analyzingFiles: null,
     isSupplementing: false, navigationPayload: null, waiterAllergyConfirmed: false,
+    sessionId: null,
     ...overrides,
   };
 }
@@ -216,5 +222,73 @@ describe('appReducer — SET_NAV_PAYLOAD / SET_WAITER_ALLERGY_CONFIRMED', () => 
     expect(r.waiterAllergyConfirmed).toBe(true);
     r = appReducer(r, { type: 'SET_WAITER_ALLERGY_CONFIRMED', confirmed: false });
     expect(r.waiterAllergyConfirmed).toBe(false);
+  });
+});
+
+describe('Memory Step 2 — sessionId + pending summary', () => {
+  beforeEach(clearStore);
+
+  it('RESET_SESSION generates a new sessionId', () => {
+    const state = makeState();
+    const r = appReducer(state, { type: 'RESET_SESSION' });
+    expect(r.sessionId).toBeTruthy();
+    expect(typeof r.sessionId).toBe('string');
+  });
+
+  it('RESET_SESSION saves pending summary when session has messages', () => {
+    const state = makeState({
+      sessionId: 'old-session-123',
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi', timestamp: 1000 },
+        { id: 'm2', role: 'assistant', content: 'hello', timestamp: 2000 },
+      ],
+      menuData: makeMenuData([makeMenuItem('d1')]),
+    });
+    appReducer(state, { type: 'RESET_SESSION' });
+    const pending = JSON.parse(store[PENDING_SUMMARY_KEY]!);
+    expect(pending.sessionId).toBe('old-session-123');
+    expect(pending.messages).toHaveLength(2);
+    expect(pending.startTime).toBe(1000);
+    expect(pending.menuData).toBeDefined();
+  });
+
+  it('RESET_SESSION does NOT save pending summary when no messages', () => {
+    const state = makeState({ sessionId: 'empty-session' });
+    appReducer(state, { type: 'RESET_SESSION' });
+    expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+  });
+
+  it('RESET_SESSION does NOT save pending summary when sessionId is null', () => {
+    const state = makeState({
+      messages: [{ id: 'm1', role: 'user', content: 'hi', timestamp: 1000 }],
+    });
+    appReducer(state, { type: 'RESET_SESSION' });
+    expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+  });
+
+  it('RESET_SESSION clears sage_current_session from localStorage', () => {
+    store[SESSION_KEY] = JSON.stringify({ sessionId: 'x', messages: [], startTime: 0 });
+    const state = makeState({ sessionId: 'x' });
+    appReducer(state, { type: 'RESET_SESSION' });
+    expect(store[SESSION_KEY]).toBeUndefined();
+  });
+
+  it('START_ANALYZE generates sessionId when null', () => {
+    const state = makeState({ sessionId: null });
+    const r = appReducer(state, { type: 'START_ANALYZE', files: [new File([], 'test.jpg')] });
+    expect(r.sessionId).toBeTruthy();
+    expect(typeof r.sessionId).toBe('string');
+  });
+
+  it('START_ANALYZE keeps existing sessionId (supplement scan)', () => {
+    const state = makeState({ sessionId: 'existing-123', isSupplementing: true });
+    const r = appReducer(state, { type: 'START_ANALYZE', files: [new File([], 'test.jpg')] });
+    expect(r.sessionId).toBe('existing-123');
+  });
+
+  it('Continue session: NAV_TO preserves sessionId', () => {
+    const state = makeState({ sessionId: 'keep-me' });
+    const r = appReducer(state, { type: 'NAV_TO', view: 'chat' });
+    expect(r.sessionId).toBe('keep-me');
   });
 });

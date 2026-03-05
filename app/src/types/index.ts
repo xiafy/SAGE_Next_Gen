@@ -103,6 +103,15 @@ export interface AppState {
   isSupplementing: boolean;
   navigationPayload?: import('../../../shared/types').SelectedDishesPayload | null;
   waiterAllergyConfirmed: boolean;
+  sessionId: string | null;
+}
+
+/** localStorage structure for current active session */
+export interface CurrentSession {
+  sessionId: string;
+  messages: Message[];
+  startTime: number;
+  menuData?: import('../../../shared/types').MenuData;
 }
 
 export type AppAction =

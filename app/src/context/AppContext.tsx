@@ -1,6 +1,6 @@
 import { createContext, useReducer, useEffect, type ReactNode } from 'react';
-import type { AppState, AppAction, Preferences } from '../types';
-import { MEMORY_KEY, OLD_PREFS_KEY } from '../utils/memory';
+import type { AppState, AppAction, Preferences, CurrentSession } from '../types';
+import { MEMORY_KEY, OLD_PREFS_KEY, SESSION_KEY, PENDING_SUMMARY_KEY } from '../utils/memory';
 
 const STORAGE_KEY = MEMORY_KEY;
 
@@ -64,10 +64,32 @@ function getInitialPreferences(): Preferences {
   return prefs;
 }
 
+export function generateSessionId(): string {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function restoreCurrentSession(): Partial<AppState> {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return {};
+    const session: CurrentSession = JSON.parse(raw);
+    if (!session.sessionId || !Array.isArray(session.messages)) return {};
+    return {
+      sessionId: session.sessionId,
+      messages: session.messages,
+      menuData: session.menuData ?? null,
+    };
+  } catch {
+    return {};
+  }
+}
+
+const restored = restoreCurrentSession();
+
 const initialState: AppState = {
-  chatPhase: 'pre_chat',
-  menuData: null,
-  messages: [],
+  chatPhase: restored.menuData ? 'chatting' : 'pre_chat',
+  menuData: restored.menuData ?? null,
+  messages: restored.messages ?? [],
   preferences: getInitialPreferences(),
   location: null,
   orderItems: [],
@@ -76,6 +98,7 @@ const initialState: AppState = {
   isSupplementing: false,
   navigationPayload: null,
   waiterAllergyConfirmed: false,
+  sessionId: restored.sessionId ?? null,
 };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -184,7 +207,23 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, preferences: updated };
     }
 
-    case 'RESET_SESSION':
+    case 'RESET_SESSION': {
+      // Save current session to pending summary for lazy summarization (Step 4)
+      if (state.sessionId && state.messages.length > 0) {
+        try {
+          const pending: CurrentSession = {
+            sessionId: state.sessionId,
+            messages: state.messages,
+            startTime: state.messages[0]?.timestamp ?? Date.now(),
+            menuData: state.menuData ?? undefined,
+          };
+          localStorage.setItem(PENDING_SUMMARY_KEY, JSON.stringify(pending));
+        } catch {
+          // ignore storage errors
+        }
+      }
+      // Clear current session from localStorage
+      try { localStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
       return {
         ...initialState,
         preferences: {
@@ -192,7 +231,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           language: state.preferences.language,
         },
         waiterAllergyConfirmed: false,
+        sessionId: generateSessionId(),
       };
+    }
 
     case 'SET_LANGUAGE':
       return {
@@ -230,6 +271,8 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         chatPhase: action.files.length > 0 && !state.isSupplementing
           ? 'pre_chat'
           : state.chatPhase,
+        // Generate sessionId if none exists (first scan); keep existing (supplement scan)
+        sessionId: state.sessionId ?? generateSessionId(),
       };
 
     case 'SET_SUPPLEMENTING':
@@ -328,6 +371,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // ignore storage errors
     }
   }, [state.preferences]);
+
+  // Persist current session (messages + sessionId + menuData) to localStorage
+  useEffect(() => {
+    try {
+      if (state.sessionId) {
+        const session: CurrentSession = {
+          sessionId: state.sessionId,
+          messages: state.messages,
+          startTime: state.messages[0]?.timestamp ?? Date.now(),
+          menuData: state.menuData ?? undefined,
+        };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [state.sessionId, state.messages, state.menuData]);
 
   // Silent geolocation request for coarse location (city-level context)
   useEffect(() => {

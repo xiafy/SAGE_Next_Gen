@@ -31,6 +31,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
     preferences: { language: 'en', dietary: [], allergies: [] }, location: null,
     orderItems: [], currentView: 'home', analyzingFiles: null,
     isSupplementing: false, navigationPayload: null, waiterAllergyConfirmed: false,
+    sessionId: null,
     ...overrides,
   };
 }

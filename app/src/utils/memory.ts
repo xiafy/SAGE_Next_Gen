@@ -2,6 +2,8 @@ import type { SAGE_Memory, PreferenceEvolution, SessionSummary } from '../../../
 
 export const MEMORY_KEY = 'sage_memory_v1';
 export const OLD_PREFS_KEY = 'sage_preferences_v1';
+export const SESSION_KEY = 'sage_current_session';
+export const PENDING_SUMMARY_KEY = 'sage_pending_summary';
 
 const MAX_SESSIONS = 20;
 

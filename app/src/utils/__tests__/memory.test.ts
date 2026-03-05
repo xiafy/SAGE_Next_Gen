@@ -4,20 +4,19 @@ import type { SAGE_Memory, PreferenceEntry, PreferenceEvolution, SessionSummary 
 const MEMORY_KEY = 'sage_memory_v1';
 const OLD_PREFS_KEY = 'sage_preferences_v1';
 
-// localStorage mock
+// localStorage mock — always override to ensure test isolation
 const store: Record<string, string> = {};
-if (typeof globalThis.localStorage === 'undefined' || typeof globalThis.localStorage.getItem !== 'function') {
-  (globalThis as any).localStorage = {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, val: string) => { store[key] = val; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { for (const k of Object.keys(store)) delete store[k]; },
-    get length() { return Object.keys(store).length; },
-    key: (i: number) => Object.keys(store)[i] ?? null,
-  };
-}
+const mockStorage = {
+  getItem: (key: string) => store[key] ?? null,
+  setItem: (key: string, val: string) => { store[key] = val; },
+  removeItem: (key: string) => { delete store[key]; },
+  clear: () => { for (const k of Object.keys(store)) delete store[k]; },
+  get length() { return Object.keys(store).length; },
+  key: (i: number) => Object.keys(store)[i] ?? null,
+};
+Object.defineProperty(globalThis, 'localStorage', { value: mockStorage, writable: true, configurable: true });
 
-const { loadMemory, saveMemory, migrateOldPreferences, addSession, applyEvolutions } = await import('../memory');
+const { loadMemory, saveMemory, migrateOldPreferences, addSession, applyEvolutions, SESSION_KEY, PENDING_SUMMARY_KEY } = await import('../memory');
 
 function clearStore() {
   for (const k of Object.keys(store)) delete store[k];
@@ -292,5 +291,45 @@ describe('applyEvolutions', () => {
     expect(result.preferences.learned).toHaveLength(2);
     expect(result.preferences.learned[0]!.confidence).toBeCloseTo(0.5);
     expect(result.preferences.learned[1]!.value).toBe('no_pork');
+  });
+});
+
+describe('Session persistence constants', () => {
+  it('SESSION_KEY is sage_current_session', () => {
+    expect(SESSION_KEY).toBe('sage_current_session');
+  });
+
+  it('PENDING_SUMMARY_KEY is sage_pending_summary', () => {
+    expect(PENDING_SUMMARY_KEY).toBe('sage_pending_summary');
+  });
+
+  it('session data round-trips through localStorage', () => {
+    clearStore();
+    const session = {
+      sessionId: 'test-session-1',
+      messages: [{ id: 'm1', role: 'user', content: 'hello', timestamp: 1000 }],
+      startTime: 1000,
+    };
+    store[SESSION_KEY] = JSON.stringify(session);
+    const restored = JSON.parse(store[SESSION_KEY]!);
+    expect(restored.sessionId).toBe('test-session-1');
+    expect(restored.messages).toHaveLength(1);
+    expect(restored.startTime).toBe(1000);
+  });
+
+  it('pending summary data can be written and read back', () => {
+    clearStore();
+    const pending = {
+      sessionId: 'old-session',
+      messages: [
+        { id: 'm1', role: 'user', content: 'hi', timestamp: 500 },
+        { id: 'm2', role: 'assistant', content: 'hey', timestamp: 600 },
+      ],
+      startTime: 500,
+    };
+    store[PENDING_SUMMARY_KEY] = JSON.stringify(pending);
+    const restored = JSON.parse(store[PENDING_SUMMARY_KEY]!);
+    expect(restored.sessionId).toBe('old-session');
+    expect(restored.messages).toHaveLength(2);
   });
 });
