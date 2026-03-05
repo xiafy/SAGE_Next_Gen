@@ -180,6 +180,8 @@ describe('prompt injection: backward compatibility', () => {
       preferences: basePrefs,
       context: baseContext,
     });
+    expect(typeof prompt).toBe('string');
+    expect(prompt.length).toBeGreaterThan(100);
     expect(prompt).toContain('SAGE');
     expect(prompt).toContain('首次用餐');
   });
@@ -207,7 +209,7 @@ describe('prompt injection: backward compatibility', () => {
 // ─── Three-layer structure ──────────────────
 
 describe('prompt injection: three-layer structure', () => {
-  it('contains all three sections (zh)', () => {
+  it('contains all three sections in correct order (zh)', () => {
     const prompt = buildAgentChatSystem({
       menu: minimalMenu,
       preferences: { ...basePrefs, allergies: ['dairy'] },
@@ -221,9 +223,15 @@ describe('prompt injection: three-layer structure', () => {
     expect(prompt).toContain('## 用户画像');
     expect(prompt).toContain('## 相关用餐历史');
     expect(prompt).toContain('## 近期偏好变化');
+    // Verify section ordering
+    const profileIdx = prompt.indexOf('## 用户画像');
+    const historyIdx = prompt.indexOf('## 相关用餐历史');
+    const changesIdx = prompt.indexOf('## 近期偏好变化');
+    expect(profileIdx).toBeLessThan(historyIdx);
+    expect(historyIdx).toBeLessThan(changesIdx);
   });
 
-  it('contains all three sections (en)', () => {
+  it('contains all three sections in correct order (en)', () => {
     const prompt = buildAgentChatSystem({
       menu: minimalMenu,
       preferences: { ...basePrefs, allergies: ['dairy'] },
@@ -237,5 +245,11 @@ describe('prompt injection: three-layer structure', () => {
     expect(prompt).toContain('## User Profile');
     expect(prompt).toContain('## Relevant Dining History');
     expect(prompt).toContain('## Recent Preference Changes');
+    // Verify section ordering
+    const profileIdx = prompt.indexOf('## User Profile');
+    const historyIdx = prompt.indexOf('## Relevant Dining History');
+    const changesIdx = prompt.indexOf('## Recent Preference Changes');
+    expect(profileIdx).toBeLessThan(historyIdx);
+    expect(historyIdx).toBeLessThan(changesIdx);
   });
 });

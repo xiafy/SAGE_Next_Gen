@@ -50,11 +50,18 @@ describe('coverage: all actions × MVP languages', () => {
   const actions: CommunicationAction[] = ['sold_out', 'change', 'add_more', 'other'];
   const mvpLangs = ['en', 'zh', 'th', 'ja', 'ko'];
 
-  it('all 4 actions × 5 MVP languages have translations', () => {
+  const expected: Record<string, Record<string, string>> = {
+    sold_out: { en: 'Sold out', zh: '没有了', th: 'ไม่มี', ja: '売り切れ', ko: '품절' },
+    change:   { en: 'Change this', zh: '换一道', th: 'เปลี่ยน', ja: '変更', ko: '변경' },
+    add_more: { en: 'One more', zh: '加一份', th: 'เพิ่ม', ja: 'もう一つ', ko: '추가' },
+    other:    { en: 'Other question', zh: '其他问题', th: 'อื่นๆ', ja: 'その他', ko: '기타' },
+  };
+
+  it('all 4 actions × 5 MVP languages return correct translations', () => {
     for (const action of actions) {
       for (const lang of mvpLangs) {
         const phrase = getPhrase(action, lang);
-        expect(phrase, `Missing: ${action}/${lang}`).toBeTruthy();
+        expect(phrase, `Mismatch: ${action}/${lang}`).toBe(expected[action]![lang]);
       }
     }
   });
@@ -64,11 +71,12 @@ describe('coverage: all allergens × MVP languages', () => {
   const allergens = Object.keys(ALLERGY_TRANSLATIONS);
   const mvpLangs = ['en', 'zh', 'th', 'ja', 'ko'];
 
-  it('all allergens × 5 MVP languages have translations', () => {
+  it('all allergens × 5 MVP languages return non-empty strings matching source table', () => {
     for (const allergen of allergens) {
       for (const lang of mvpLangs) {
         const label = getAllergyLabel(allergen, lang);
-        expect(label, `Missing: ${allergen}/${lang}`).toBeTruthy();
+        const expectedLabel = ALLERGY_TRANSLATIONS[allergen]![lang]!;
+        expect(label, `Mismatch: ${allergen}/${lang}`).toBe(expectedLabel);
       }
     }
   });

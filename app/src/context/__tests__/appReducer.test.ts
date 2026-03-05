@@ -137,9 +137,8 @@ describe('OPEN-001: badge should show total quantity, not item count', () => {
   it('ADD_TO_ORDER increments qty for existing item', () => {
     const state = makeState({ orderItems: [{ menuItem: d1, quantity: 2 }] });
     const r = appReducer(state, { type: 'ADD_TO_ORDER', item: d1 });
-    const totalQty = r.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
-    expect(totalQty).toBe(3);
-    expect(r.orderItems.length).toBe(1);
+    expect(r.orderItems).toHaveLength(1);
+    expect(r.orderItems[0]!.quantity).toBe(3);
   });
 
   it('UPDATE_ORDER_QTY changes qty correctly', () => {
@@ -150,8 +149,8 @@ describe('OPEN-001: badge should show total quantity, not item count', () => {
       ],
     });
     const r = appReducer(state, { type: 'UPDATE_ORDER_QTY', itemId: 'd1', quantity: 5 });
-    const totalQty = r.orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
-    expect(totalQty).toBe(6);
+    expect(r.orderItems.find(oi => oi.menuItem.id === 'd1')!.quantity).toBe(5);
+    expect(r.orderItems.find(oi => oi.menuItem.id === 'd2')!.quantity).toBe(1);
   });
 });
 
@@ -230,8 +229,8 @@ describe('Memory Step 2 — sessionId + pending summary', () => {
   it('RESET_SESSION generates a new sessionId', () => {
     const state = makeState();
     const r = appReducer(state, { type: 'RESET_SESSION' });
-    expect(r.sessionId).toBeTruthy();
     expect(typeof r.sessionId).toBe('string');
+    expect(r.sessionId!.length).toBeGreaterThan(0);
   });
 
   it('RESET_SESSION saves pending summary when session has messages', () => {
@@ -275,8 +274,8 @@ describe('Memory Step 2 — sessionId + pending summary', () => {
   it('START_ANALYZE generates sessionId when null', () => {
     const state = makeState({ sessionId: null });
     const r = appReducer(state, { type: 'START_ANALYZE', files: [new File([], 'test.jpg')] });
-    expect(r.sessionId).toBeTruthy();
     expect(typeof r.sessionId).toBe('string');
+    expect(r.sessionId!.length).toBeGreaterThan(0);
   });
 
   it('START_ANALYZE keeps existing sessionId (supplement scan)', () => {

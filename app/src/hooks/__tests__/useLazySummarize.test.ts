@@ -82,10 +82,6 @@ function getMemory(): SAGE_Memory {
   return JSON.parse(store[MEMORY_KEY]!);
 }
 
-async function flushPromises() {
-  await new Promise((r) => setTimeout(r, 0));
-}
-
 describe('useLazySummarize', () => {
   beforeEach(() => {
     clearStore();
@@ -94,23 +90,27 @@ describe('useLazySummarize', () => {
 
   it('does nothing when no pending summary exists', async () => {
     renderHook(() => useLazySummarize());
-    await flushPromises();
-    expect(mockSummarizeSession).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      // No pending = no API call, just ensure it doesn't throw
+      expect(mockSummarizeSession).not.toHaveBeenCalled();
+    });
   });
 
   it('clears pending when messages array is empty', async () => {
     setPending({ sessionId: 's1', messages: [], startTime: 1000 });
     renderHook(() => useLazySummarize());
-    await flushPromises();
-    expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    await vi.waitFor(() => {
+      expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    });
     expect(mockSummarizeSession).not.toHaveBeenCalled();
   });
 
   it('clears pending when JSON is corrupt', async () => {
     store[PENDING_SUMMARY_KEY] = 'NOT_VALID_JSON!!!';
     renderHook(() => useLazySummarize());
-    await flushPromises();
-    expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    await vi.waitFor(() => {
+      expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    });
     expect(mockSummarizeSession).not.toHaveBeenCalled();
   });
 
@@ -132,19 +132,21 @@ describe('useLazySummarize', () => {
     mockSummarizeSession.mockResolvedValueOnce({ summary, evolutions });
 
     renderHook(() => useLazySummarize());
-    await flushPromises();
 
-    expect(mockSummarizeSession).toHaveBeenCalledOnce();
+    await vi.waitFor(() => {
+      expect(mockSummarizeSession).toHaveBeenCalledOnce();
+    });
+
     expect(mockSummarizeSession).toHaveBeenCalledWith(
       [{ role: 'user', content: 'hi' }, { role: 'assistant', content: 'hello' }],
       mem.preferences,
       { restaurantType: 'thai' },
     );
 
-    // pending should be cleared
-    expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    await vi.waitFor(() => {
+      expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    });
 
-    // memory should have the session
     const updated = getMemory();
     expect(updated.sessions).toHaveLength(1);
     expect(updated.sessions[0]!.id).toBe('sess-abc');
@@ -166,7 +168,10 @@ describe('useLazySummarize', () => {
     mockSummarizeSession.mockResolvedValueOnce({ summary, evolutions });
 
     renderHook(() => useLazySummarize());
-    await flushPromises();
+
+    await vi.waitFor(() => {
+      expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    });
 
     const updated = getMemory();
     expect(updated.preferences.learned).toHaveLength(1);
@@ -186,7 +191,10 @@ describe('useLazySummarize', () => {
     mockSummarizeSession.mockRejectedValueOnce(new Error('Network error'));
 
     renderHook(() => useLazySummarize());
-    await flushPromises();
+
+    await vi.waitFor(() => {
+      expect(mockSummarizeSession).toHaveBeenCalledOnce();
+    });
 
     // pending should still exist for retry
     expect(store[PENDING_SUMMARY_KEY]).toBeDefined();
@@ -209,10 +217,44 @@ describe('useLazySummarize', () => {
     mockSummarizeSession.mockResolvedValueOnce({ summary, evolutions: [] });
 
     renderHook(() => useLazySummarize());
-    await flushPromises();
+
+    await vi.waitFor(() => {
+      expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    });
 
     const updated = getMemory();
     expect(updated.sessions[0]!.id).toBe('custom-id-123');
     expect(updated.sessions[0]!.date).toBe('2026-02-14');
+  });
+
+  it('second mount does not re-consume already-cleared pending', async () => {
+    const mem = makeMemory();
+    setMemory(mem);
+    setPending({
+      sessionId: 'sess-once',
+      messages: [{ role: 'user', content: 'hi' }],
+      startTime: Date.now(),
+    });
+
+    const summary = makeSummary();
+    mockSummarizeSession.mockResolvedValueOnce({ summary, evolutions: [] });
+
+    // First mount: consumes pending
+    renderHook(() => useLazySummarize());
+    await vi.waitFor(() => {
+      expect(store[PENDING_SUMMARY_KEY]).toBeUndefined();
+    });
+    expect(mockSummarizeSession).toHaveBeenCalledOnce();
+
+    // Second mount: no pending left, should not call API again
+    mockSummarizeSession.mockReset();
+    renderHook(() => useLazySummarize());
+    await vi.waitFor(() => {
+      expect(mockSummarizeSession).not.toHaveBeenCalled();
+    });
+
+    // Only one session added
+    const updated = getMemory();
+    expect(updated.sessions).toHaveLength(1);
   });
 });
