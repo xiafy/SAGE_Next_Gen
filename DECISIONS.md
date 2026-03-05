@@ -1259,3 +1259,27 @@
 - 与 TASK_TEMPLATE.md 互补：模板定结构，patterns 定填法
 
 - **状态**: ✅ 方案确认，待 Sprint 4b 落地
+
+## DEC-076: 实现/测试 Agent 分离（2026-03-05）
+
+**背景**: Codex 审计发现 19 个测试文件总评 6.6/10，存在大量假绿（测试内重写业务逻辑）、宽松断言（toBeTruthy）、自证式测试。根因是同一个 Agent 写代码又写测试，动机是"让测试通过"而非"找出 bug"。
+
+**决策**:
+- 编码任务拆为两个独立 Agent：Agent A（实现）+ Agent B（测试）
+- Agent B 只读 Spec + 类型 + 函数签名，**禁止阅读实现代码**（黑盒测试）
+- 两个 Agent 可并行：A 写实现，B 基于 Spec 写测试骨架
+- A 完成后跑 B 的测试，失败的退回 A 修
+
+**模板**:
+- `TASK_TEMPLATE_IMPL.md` — 纯实现，不写测试
+- `TASK_TEMPLATE_TEST.md` — 纯测试，含质量红线 6 条
+
+**质量红线**:
+1. 禁止测试内重写被测逻辑
+2. 禁止 toBeTruthy/toBeDefined 作为核心断言
+3. 禁止 setTimeout 刷异步
+4. 禁止条件分支断言
+5. 禁止 toContain 作为唯一断言
+6. localStorage mock 必须 Object.defineProperty 无条件覆盖
+
+**拍板**: 夏总 ✅
