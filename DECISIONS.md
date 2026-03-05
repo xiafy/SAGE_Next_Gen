@@ -1210,3 +1210,52 @@
 - **实际效果**: Phase 1a/1b/2 共发现 10+ 个设计/实现问题，其中 4 个是真实 bug
 - **文档**: `docs/engineering/cross-review-workflow.md`
 - **状态**: ✅ 已建立 (commit f644bc7)
+
+---
+
+### [DEC-075] Agent Swarm 五项改进（Elvis 架构对标）
+
+- **日期**: 2026-03-05
+- **决策人**: SAGE + 夏总
+- **背景**: 对标 Elvis Sun (@elvissun) 的 OpenClaw + Codex/Claude Code Agent Swarm 架构，识别 SAGE 在并行度、自动化、学习闭环上的差距
+- **参考**: `memory/ref-elvissun-agent-swarm.md`
+- **决策**: 五项改进，Sprint 4b 期间穿插落地（总计 ~6-7 天）
+
+#### 改进 1：git worktree 并行（0.5 天）
+- 每个编码 Agent 独立 worktree + branch，通过 sessions_spawn 的 cwd 参数隔离
+- Mac Mini 16GB 预计支持 3-4 个并行 Agent
+- 任务完成后自动 git worktree remove 清理
+
+#### 改进 2：自动化双路 Code Review — cron 方案（1-2 天）
+- PR 创建后 cron 自动触发两路审查：
+  - Codex (gpt-5.3-codex)：逻辑、边界 case、race condition、类型一致性
+  - Opus 4.6：PRD AC 对照、安全、UX 一致性
+- Definition of Done：PR + CI + 双路 Review 全过 → Telegram 通知夏总
+- Review 有 critical → 自动 respawn 修复（最多 2 次）→ 仍失败 → SAGE 介入
+- 选择 cron 方案（B）而非 GitHub Actions（A）：复用现有基础设施 + 不暴露 API Key + 可带业务 context
+
+#### 改进 3：PR 截图 + E2E 自动化（3 天，三阶段）
+- **3A 短期**（1 天）：playwright.config screenshot: 'on'，截图附到 PR comment
+- **3B 中期**（2 天）：
+  - 补 data-testid（规范：sage-{component}-{element}）
+  - API Mock 层（page.route() 拦截 analyze/chat）
+  - 标准 mock fixture：thai-dense-01 的识别结果
+  - 新增 main-flow.spec.ts（完整主路径 30s）+ regression.spec.ts（BUG-001~004）
+  - 多图补充扫描 E2E（english-03~07 Cheesecake Factory 5 页）
+- **3C 后期**：截图 baseline 对比 + Waiter/MealPlan 路径 + 真实 API 集成测试
+- **测试素材**：22 张真实菜单图片（7 语种），已清理 AI 生成/stock photo 假图
+
+#### 改进 4：Agent 任务 Registry（1 天）
+- .sage/active-tasks.json 结构化跟踪所有在跑的 Agent
+- 字段：id, branch, worktree, agent, model, sessionKey, status, pr, checks, retries
+- 生命周期：running → pr_created → reviewing → ready → merged
+- cron 每 10min 扫描：检查 session 存活、PR 状态、CI 状态、Review 状态
+- 自动 respawn 失败 Agent（retries < maxRetries）
+
+#### 改进 5：Prompt 模式记忆（0.5 天 + 持续积累）
+- .sage/prompt-patterns.md 按任务类型索引
+- 记录每类的成功率、关键要素、模型偏好、教训
+- Agent 任务一次通过 → 自动提取成功模式；失败 → 记录失败原因 + 修正 diff
+- 与 TASK_TEMPLATE.md 互补：模板定结构，patterns 定填法
+
+- **状态**: ✅ 方案确认，待 Sprint 4b 落地
