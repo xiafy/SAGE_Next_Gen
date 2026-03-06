@@ -8,10 +8,10 @@
 
 ## 当前状态
 
-**阶段**: Sprint 4b Phase 1 ✅ 完成 | Phase 2 待启动
-**当前子阶段**: Phase 2 Step 0 — Spec 审查 + 一致性闸门 (DEC-063)
-**整体进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅ | Sprint 4b Phase 1 ✅
-**最后更新**: 2026-03-05 15:50
+**阶段**: Sprint 4b ✅ 完成
+**当前子阶段**: Sprint 5 Beta 内测 — 待规划
+**整体进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅ | Sprint 4b ✅
+**最后更新**: 2026-03-06 18:45
 
 ## 🌐 线上地址
 - **App**: https://sage-next-gen.pages.dev (deploy: 62730ff)

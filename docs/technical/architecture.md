@@ -88,6 +88,7 @@ app/src/
 │   ├── chat.ts           # 调用 /api/chat（SSE 流式）
 │   ├── config.ts         # Worker URL 配置
 │   └── transcribe.ts     # 语音转写（Sprint 2）
+│   └── summarize.ts      # /api/memory/summarize（记忆）
 ├── hooks/
 │   └── useAppState.ts
 ├── types/
@@ -112,6 +113,7 @@ worker/
 │   ├── chat.ts           # /api/chat 处理器（SSE 透传）
 │   ├── health.ts         # /api/health
 │   └── transcribe.ts     # /api/transcribe（语音）
+│   └── summarize.ts      # /api/memory/summarize（记忆）
 ├── middleware/
 │   └── cors.ts           # CORS + Env 类型（持有所有 Secret 引用）
 ├── prompts/
@@ -181,6 +183,7 @@ interface StoredPreferences {
 | `/api/chat` | POST | SSE（流式文本） | AI 对话推荐 |
 | `/api/health` | GET | JSON | 健康检查 |
 | `/api/transcribe` | POST | JSON | 语音转写（Sprint 2） |
+| `/api/memory/summarize` | POST | JSON | 会话摘要 + 偏好进化（Sprint 4b） |
 
 ### 3.2 `/api/analyze` SSE 事件序列
 

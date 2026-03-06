@@ -1,12 +1,13 @@
 # API_DESIGN.md — API 接口详细设计
 
-> 版本: v3.1
-> 日期: 2026-03-04
-> 状态: ✅ 当前版本（已对齐 DEC-044/045/050/051/068）
+> 版本: v3.2
+> 日期: 2026-03-06
+> 状态: ✅ 当前版本（已对齐 DEC-044/045/050/051/067/068）
 > 变更说明: v1.0→v2.0→v3.0→v3.1
 > - v2.0: VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径；Prompt v8 allergenCodes pipeline
 > - **v3.0 (DEC-068, 2026-03-03)**: VL+Enrich 合并为单次 Gemini 调用（Prompt v9）。移除独立 Enrich 阶段，消除 429 限流和跨境延迟问题。Worker `analyze.ts` 只保留 Step 1。总延迟 ~18s，成功率大幅提升
 > - **v3.1 (2026-03-04)**: 补充 `POST /api/transcribe` 文档（Sprint 3 已实现）；移除 weather 占位
+> - **v3.2 (2026-03-06)**: 新增 `POST /api/memory/summarize` 文档（Sprint 4b Memory System）
 > 上游文档: `docs/technical/architecture.md`、`docs/product/prd.md`、`DECISIONS.md`
 > 供应商: 菜单识别 = Google Gemini API（单次调用，DEC-068）；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 

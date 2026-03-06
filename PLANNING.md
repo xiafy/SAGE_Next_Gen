@@ -5,9 +5,9 @@
 
 ---
 
-## 当前阶段：Sprint 4b 进行中
+## 当前阶段：Sprint 4b ✅ 完成
 
-**进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅
+**进度**: Sprint 0 ✅ | Sprint 1 ✅ | Sprint 2 ✅ | Sprint 3 ✅ | Sprint 4a ✅ | Sprint 4b ✅
 
 **当前**: Sprint 4b — Memory System (DEC-067)  
 **下一阶段**: Sprint 5 — Beta 内测
