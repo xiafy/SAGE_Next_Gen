@@ -61,10 +61,10 @@ export const SummarizeResponseSchema = z.object({
   evolutions: z.array(z.object({
     action: z.enum(['add', 'strengthen', 'modify']),
     key: z.string(),
-    entry: PreferenceEntrySchema.optional(),
-    newConfidence: z.number().min(0).max(1).optional(),
-    oldValue: z.string().optional(),
-    newValue: z.string().optional(),
+    entry: PreferenceEntrySchema.nullable().optional(),
+    newConfidence: z.number().min(0).max(1).nullable().optional(),
+    oldValue: z.string().nullable().optional(),
+    newValue: z.string().nullable().optional(),
   })),
 });
 

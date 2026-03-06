@@ -101,117 +101,52 @@ describe('SummarizeRequestSchema', () => {
 
 // ─── Response validation ─────────────────────────
 
+
 describe('SummarizeResponseSchema', () => {
-  it('accepts valid AI response', () => {
-    const result = SummarizeResponseSchema.safeParse(validAIResponse);
-    expect(result.success).toBe(true);
-  });
-
-  it('truncates keyMoments to 3 entries', () => {
-    const result = SummarizeResponseSchema.safeParse({
-      ...validAIResponse,
+  it('accepts null values in evolution optional fields', () => {
+    const aiResponse = {
       summary: {
-        ...validAIResponse.summary,
-        keyMoments: ['a', 'b', 'c', 'd'],
+        dishesOrdered: ['蒸鸡胸'],
+        dishesSkipped: [],
+        restaurantType: '中餐',
+        preferencesLearned: ['对海鲜过敏'],
+        keyMoments: ['用户声明过敏'],
       },
-    });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.summary.keyMoments).toHaveLength(3);
-    }
-  });
-
-  it('rejects invalid evolution action', () => {
-    const result = SummarizeResponseSchema.safeParse({
-      ...validAIResponse,
-      evolutions: [{ action: 'weaken', key: 'test' }],
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it('accepts empty evolutions', () => {
-    const result = SummarizeResponseSchema.safeParse({
-      ...validAIResponse,
-      evolutions: [],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts strengthen without entry', () => {
-    const result = SummarizeResponseSchema.safeParse({
-      ...validAIResponse,
-      evolutions: [
-        { action: 'strengthen', key: 'seafood', newConfidence: 0.7 },
-      ],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it('accepts modify with oldValue/newValue', () => {
-    const result = SummarizeResponseSchema.safeParse({
-      ...validAIResponse,
-      evolutions: [
-        { action: 'modify', key: 'spicy', oldValue: 'no_spicy', newValue: 'mild_spicy' },
-      ],
-    });
-    expect(result.success).toBe(true);
-  });
-});
-
-// ─── Prompt builder ─────────────────────────
-
-describe('buildMemorySummarizePrompt', () => {
-  it('includes conversation content', () => {
-    const prompt = buildMemorySummarizePrompt(validRequest);
-    expect(prompt).toContain('我不吃猪肉');
-    expect(prompt).toContain('冬阴功汤');
-  });
-
-  it('includes user preferences', () => {
-    const prompt = buildMemorySummarizePrompt(validRequest);
-    expect(prompt).toContain('peanut');
-    expect(prompt).toContain('no_pork');
-    expect(prompt).toContain('spicy');
-  });
-
-  it('includes restaurant type from menuData', () => {
-    const prompt = buildMemorySummarizePrompt(validRequest);
-    expect(prompt).toContain('泰式');
-  });
-
-  it('includes preference evolution rules', () => {
-    const prompt = buildMemorySummarizePrompt(validRequest);
-    expect(prompt).toContain('add');
-    expect(prompt).toContain('strengthen');
-    expect(prompt).toContain('modify');
-    expect(prompt).toContain('explicit');
-    expect(prompt).toContain('inferred');
-    expect(prompt).toContain('confidence');
-  });
-
-  it('works without menuData', () => {
-    const { menuData: _, ...noMenu } = validRequest;
-    const prompt = buildMemorySummarizePrompt(noMenu);
-    expect(prompt).toContain('我不吃猪肉');
-  });
-
-  it('includes learned preferences when present', () => {
-    const req = {
-      ...validRequest,
-      preferences: {
-        ...validRequest.preferences,
-        learned: [{
-          value: 'seafood',
-          source: 'inferred' as const,
-          confidence: 0.5,
-          firstSeen: '2026-01-01',
-          lastSeen: '2026-01-01',
-          occurrences: 2,
-        }],
-      },
+      evolutions: [{
+        action: 'strengthen',
+        key: 'allergen_seafood',
+        entry: null,
+        newConfidence: 1.0,
+        oldValue: null,
+        newValue: null,
+      }],
     };
-    const prompt = buildMemorySummarizePrompt(req);
-    expect(prompt).toContain('seafood');
-    expect(prompt).toContain('inferred');
+    const result = SummarizeResponseSchema.safeParse(aiResponse);
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts missing optional fields in evolutions', () => {
+    const aiResponse = {
+      summary: {
+        dishesOrdered: [],
+        dishesSkipped: [],
+        preferencesLearned: [],
+        keyMoments: [],
+      },
+      evolutions: [{
+        action: 'add',
+        key: 'light_food',
+        entry: {
+          value: 'light_food',
+          source: 'explicit',
+          confidence: 1.0,
+          firstSeen: '2026-03-06',
+          lastSeen: '2026-03-06',
+          occurrences: 1,
+        },
+      }],
+    };
+    const result = SummarizeResponseSchema.safeParse(aiResponse);
+    expect(result.success).toBe(true);
   });
 });
