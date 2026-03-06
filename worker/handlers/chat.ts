@@ -3,7 +3,6 @@ import { checkRateLimit } from '../utils/rateLimit.js';
 import { streamPassthroughWithFallback } from '../utils/bailian.js';
 import { errorResponse } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import { getWeather } from '../utils/weather.js';
 import { ChatRequestSchema } from '../schemas/chatSchema.js';
 import { getPreChatSystem } from '../prompts/preChat.js';
 import { buildAgentChatSystem } from '../prompts/agentChat.js';
