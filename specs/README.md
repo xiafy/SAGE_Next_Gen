@@ -49,3 +49,21 @@ specs/
 2. **Spec 是契约** — 实现必须满足 spec 中所有 AC
 3. **Spec 可迭代** — 发现问题随时更新，但需记录变更原因
 4. **AI agent 可读** — 写清楚到 AI agent 能直接据此生成测试和代码的程度
+
+## 模板
+
+新 Spec 必须使用 `SPEC_TEMPLATE.md` 模板，包含以下必填章节：
+- 验收标准（每条 AC 附验证方式）
+- 不做（Non-Goals，3-5 条）
+
+## 已归档
+
+以下 Spec 已移至 `archive/`：
+- `sprint2-weather-api-spec.md` — 功能已废弃（2026-03-06）
+- `f05-pre-chat.md` — DEC-020 已删除
+
+## 已搁置
+
+以下 Spec 保留但未实施：
+- `ui-redesign-duolingo-style.md` — 从未实施
+- `vl-display-tiers-spec.md` — 待确认
