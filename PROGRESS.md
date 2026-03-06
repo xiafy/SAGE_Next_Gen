@@ -21,12 +21,15 @@
 
 ## 🔴 进行中（锁定区）
 
-**Sprint 4b Phase 2: Memory System (DEC-067)**
-- [ ] Step 0: Spec 审查 + 一致性闸门 (DEC-063) — 待夏总确认
-- [ ] Step 1: 数据层设计 + 实现
-- [ ] Step 2: 会话摘要生成
-- [ ] Step 3: 跨会话记忆注入
-- [ ] Step 4: 验收 + 部署
+**Sprint 4b Phase 2: Memory System (DEC-067)** ✅
+- [x] Step 0: Spec 审查 + 一致性闸门 — 通过 (2026-03-06)
+- [x] Step 1: types + 偏好迁移 + 版本化 — memory.ts 全套
+- [x] Step 2: 会话持久化 + sessionId + 边界检测 — AppContext
+- [x] Step 3: Worker /api/memory/summarize — 线上验证通过 (59c3faf)
+- [x] Step 4: 懒摘要 hook + 前端 API — useLazySummarize
+- [x] Step 5: Chat prompt 记忆注入 — agentChat.ts matchSessions
+- [x] Step 6: Zod schema null 兼容修复 + 部署
+- 待做: 真机端到端验证（App 打开 → 摘要生成 → 下次会话注入）
 
 ## ✅ Sprint 4b Phase 1: Agent Swarm 基建 (2026-03-05)
 
