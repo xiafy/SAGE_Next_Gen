@@ -14,7 +14,7 @@
 **最后更新**: 2026-03-06 18:45
 
 ## 🌐 线上地址
-- **App**: https://sage-next-gen.pages.dev (deploy: 62730ff)
+- **App**: https://sage-next-gen.pages.dev (deploy: 8d562393 (Sprint 4b))
 - **Worker**: https://sage-worker.xiafy920.workers.dev
 
 ---
