@@ -33,7 +33,6 @@
 │                                                             │
 │  POST /api/analyze  → 菜单识别（单次 Gemini 调用，SSE 返回）   │
 │  POST /api/chat     → AI 对话（SSE 流式透传）                  │
-│  GET  /api/weather  → 天气 API（Open-Meteo 代理）             │
 │  GET  /api/health   → 健康检查                                │
 │                                                             │
 │  职责：持有 API Key / 速率限制 / CORS / 请求日志 / 路由兜底      │
@@ -128,7 +127,6 @@ worker/
 │   ├── gemini.ts         # Gemini API 客户端（fetchGeminiComplete）
 │   ├── logger.ts         # 结构化日志
 │   ├── rateLimit.ts      # IP 速率限制
-│   └── weather.ts        # Open-Meteo 天气
 └── index.ts              # Worker 入口路由
 ```
 
@@ -181,7 +179,6 @@ interface StoredPreferences {
 |------|------|---------|------|
 | `/api/analyze` | POST | SSE（progress + result） | 菜单图片识别（单阶段，DEC-068） |
 | `/api/chat` | POST | SSE（流式文本） | AI 对话推荐 |
-| `/api/weather` | GET | JSON | 天气查询（Open-Meteo 代理） |
 | `/api/health` | GET | JSON | 健康检查 |
 | `/api/transcribe` | POST | JSON | 语音转写（Sprint 2） |
 

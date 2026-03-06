@@ -6,7 +6,7 @@
 > 变更说明: v1.0→v2.0→v3.0→v3.1
 > - v2.0: VL+Enrich 切换为 Gemini 2.0 Flash；更新超时参数；更新降级路径；Prompt v8 allergenCodes pipeline
 > - **v3.0 (DEC-068, 2026-03-03)**: VL+Enrich 合并为单次 Gemini 调用（Prompt v9）。移除独立 Enrich 阶段，消除 429 限流和跨境延迟问题。Worker `analyze.ts` 只保留 Step 1。总延迟 ~18s，成功率大幅提升
-> - **v3.1 (2026-03-04)**: 补充 `POST /api/transcribe` 文档（Sprint 3 已实现）；标记 `GET /api/weather` 为未实现占位
+> - **v3.1 (2026-03-04)**: 补充 `POST /api/transcribe` 文档（Sprint 3 已实现）；移除 weather 占位
 > 上游文档: `docs/technical/architecture.md`、`docs/product/prd.md`、`DECISIONS.md`
 > 供应商: 菜单识别 = Google Gemini API（单次调用，DEC-068）；Chat = 阿里云百炼 DashScope；兜底 = 百炼新加坡国际站
 
@@ -510,27 +510,6 @@ interface TranscribeRequest {
 | ASR 超时 | **20s** | `AbortSignal.timeout(20_000)` |
 | 音频上限 | **500 KB** | `MAX_AUDIO_BYTES = 500 * 1024` |
 | API 端点 | DashScope compatible-mode | `dashscope.aliyuncs.com/compatible-mode/v1/chat/completions` |
-
----
-
-### `GET /api/weather` `[Sprint 2]` ⏳ 未实现
-
-**功能**: 获取当前位置天气
-
-> ⏳ **未实现**：此端点为 Sprint 2 设计占位，代码中尚未注册路由，Worker 不会响应此请求。
-
-**参数**: `?lat={lat}&lng={lng}`
-
-**响应** (Sprint 2 设计占位，尚未实现):
-```typescript
-{
-  condition: 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'hot' | 'cold';
-  temperatureCelsius: number;
-  description: string;        // 翻译后的天气描述
-}
-```
-
-**数据来源**: Open-Meteo（免费，无需 API Key）
 
 ---
 
