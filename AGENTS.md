@@ -67,7 +67,8 @@
 ```
 .
 ├── AGENTS.md              # Agent 工作手册（入口）
-├── TASK_TEMPLATE.md       # 编码任务下发模板
+├── TASK_TEMPLATE_IMPL.md  # 实现任务模板（DEC-076）
+├── TASK_TEMPLATE_TEST.md  # 测试任务模板（DEC-076）
 ├── PLANNING.md / PROGRESS.md / DECISIONS.md
 │
 ├── docs/
