@@ -199,46 +199,62 @@ done <<< "$PRD_FEATURES"
 M_SPEC_COV="$COVERED_F/$TOTAL_F"
 log "  Spec 覆盖: $M_SPEC_COV"
 
-# 8c. AC→测试覆盖（F{xx}-AC{yy} 格式，仅 MVP）
+# 8c. AC→测试覆盖（三层度量：标签覆盖 / 有效覆盖 / 可自动化总数）
+# 使用 ac-registry.json 分类：A逻辑/B组件/C集成/D-AI质量/E性能(排除)
+# 有效覆盖 = 标签存在 且 测试内容包含该类型要求的关键词
 AC_OUTPUT=$(python3 -c "
-import re, glob, os
+import re, glob, os, json
 
-# --- 分母：从 PRD 提取 MVP 功能的 F{xx}-AC{yy} ---
-with open('docs/product/prd.md') as f: prd = f.read()
-# 按 ### F 分段
-sections = re.split(r'(?=^### )', prd, flags=re.MULTILINE)
-all_acs = set()
-for sec in sections:
-    hdr = re.match(r'### .*?(F\d+)', sec)
-    if not hdr: continue
-    feat = hdr.group(1)
-    # 排除非 MVP：已删除 / Sprint 2 / Sprint 3 / Future / Backlog
-    first_line = sec.split('\n')[0]
-    if any(tag in first_line for tag in ['已删除', 'Sprint 2', 'Sprint 3', 'Future', 'Backlog']):
-        continue
-    if re.search(r'\*\*优先级\*\*.*\[Sprint [23]\]', sec):
-        continue
-    if re.search(r'\*\*优先级\*\*.*\[Future\]', sec):
-        continue
-    # 提取该段内所有 AC
-    for m in re.finditer(r'-\s+\*?\*?AC(\d+)', sec):
-        all_acs.add(f'{feat}-AC{m.group(1)}')
+with open('scripts/ac-registry.json') as f:
+    registry = json.load(f)['registry']
 
-# --- 分子：从测试文件提取 F{xx}-AC{yy} ---
-test_acs = set()
+all_acs = set(registry.keys())
+e_acs = {ac for ac, t in registry.items() if t == 'E'}
+automatable_acs = all_acs - e_acs
+
+validity_keywords = {
+    'A': [],
+    'B': ['render', 'screen', 'fireEvent', 'getByRole', 'getByText',
+          'querySelector', 'className', 'style', 'toHaveAttribute',
+          'toBeInTheDocument', 'queryByText', 'getAllByRole', 'getByTestId'],
+    'C': ['mock', 'spy', 'fetch', 'navigator', 'vi.fn', 'vi.spyOn',
+          'mockResolvedValue', 'mockRejectedValue'],
+    'D': ['prompt', 'system.*message', 'instruction', 'preferencesSummary',
+          'preferences_summary', 'anti.?pattern'],
+}
+
+tagged_acs = set()
+valid_acs = set()
+
 search_paths = (
     glob.glob('app/src/**/*.test.*', recursive=True)
     + glob.glob('worker/**/*.test.*', recursive=True)
-    + glob.glob('tests/**/*.md', recursive=True)
 )
-for f in search_paths:
-    if not os.path.isfile(f): continue
-    with open(f) as fh: t = fh.read()
-    for m in re.finditer(r'F(\d+)[-_]AC(\d+)', t):
-        test_acs.add(f'F{m.group(1)}-AC{m.group(2)}')
 
-covered = all_acs & test_acs
-print(f'{len(covered)}/{len(all_acs)} (MVP)')
+for fpath in search_paths:
+    if not os.path.isfile(fpath): continue
+    with open(fpath) as fh: content = fh.read()
+    file_acs = set()
+    for m in re.finditer(r'F(\d+)[-_]AC(\d+)', content):
+        file_acs.add(f'F{m.group(1)}-AC{m.group(2)}')
+    for ac in file_acs:
+        if ac not in automatable_acs: continue
+        tagged_acs.add(ac)
+        ac_type = registry.get(ac, 'A')
+        keywords = validity_keywords.get(ac_type, [])
+        if not keywords:
+            valid_acs.add(ac)
+        else:
+            for kw in keywords:
+                if re.search(kw, content, re.IGNORECASE):
+                    valid_acs.add(ac)
+                    break
+
+total = len(automatable_acs)
+tagged = len(tagged_acs & automatable_acs)
+valid = len(valid_acs & automatable_acs)
+e_count = len(e_acs)
+print(f'tagged:{tagged}/{total} valid:{valid}/{total} (-{e_count}E)')
 " 2>/dev/null || echo "?/?")
 M_AC_COV="$AC_OUTPUT"
 log "  AC 覆盖: $M_AC_COV"
