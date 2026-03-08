@@ -62,7 +62,7 @@ function makeMemory(overrides: Partial<SAGE_Memory> = {}): SAGE_Memory {
   };
 }
 
-describe('loadMemory', () => {
+describe('F09-AC1 F04-AC3: loadMemory — preference persistence across sessions', () => {
   beforeEach(clearStore);
 
   it('returns default when localStorage is empty', () => {

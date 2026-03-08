@@ -199,17 +199,46 @@ done <<< "$PRD_FEATURES"
 M_SPEC_COV="$COVERED_F/$TOTAL_F"
 log "  Spec 覆盖: $M_SPEC_COV"
 
-# 8c. AC→测试覆盖
+# 8c. AC→测试覆盖（F{xx}-AC{yy} 格式，仅 MVP）
 AC_OUTPUT=$(python3 -c "
 import re, glob, os
-with open('docs/product/prd.md') as f: c = f.read()
-total_ac = len(re.findall(r'- \*?\*?AC\d+', c))
+
+# --- 分母：从 PRD 提取 MVP 功能的 F{xx}-AC{yy} ---
+with open('docs/product/prd.md') as f: prd = f.read()
+# 按 ### F 分段
+sections = re.split(r'(?=^### )', prd, flags=re.MULTILINE)
+all_acs = set()
+for sec in sections:
+    hdr = re.match(r'### .*?(F\d+)', sec)
+    if not hdr: continue
+    feat = hdr.group(1)
+    # 排除非 MVP：已删除 / Sprint 2 / Sprint 3 / Future / Backlog
+    first_line = sec.split('\n')[0]
+    if any(tag in first_line for tag in ['已删除', 'Sprint 2', 'Sprint 3', 'Future', 'Backlog']):
+        continue
+    if re.search(r'\*\*优先级\*\*.*\[Sprint [23]\]', sec):
+        continue
+    if re.search(r'\*\*优先级\*\*.*\[Future\]', sec):
+        continue
+    # 提取该段内所有 AC
+    for m in re.finditer(r'-\s+\*?\*?AC(\d+)', sec):
+        all_acs.add(f'{feat}-AC{m.group(1)}')
+
+# --- 分子：从测试文件提取 F{xx}-AC{yy} ---
 test_acs = set()
-for f in glob.glob('app/src/**/*.test.*', recursive=True) + glob.glob('tests/**/*.md', recursive=True):
+search_paths = (
+    glob.glob('app/src/**/*.test.*', recursive=True)
+    + glob.glob('worker/**/*.test.*', recursive=True)
+    + glob.glob('tests/**/*.md', recursive=True)
+)
+for f in search_paths:
     if not os.path.isfile(f): continue
     with open(f) as fh: t = fh.read()
-    test_acs.update(re.findall(r'AC\d+', t))
-print(f'{len(test_acs)}/{total_ac}')
+    for m in re.finditer(r'F(\d+)[-_]AC(\d+)', t):
+        test_acs.add(f'F{m.group(1)}-AC{m.group(2)}')
+
+covered = all_acs & test_acs
+print(f'{len(covered)}/{len(all_acs)} (MVP)')
 " 2>/dev/null || echo "?/?")
 M_AC_COV="$AC_OUTPUT"
 log "  AC 覆盖: $M_AC_COV"

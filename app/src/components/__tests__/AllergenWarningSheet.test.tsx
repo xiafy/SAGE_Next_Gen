@@ -23,7 +23,7 @@ const defaultProps = {
   isZh: false,
 };
 
-describe('AllergenWarningSheet', () => {
+describe('F08-AC9: AllergenWarningSheet — allergen warning before waiter mode', () => {
   it('renders risk items with allergen info', () => {
     render(
       <AllergenWarningSheet

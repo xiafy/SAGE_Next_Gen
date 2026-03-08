@@ -4,7 +4,7 @@ import {
 } from '../localLanguage';
 import type { CommunicationAction } from '../../../../shared/types';
 
-describe('getPhrase', () => {
+describe('F08-AC8: getPhrase — waiter communication panel translations', () => {
   it('sold_out, th → ไม่มี', () => {
     expect(getPhrase('sold_out', 'th')).toBe('ไม่มี');
   });

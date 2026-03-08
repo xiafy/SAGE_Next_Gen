@@ -7,7 +7,7 @@ function makeBannerData(items: AllergyBannerData['items'] = []): AllergyBannerDa
   return { items, detectedLanguage: 'th' };
 }
 
-describe('WaiterAllergyBanner', () => {
+describe('F08-AC7: WaiterAllergyBanner — allergy banner in waiter mode', () => {
   it('renders allergen icon + English + local language', () => {
     render(
       <WaiterAllergyBanner
