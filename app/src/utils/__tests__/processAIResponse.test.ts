@@ -255,3 +255,117 @@ describe('F06-AC13: AI operates Order (add/remove/replace)', () => {
     expect(result.toasts).toContain('Dish replaced');
   });
 });
+
+describe('F06-AC4: Main Chat handoff should continue from answered pre-chat context', () => {
+  it('F06-AC4: handing_off structured response keeps main-chat message as-is', () => {
+    const fullText = [
+      '```json',
+      JSON.stringify({
+        message: '你们2个人且有人花生过敏，我先给你一套避开花生的组合。',
+        quickReplies: ['看方案', '先了解招牌菜'],
+      }),
+      '```',
+    ].join('\n');
+
+    const result = processAIResponse(buildInput({ fullText, mode: 'chat', chatPhase: 'handing_off' }));
+    expect(result.messages[0]?.content).toBe('你们2个人且有人花生过敏，我先给你一套避开花生的组合。');
+    expect(result.quickReplies).toEqual(['看方案', '先了解招牌菜']);
+    expect(result.chatPhaseTransition).toBe('chatting');
+  });
+
+  it('F06-AC4: handing_off plain text still transitions to chatting without losing content', () => {
+    const result = processAIResponse(buildInput({
+      fullText: '我会在你的过敏约束下继续推荐。',
+      mode: 'chat',
+      chatPhase: 'handing_off',
+    }));
+
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0]?.content).toBe('我会在你的过敏约束下继续推荐。');
+    expect(result.chatPhaseTransition).toBe('chatting');
+  });
+
+  it('F06-AC4: handing_off malformed JSON falls back safely and still completes phase transition', () => {
+    const result = processAIResponse(buildInput({
+      fullText: '```json\n{"message":"broken"\n```',
+      mode: 'chat',
+      chatPhase: 'handing_off',
+      language: 'en',
+    }));
+
+    expect(result.messages[0]?.content).toBe('```json\n{"message":"broken"\n```');
+    expect(result.quickReplies).toContain('🔄 Regenerate');
+    expect(result.chatPhaseTransition).toBe('chatting');
+  });
+});
+
+describe('F06-AC5: Quick replies are context-driven from AI response', () => {
+  it('F06-AC5: returns AI-provided quick replies from structured response', () => {
+    const fullText = JSON.stringify({
+      message: '想先看哪类？',
+      quickReplies: ['看辣的', '看清淡', '直接给方案'],
+    });
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.quickReplies).toEqual(['看辣的', '看清淡', '直接给方案']);
+  });
+
+  it('F06-AC5: supports boundary of 4 quick replies', () => {
+    const fullText = JSON.stringify({
+      message: '继续吗？',
+      quickReplies: ['换一道', '加主食', '看点菜单', '展示给服务员'],
+    });
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.quickReplies).toHaveLength(4);
+  });
+
+  it('F06-AC5: invalid quickReplies type is ignored', () => {
+    const fullText = JSON.stringify({
+      message: '继续',
+      quickReplies: 'not-an-array',
+    });
+    const result = processAIResponse(buildInput({ fullText }));
+    expect(result.quickReplies).toEqual([]);
+  });
+});
+
+describe('F06-AC10: AI intent auto-switch (explore vs plan) in one session', () => {
+  it('F06-AC10: explore-style response keeps text-only message', () => {
+    const result = processAIResponse(buildInput({
+      fullText: JSON.stringify({ message: '这道冬阴功偏酸辣，香茅味会更突出。' }),
+    }));
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0]?.cardType).toBeUndefined();
+  });
+
+  it('F06-AC10: plan-style response with constraints yields MealPlan card', () => {
+    const fullText = [
+      '4人预算800泰铢，我给你一套方案：',
+      '```json',
+      JSON.stringify({
+        version: 1,
+        totalEstimate: 760,
+        currency: 'THB',
+        rationale: 'balanced',
+        diners: 4,
+        courses: [
+          {
+            name: 'Main',
+            items: [{ dishId: 'dish_1', name: 'Pad Thai', nameOriginal: 'ผัดไทย', price: 180, reason: 'shareable', quantity: 2 }],
+          },
+        ],
+      }),
+      '```',
+    ].join('\n');
+    const result = processAIResponse(buildInput({ fullText }));
+    const cardMsg = result.messages.find((message) => message.cardType === 'mealPlan');
+    expect(cardMsg?.cardType).toBe('mealPlan');
+    expect(result.mealPlanVersion).toBe(1);
+  });
+
+  it('F06-AC10: broken plan JSON falls back to text + regenerate CTA', () => {
+    const fullText = '预算800，帮你配一套。\n```json\n{"version":1,"courses":[\n```';
+    const result = processAIResponse(buildInput({ fullText, language: 'zh' }));
+    expect(result.messages.some((message) => message.cardType === 'mealPlan')).toBe(false);
+    expect(result.quickReplies).toContain('🔄 重新生成方案');
+  });
+});

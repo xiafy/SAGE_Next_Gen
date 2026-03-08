@@ -169,3 +169,46 @@ describe('F06-AC8: MealPlanCard for meal plan display', () => {
     expect(allItems).toHaveLength(3);
   });
 });
+
+describe('F06-AC9: MealPlanCard replace-per-dish and add-all behaviors', () => {
+  it('F06-AC9: per-dish replace triggers AI-driven callback with dish identity', () => {
+    const onReplaceDish = vi.fn();
+    render(<MealPlanCard mealPlan={makeMealPlan()} {...defaultProps} onReplaceDish={onReplaceDish} />);
+
+    fireEvent.click(screen.getAllByLabelText('Replace dish')[1]!);
+    expect(onReplaceDish).toHaveBeenCalledWith('d2', 'Pad Thai');
+  });
+
+  it('F06-AC9: add-all callback receives full meal plan across courses', () => {
+    const onAddAllToOrder = vi.fn();
+    const mealPlan = makeMealPlan();
+    render(<MealPlanCard mealPlan={mealPlan} {...defaultProps} onAddAllToOrder={onAddAllToOrder} />);
+
+    fireEvent.click(screen.getByText('Add All to Order'));
+    expect(onAddAllToOrder).toHaveBeenCalledWith(mealPlan);
+
+    const passed = onAddAllToOrder.mock.calls[0]![0] as MealPlan;
+    expect(passed.courses).toHaveLength(2);
+    expect(passed.courses[0]?.items).toHaveLength(1);
+    expect(passed.courses[1]?.items).toHaveLength(2);
+  });
+
+  it('F06-AC9: inactive card blocks replace and add-all operations', () => {
+    const onReplaceDish = vi.fn();
+    const onAddAllToOrder = vi.fn();
+    render(
+      <MealPlanCard
+        mealPlan={makeMealPlan()}
+        {...defaultProps}
+        isActive={false}
+        onReplaceDish={onReplaceDish}
+        onAddAllToOrder={onAddAllToOrder}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Add All to Order'));
+    fireEvent.click(screen.getAllByLabelText('Replace dish')[0]!);
+    expect(onAddAllToOrder).toHaveBeenCalledTimes(0);
+    expect(onReplaceDish).toHaveBeenCalledTimes(0);
+  });
+});

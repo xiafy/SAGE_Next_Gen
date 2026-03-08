@@ -290,3 +290,96 @@ describe('Memory Step 2 — sessionId + pending summary', () => {
     expect(r.sessionId).toBe('keep-me');
   });
 });
+
+describe('F06-AC6: Explore round trip preserves conversation history', () => {
+  it('F06-AC6: chat -> explore -> chat keeps all existing messages', () => {
+    const initialMessages = [
+      { id: 'm1', role: 'user', content: '想吃点清淡的', timestamp: 1 },
+      { id: 'm2', role: 'assistant', content: '可以看看蒸鱼和青木瓜沙拉', timestamp: 2 },
+    ] as const;
+
+    let state = makeState({ currentView: 'chat', messages: [...initialMessages] });
+    state = appReducer(state, { type: 'NAV_TO', view: 'explore' });
+    state = appReducer(state, { type: 'NAV_TO', view: 'chat' });
+
+    expect(state.messages).toHaveLength(2);
+    expect(state.messages.map((message) => message.id)).toEqual(['m1', 'm2']);
+    expect(state.currentView).toBe('chat');
+  });
+
+  it('F06-AC6: multiple explore round trips keep history untouched', () => {
+    const initialMessages = [
+      { id: 'm1', role: 'user' as const, content: '先看看菜单', timestamp: 1 },
+      { id: 'm2', role: 'assistant' as const, content: '好的，你可以从海鲜分类开始', timestamp: 2 },
+      { id: 'm3', role: 'user' as const, content: '返回对话', timestamp: 3 },
+    ];
+
+    let state = makeState({ currentView: 'chat', messages: initialMessages });
+    state = appReducer(state, { type: 'NAV_TO', view: 'explore' });
+    state = appReducer(state, { type: 'NAV_TO', view: 'chat' });
+    state = appReducer(state, { type: 'NAV_TO', view: 'explore' });
+    state = appReducer(state, { type: 'NAV_TO', view: 'chat' });
+
+    expect(state.messages).toHaveLength(3);
+    expect(state.messages[2]?.content).toBe('返回对话');
+  });
+
+  it('F06-AC6: explicit RESET_SESSION clears history after round trip', () => {
+    let state = makeState({
+      currentView: 'chat',
+      messages: [{ id: 'm1', role: 'assistant', content: '已有会话', timestamp: 1 }],
+    });
+    state = appReducer(state, { type: 'NAV_TO', view: 'explore' });
+    state = appReducer(state, { type: 'NAV_TO', view: 'chat' });
+    state = appReducer(state, { type: 'RESET_SESSION' });
+
+    expect(state.messages).toHaveLength(0);
+    expect(state.chatPhase).toBe('pre_chat');
+  });
+});
+
+describe('F06-AC7: Existing conversation survives network interruption paths', () => {
+  it('F06-AC7: START_ANALYZE from chat keeps existing messages while entering analyze flow', () => {
+    const existingMessages = [
+      { id: 'm1', role: 'user' as const, content: '先聊聊推荐', timestamp: 1 },
+      { id: 'm2', role: 'assistant' as const, content: '好的，告诉我忌口', timestamp: 2 },
+    ];
+
+    const next = appReducer(
+      makeState({ currentView: 'chat', messages: existingMessages }),
+      { type: 'START_ANALYZE', files: [new File([], 'supplement.jpg')] },
+    );
+
+    expect(next.messages).toHaveLength(2);
+    expect(next.messages[0]?.id).toBe('m1');
+    expect(next.analyzingFiles).toHaveLength(1);
+  });
+
+  it('F06-AC7: chat -> scanner -> chat round trip keeps conversation state', () => {
+    let state = makeState({
+      currentView: 'chat',
+      messages: [{ id: 'm1', role: 'assistant', content: '继续对话', timestamp: 1 }],
+    });
+
+    state = appReducer(state, { type: 'NAV_TO', view: 'scanner' });
+    state = appReducer(state, { type: 'NAV_TO', view: 'chat' });
+
+    expect(state.messages).toHaveLength(1);
+    expect(state.messages[0]?.content).toBe('继续对话');
+  });
+
+  it('F06-AC7: RESET_SESSION is the only path that clears existing conversation', () => {
+    const next = appReducer(
+      makeState({
+        currentView: 'chat',
+        messages: [
+          { id: 'm1', role: 'user', content: '保留直到重置', timestamp: 1 },
+          { id: 'm2', role: 'assistant', content: '收到', timestamp: 2 },
+        ],
+      }),
+      { type: 'RESET_SESSION' },
+    );
+
+    expect(next.messages).toHaveLength(0);
+  });
+});
