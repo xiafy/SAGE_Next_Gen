@@ -658,3 +658,11 @@ https://sage-next-gen.pages.dev
 - [ ] Codex 审查（补做，审查中...）
 - **修复前**: 11/77 = 14%（假阳性）→ **修复后**: 21/60 = 35%（真实值）
 - **流程违规记录**: 未使用 TASK_TEMPLATE，实现/测试未分离（DEC-076），已补审查
+
+**Codex 审查修正** (commit b203760)
+- [x] Codex 审查 commit 935be93 → 评分 7/10，发现 2 个 🔴 标注不准确
+- [x] 修正 stateMachine.test.ts: 移除过度声明的 F06-AC6/F07-AC1/F08-AC6
+- [x] 修正 waiterActions.test.ts: F08-AC5→F08-AC1（匹配实际测试行为）
+- [x] AC 覆盖率: 21/60 → 20/60（修正后更诚实）
+- [x] CI ✅ 通过
+- **教训**: 补标注时不能"看起来相关就标"，必须验证测试断言是否真正覆盖 AC 的核心验收点
