@@ -88,3 +88,36 @@ describe('F08-AC1 F08-AC6: Waiter Actions — order CRUD + session reset via red
     expect(r.currentView).toBe('home');
   });
 });
+
+describe('F08-AC5: Continue ordering returns to Order and can navigate back to Chat', () => {
+  it('F08-AC5: normal path waiter -> order -> chat works', () => {
+    let s = makeState({
+      currentView: 'waiter',
+      orderItems: [{ menuItem: d1, quantity: 1 }],
+    });
+    s = appReducer(s, { type: 'NAV_TO', view: 'order' });
+    expect(s.currentView).toBe('order');
+    expect(s.orderItems).toHaveLength(1);
+
+    s = appReducer(s, { type: 'NAV_TO', view: 'chat' });
+    expect(s.currentView).toBe('chat');
+    expect(s.orderItems[0]!.menuItem.id).toBe('d1');
+  });
+
+  it('F08-AC5: boundary path with empty order still allows waiter -> order', () => {
+    let s = makeState({ currentView: 'waiter', orderItems: [] });
+    s = appReducer(s, { type: 'NAV_TO', view: 'order' });
+
+    expect(s.currentView).toBe('order');
+    expect(s.orderItems).toHaveLength(0);
+  });
+
+  it('F08-AC5: error-tolerant navigation from unexpected view still reaches order then chat', () => {
+    let s = makeState({ currentView: 'chat' });
+    s = appReducer(s, { type: 'NAV_TO', view: 'order' });
+    expect(s.currentView).toBe('order');
+
+    s = appReducer(s, { type: 'NAV_TO', view: 'chat' });
+    expect(s.currentView).toBe('chat');
+  });
+});
