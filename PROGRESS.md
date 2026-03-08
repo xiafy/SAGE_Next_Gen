@@ -666,3 +666,34 @@ https://sage-next-gen.pages.dev
 - [x] AC 覆盖率: 21/60 → 20/60（修正后更诚实）
 - [x] CI ✅ 通过
 - **教训**: 补标注时不能"看起来相关就标"，必须验证测试断言是否真正覆盖 AC 的核心验收点
+
+## 🧹 技术债清理（2026-03-09）
+
+**Cron 任务：God Components + Stale 引用清理**
+
+### Stale 引用修复（5处 → 0处）
+
+- [x] `assets/user-guide.md` — 创建 GTM 占位文件
+- [x] `assets/landing-page.md` — 创建 GTM 占位文件
+- [x] `assets/launch-copy.md` — 创建 GTM 占位文件
+- [x] `logs/retro-phase-X.md` → 改为 `logs/retro-phase-1.md` 模板并更新引用
+- [x] `docs/engineering/agent-swarm-ops.md` — 创建 stub 文档
+
+### POST /api/memory 误报修复
+
+**根因**: `quality-check.sh` DOC_EP/CODE_EP 正则 `/api/[a-z_-]+` 不支持多段路径，  
+将 `POST /api/memory/summarize` 截断为 `POST /api/memory` → 与代码不匹配。
+
+- [x] 修复 `scripts/quality-check.sh`：正则改为 `/api/[a-z_/-]+`（支持子路径）
+- [x] 更新 `PLANNING.md`：标记 `/api/memory/summarize` 已实现（`[x]`）
+
+### God Components 拆分方案
+
+- [x] 输出拆分方案文档：`docs/engineering/god-component-split-plan.md`
+- **AgentChatView.tsx (1163行)**: 推荐提取 `useVoiceRecorder` + `useChatAI` hooks，目标降至 ~500行
+- **analyze.ts (597行)**: 提取 `analyzeHelpers.ts` + `normalizeResult.ts`，目标降至 ~350行
+- **执行时机**: Sprint 5，需夏总拍板
+
+### 扫描结果预期
+
+下次日扫：Stale 引用 5→0，POST /api/memory 误报消除，God Components 警告保留（已豁免）

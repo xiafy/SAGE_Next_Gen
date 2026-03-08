@@ -167,11 +167,11 @@ log "$REF_OUTPUT"
 log "\n${YELLOW}▶ 业务一致性检查${NC}"
 
 # 8a. API 路由对齐
-DOC_EP=$(grep -oE '(GET|POST|PUT|DELETE) /api/[a-z_-]+' docs/technical/api-design.md 2>/dev/null | sort -u)
+DOC_EP=$(grep -oE '(GET|POST|PUT|DELETE) /api/[a-z_/-]+' docs/technical/api-design.md 2>/dev/null | sort -u)
 CODE_EP=$(python3 -c "
 import re
 with open('worker/index.ts') as f: c = f.read()
-for m in re.finditer(r\"request\.method === '(GET|POST)' && url\.pathname === '(/api/[a-z_-]+)'\", c):
+for m in re.finditer(r\"request\.method === '(GET|POST)' && url\.pathname === '(/api/[a-z_/-]+)'\", c):
     print(f'{m.group(1)} {m.group(2)}')
 " 2>/dev/null | sort -u)
 

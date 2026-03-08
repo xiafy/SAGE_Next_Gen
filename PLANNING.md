@@ -228,7 +228,7 @@
 
 - [ ] **Step 2: 会话摘要生成**
   - [ ] 会话结束时 AI 驱动摘要
-  - [ ] Worker POST /api/memory 接口
+  - [x] Worker POST /api/memory/summarize 接口（已实现，worker/handlers/summarize.ts）
 
 - [ ] **Step 3: 跨会话记忆注入**
   - [ ] 新会话 Prompt 注入历史记忆

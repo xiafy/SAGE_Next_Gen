@@ -68,6 +68,6 @@ TBD — S1 结束后根据数据细化
 
 ## 复盘规则
 
-1. 每个 Phase 完成后写复盘（`logs/retro-phase-X.md`，TODO: 待创建）
+1. 每个 Phase 完成后写复盘（`logs/retro-phase-1.md`（模板已创建，X 替换为对应 Phase 编号））
 2. 复盘内容：做对了什么 / 做错了什么 / 下次怎么改
 3. 关键经验沉淀到 MEMORY.md
