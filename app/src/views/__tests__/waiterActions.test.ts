@@ -40,7 +40,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
 const d1 = makeMenuItem('d1', 'Tom Yum');
 const d2 = makeMenuItem('d2', 'Pad Thai');
 
-describe('F08-AC5 F08-AC6: Waiter Actions — business consequences via reducer', () => {
+describe('F08-AC1 F08-AC6: Waiter Actions — order CRUD + session reset via reducer', () => {
   it('sold_out: REMOVE_FROM_ORDER removes correct dish', () => {
     const s = makeState({ orderItems: [{ menuItem: d1, quantity: 1 }, { menuItem: d2, quantity: 2 }] });
     const r = appReducer(s, { type: 'REMOVE_FROM_ORDER', itemId: 'd1' });

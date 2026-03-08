@@ -35,7 +35,7 @@ function makeMenuData(items: MenuItem[]): MenuData {
   return { menuType: 'restaurant', detectedLanguage: 'th', priceLevel: 2, currency: 'THB', categories: [], items, processingMs: 100, imageCount: 1 };
 }
 
-describe('F06-AC6 F07-AC1 F08-AC6: DEC-057 State Machine — multi-step sequences', () => {
+describe('DEC-057 State Machine — multi-step navigation + order persistence', () => {
   const d1 = makeMenuItem('d1', 'Tom Yum');
   const d2 = makeMenuItem('d2', 'Pad Thai');
   const menuData = makeMenuData([d1, d2]);
