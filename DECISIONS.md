@@ -1322,3 +1322,11 @@
 - **恢复的治理项**: §0 前置检查（一致性闸门）、§3 DEC 冲突检查、§4 PRD AC 清单、契约断言（grep）、完整禁止项（Tailwind v4/废弃文件）、严格完成自检（build + AC 逐条 + 导航回归）、反模式章节
 - **影响**: TASK_TEMPLATE_IMPL.md、TASK_TEMPLATE_TEST.md、AGENTS.md 目录结构
 - **拍板**: 夏总 ✅
+
+### DEC-080: 项目工作前必读项目 AGENTS.md（2026-03-08）
+
+**背景**: AC 覆盖率修复事件中，因未读项目 AGENTS.md 导致跳过 TASK_TEMPLATE、违反 DEC-076 实现/测试分离。问题不是制度不够，是没执行已有制度的第一步。
+
+**决策**: 每次涉及 SAGE 项目的编码/修复/脚本改动工作开始前，必须先 Read 项目目录的 AGENTS.md。写入 workspace AGENTS.md 铁律 0。
+
+**原则**: 确保现有制度被执行，而不是每次出问题就加一层新制度。
