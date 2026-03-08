@@ -697,3 +697,29 @@ https://sage-next-gen.pages.dev
 ### 扫描结果预期
 
 下次日扫：Stale 引用 5→0，POST /api/memory 误报消除，God Components 警告保留（已豁免）
+
+### 2026-03-09 AC 覆盖率诚实化 + 度量脚本修正
+
+**起因**: Batch 1-3 测试全部一次通过（74 tests, 0 fail），夏总质疑是否有水分。
+
+**审查结论**:
+- 大量 B 类 AC（UI 行为）标签挂在 reducer 单元测试上，没有渲染组件
+- D 类 AC（AI 质量）标签挂在 reducer 上，没有验证 prompt 构建
+- F02/F03 完全 0 覆盖（16个 AC，含 7 个 E 类）
+
+**修正动作**:
+1. 建立 AC 五类分类框架（ABCDE），记录为 DEC-081
+2. 创建 `scripts/ac-registry.json`（60 条 AC 逐条分类）
+3. 创建 `docs/technical/ac-classification.md`（全量分类表 + 诚实评估）
+4. 修改 `scripts/quality-check.sh`：输出 tagged + valid 双指标
+
+**覆盖率变化**:
+```
+Batch 1 前:    20/60 = 33%（修复测量 bug 后的诚实值）
+Batch 1-3 后:  43/60 = 72%（脚本报告，虚高）
+诚实-valid:    32/53 = 60%（排除 E 类，类型匹配）
+诚实-严格:     24/50 = 48%（人工逐条评估）
+```
+
+**Commits**: 3d66433 (Batch 2), e1dc19f (Batch 3), d7ec9d1 (度量修正)
+**CI**: 全绿
